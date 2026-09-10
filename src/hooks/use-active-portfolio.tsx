@@ -70,7 +70,7 @@ function writeStoredId(id: string | null) {
 }
 
 export function ActivePortfolioProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { tier, loading: tierLoading } = useEntitlement();
   const {
     portfolios,
@@ -86,13 +86,16 @@ export function ActivePortfolioProvider({ children }: { children: ReactNode }) {
 
   const [activePortfolioId, setActiveState] = useState<string | null>(readStoredId);
 
-  // Reset on user change (sign in / sign out)
+  // Reset on real sign-out only. While auth is still restoring the session on a
+  // page refresh, `user` is briefly null — clearing the stored id there was
+  // wiping the user's selected portfolio on every reload.
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       setActiveState(null);
       writeStoredId(null);
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   // Resolve / repair active id once portfolios load.
   useEffect(() => {

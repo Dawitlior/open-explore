@@ -192,7 +192,22 @@ const Index = () => {
   const hasStrictRData = expectancyState.mode === 'R' || rEligibleTrades.length > 0;
 
 
-  const [page, setPage] = useState('dashboard');
+  // Remember the last page the user was on so a refresh restores it instead of
+  // dumping them back on the dashboard.
+  const PAGE_LS_KEY = 'orca.activePage';
+  const [page, setPage] = useState<string>(() => {
+    try {
+      return window.sessionStorage.getItem(PAGE_LS_KEY) || window.localStorage.getItem(PAGE_LS_KEY) || 'dashboard';
+    } catch {
+      return 'dashboard';
+    }
+  });
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem(PAGE_LS_KEY, page);
+      window.localStorage.setItem(PAGE_LS_KEY, page);
+    } catch { /* ignore */ }
+  }, [page]);
   // Sidebar starts collapsed on every load (both mobile and desktop) — user
   // explicitly requested no auto-open on refresh.
   const [sbOpen, setSbOpen] = useState(false);
