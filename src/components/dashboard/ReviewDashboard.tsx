@@ -518,9 +518,8 @@ export const ReviewDashboard = ({
                       <LazyChart><QuarterlyYearMatrixChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
                     </div>
                   </ChartWrapper>
-                </div>
-                </div>
-                <div className="dash-chart-card">
+                 </div>
+                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים חודשיים (R)' : 'Monthly Performance (R)'} explanation={EXPLANATIONS.monthlyPerformance} unit="R">
                     {/* Compact chip grid — 2 cols mobile, 3-4 desktop, no vertical scroll.
                         Prevents "cannot scroll when many months exist" issue and gives
