@@ -2042,13 +2042,23 @@ const Index = () => {
         {!sbOpen && <button onClick={() => setSbOpen(true)} style={{ background: 'none', border: 'none', color: T.text.muted, cursor: 'pointer', fontSize: 14, padding: '6px 0', lineHeight: 1, transition: 'color 0.2s' }}>›</button>}
         
         <nav style={{ flex: 1, padding: '0 6px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
-          {nav.map(item => {
+          {nav.map((item, idx) => {
             const isWeekly = item.id === 'weekly-review';
             const activeColor = isWeekly ? '#FFD700' : infoColor(T);
             const showBadge = isWeekly && showWeeklyReminder;
+            const isDash = item.id === 'dashboard';
+            const groupChanged = item.group && item.group !== nav[idx - 1]?.group;
             return (
             <React.Fragment key={item.id}>
-            <button onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isWeekly) dismissWeeklyReminder(); }}
+            {groupChanged && sbOpen && (
+              <div style={{ padding: '10px 12px 4px', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: T.text.muted, fontWeight: 600 }}>
+                {NAV_GROUP_LABEL[item.group!]}
+              </div>
+            )}
+            {groupChanged && !sbOpen && idx > 0 && (
+              <div aria-hidden style={{ height: 1, background: T.border.subtle, margin: '6px 12px' }} />
+            )}
+            <button onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isDash) setDashSubOpen(true); if (isWeekly) dismissWeeklyReminder(); }}
               onMouseEnter={e => {
                 if (page === item.id) return;
                 e.currentTarget.style.background = `linear-gradient(110deg, transparent 0%, ${activeColor}18 50%, transparent 100%)`;
