@@ -2064,7 +2064,7 @@ const Index = () => {
             {groupChanged && !sbOpen && idx > 0 && (
               <div aria-hidden style={{ height: 1, background: T.border.subtle, margin: '6px 12px' }} />
             )}
-            <button onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isDash) setDashSubOpen(true); if (isPerf) { setPerfSubOpen(true); setPerfChannel(null); } if (isWeekly) dismissWeeklyReminder(); }}
+            <button onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isDash) { setDashChannel('home'); setDashSubOpen(true); } if (isPerf) { setPerfSubOpen(true); setPerfChannel(null); } if (isWeekly) dismissWeeklyReminder(); }}
               onMouseEnter={e => {
                 if (page === item.id) return;
                 e.currentTarget.style.background = `linear-gradient(110deg, transparent 0%, ${activeColor}18 50%, transparent 100%)`;
