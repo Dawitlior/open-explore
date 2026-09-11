@@ -2042,6 +2042,35 @@ const Index = () => {
               </span>
               {sbOpen && <span>{item.label}</span>}
             </button>
+            {/* Dashboard sub-channels — visible to everyone, Pro ones show a lock */}
+            {item.id === 'dashboard' && sbOpen && page === 'dashboard' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 1, margin: '2px 0 6px', paddingInlineStart: 18, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 16 }}>
+                {CHANNELS.map(ch => {
+                  const locked = ch.pro && !isUltimateTier;
+                  const chActive = dashChannel === ch.id;
+                  return (
+                    <button
+                      key={ch.id}
+                      onClick={() => { setDashChannel(ch.id); setAdvancedOpen(true); }}
+                      title={locked ? (isRTL ? 'זמין בתוכנית פרו' : 'Available on Orca Pro') : undefined}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                        padding: '6px 8px', border: 'none', borderRadius: T.radius.sm,
+                        background: chActive ? `${infoColor(T)}18` : 'transparent',
+                        color: chActive ? infoColor(T) : (locked ? T.text.muted : T.text.secondary),
+                        fontSize: 11.5, fontWeight: chActive ? 600 : 400, cursor: 'pointer',
+                        textAlign: isRTL ? 'right' : 'left', transition: 'background 0.2s, color 0.2s',
+                      }}
+                    >
+                      <span aria-hidden style={{ fontSize: 11, opacity: 0.8 }}>{ch.icon}</span>
+                      <span style={{ flex: 1 }}>{isRTL ? ch.he : ch.en}</span>
+                      {locked && <span aria-hidden style={{ fontSize: 10 }}>🔒</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            </>
             );
           })}
           {bugBoardAllowed && (
