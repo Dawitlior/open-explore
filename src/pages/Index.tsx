@@ -2076,31 +2076,42 @@ const Index = () => {
                 {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}
                 {showBadge && <ReminderBadge />}
               </span>
-              {sbOpen && <span>{item.label}</span>}
+              {sbOpen && <span style={{ flex: 1 }}>{item.label}</span>}
+              {isDash && sbOpen && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  aria-label={isRTL ? 'הצג ערוצי דשבורד' : 'Toggle dashboard channels'}
+                  onClick={e => { e.stopPropagation(); setDashSubOpen(o => !o); }}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); setDashSubOpen(o => !o); } }}
+                  style={{ display: 'inline-flex', fontSize: 10, opacity: 0.75, transform: `rotate(${dashSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', padding: '0 2px' }}
+                >▸</span>
+              )}
             </button>
-            {/* Dashboard sub-channels — visible to everyone, Pro ones show a lock */}
-            {item.id === 'dashboard' && sbOpen && page === 'dashboard' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 1, margin: '2px 0 6px', paddingInlineStart: 18, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 16 }}>
+            {/* Dashboard sub-channels — compact list, Pro ones show a lock */}
+            {isDash && sbOpen && dashSubOpen && (
+              <div style={{ display: 'flex', flexDirection: 'column', margin: '1px 0 4px', paddingInlineStart: 12, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 20 }}>
                 {CHANNELS.map(ch => {
                   const locked = ch.pro && !isUltimateTier;
-                  const chActive = dashChannel === ch.id;
+                  const chActive = page === 'dashboard' && dashChannel === ch.id;
                   return (
                     <button
                       key={ch.id}
-                      onClick={() => { setDashChannel(ch.id); setAdvancedOpen(true); }}
+                      onClick={() => { setPage('dashboard'); setDashChannel(ch.id); setAdvancedOpen(true); }}
                       title={locked ? (isRTL ? 'זמין בתוכנית פרו' : 'Available on Orca Pro') : undefined}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                        padding: '6px 8px', border: 'none', borderRadius: T.radius.sm,
-                        background: chActive ? `${infoColor(T)}18` : 'transparent',
+                        display: 'flex', alignItems: 'center', gap: 7, width: '100%',
+                        padding: '4px 8px', border: 'none', borderRadius: T.radius.sm,
+                        background: 'transparent',
                         color: chActive ? infoColor(T) : (locked ? T.text.muted : T.text.secondary),
-                        fontSize: 11.5, fontWeight: chActive ? 600 : 400, cursor: 'pointer',
-                        textAlign: isRTL ? 'right' : 'left', transition: 'background 0.2s, color 0.2s',
+                        fontSize: 11, lineHeight: 1.4, fontWeight: chActive ? 600 : 400, cursor: 'pointer',
+                        textAlign: isRTL ? 'right' : 'left', transition: 'color 0.2s',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                       }}
                     >
-                      <span aria-hidden style={{ fontSize: 11, opacity: 0.8 }}>{ch.icon}</span>
-                      <span style={{ flex: 1 }}>{isRTL ? ch.he : ch.en}</span>
-                      {locked && <span aria-hidden style={{ fontSize: 10 }}>🔒</span>}
+                      <span aria-hidden style={{ width: 4, height: 4, borderRadius: '50%', flexShrink: 0, background: chActive ? infoColor(T) : T.text.muted, opacity: chActive ? 1 : 0.5 }} />
+                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{isRTL ? ch.he : ch.en}</span>
+                      {locked && <span aria-hidden style={{ fontSize: 9, opacity: 0.7 }}>🔒</span>}
                     </button>
                   );
                 })}
