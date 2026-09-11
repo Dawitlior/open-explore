@@ -689,19 +689,25 @@ const Index = () => {
   const WEEKLY_REVIEW_ALLOWED_EMAIL = 'dawitlior777@gmail.com';
   const weeklyReviewAllowed = (authUser?.email || '').toLowerCase() === WEEKLY_REVIEW_ALLOWED_EMAIL;
   const bugBoardAllowed = (authUser?.email || '').toLowerCase() === WEEKLY_REVIEW_ALLOWED_EMAIL;
-  const nav: Array<{ id: string; icon: any; label: string; color?: string; action?: () => void }> = [
-    { id: 'dashboard', icon: Ico.dash, label: isRTL ? 'דשבורד' : 'Dashboard' },
-    { id: 'calendar', icon: '📅', label: isRTL ? 'לוח שנה' : 'Calendar' },
-    { id: 'journal', icon: Ico.book, label: t.journal },
-    { id: 'analytics', icon: Ico.bar, label: isRTL ? 'ביצועים' : 'Performance' },
-    { id: 'control-room', icon: Ico.shield, label: isRTL ? 'חדר בקרה' : 'Control Room' },
+  const nav: Array<{ id: string; icon: any; label: string; color?: string; group?: string; action?: () => void }> = [
+    { id: 'dashboard', icon: Ico.dash, label: isRTL ? 'דשבורד' : 'Dashboard', group: 'workspace' },
+    { id: 'calendar', icon: '📅', label: isRTL ? 'לוח שנה' : 'Calendar', group: 'workspace' },
+    { id: 'journal', icon: Ico.book, label: t.journal, group: 'workspace' },
+    { id: 'analytics', icon: Ico.bar, label: isRTL ? 'ביצועים' : 'Performance', group: 'workspace' },
 
-    { id: 'ai', icon: Ico.star, label: t.ai },
-    { id: 'economic-radar', icon: '📡', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar' },
+    { id: 'control-room', icon: Ico.shield, label: isRTL ? 'חדר בקרה' : 'Control Room', group: 'intelligence' },
+    { id: 'ai', icon: Ico.star, label: t.ai, group: 'intelligence' },
     ...(weeklyReviewAllowed
-      ? [{ id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: T.isLight ? '#B45309' : '#FFD700' }]
+      ? [{ id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: T.isLight ? '#B45309' : '#FFD700', group: 'intelligence' }]
       : []),
+
+    { id: 'economic-radar', icon: '📡', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar', group: 'markets' },
   ];
+  const NAV_GROUP_LABEL: Record<string, string> = {
+    workspace: isRTL ? 'סביבת עבודה' : 'Workspace',
+    intelligence: isRTL ? 'תובנות' : 'Intelligence',
+    markets: isRTL ? 'שווקים' : 'Markets',
+  };
 
   // Keep the loader visible until BOTH the trade list and the portfolio
   // resolution have finished.
