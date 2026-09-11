@@ -8,9 +8,12 @@ const cors = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Single paid plan — Orca Pro. Legacy keys kept so older clients keep working.
+const PRO_PRICE = "price_1UEalkLHBUsnz0dmmg1huRmq";
 const PRICES: Record<string, string> = {
+  pro: PRO_PRICE,
+  ultimate: PRO_PRICE,
   advanced: "price_1UEalRLHBUsnz0dmv8FShrt5",
-  ultimate: "price_1UEalkLHBUsnz0dmmg1huRmq",
 };
 
 const json = (body: unknown, status = 200) =>

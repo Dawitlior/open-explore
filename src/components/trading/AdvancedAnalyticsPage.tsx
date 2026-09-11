@@ -85,8 +85,8 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
   const { tier: appTier } = useEntitlement();
   const DOW = langRTL ? HEB_DOW : ENG_DOW;
   const DOW_FULL = langRTL ? HEB_DOW_FULL : ENG_DOW_FULL;
-  // SaaS tier resolution — Standard → core · Advanced → pro · Ultimate → max.
-  const tier: 'core' | 'pro' | 'max' = appTier === 'ultimate' ? 'max' : appTier === 'advanced' ? 'pro' : 'core';
+  // SaaS plan resolution — Free → pro deck (ex-Advanced) · Pro → max deck.
+  const tier: 'core' | 'pro' | 'max' = appTier === 'pro' ? 'max' : 'pro';
   const showPro = tier === 'pro' || tier === 'max';
   const showMax = tier === 'max';
   const showCore = true;

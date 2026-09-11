@@ -1,7 +1,7 @@
 import { SURF } from '@/lib/neon-palette';
 /**
  * UpgradeModal — listens for 'orca:open-upgrade' and presents the
- * 3-tier pricing comparison (Standard / Advanced / Ultimate).
+ * 2-plan pricing comparison (Free / Pro).
  *
  * Bilingual (HE/EN). Pre-launch CTA is wired to a no-op stub that
  * dispatches 'orca:start-trial' — payment flow lands in a later phase.
@@ -30,9 +30,9 @@ interface TierDef {
 
 const TIERS: TierDef[] = [
   {
-    id: 'standard',
+    id: 'free',
     icon: Zap,
-    name: { he: 'סטנדרט', en: 'Standard' },
+    name: { he: 'חינם', en: 'Free' },
     tagline: { he: 'הבסיס למסחר ממושמע', en: 'The disciplined-trading baseline' },
     price: { he: 'חינם', en: 'Free' },
     accent: '#94a3b8',
@@ -41,43 +41,30 @@ const TIERS: TierDef[] = [
       { he: 'יומן מסחר מלא', en: 'Full trade journal' },
       { he: 'חישובי R-Multiple', en: 'R-Multiple calculations' },
       { he: 'מגבלות סיכון 4 שכבות', en: '4-tier risk limits' },
-      { he: 'לוח שנה כלכלי בסיסי', en: 'Basic economic calendar' },
+      { he: 'לוח שנה כלכלי', en: 'Economic calendar' },
       { he: 'תובנות AI שבועיות', en: 'Weekly AI insights' },
-    ],
-  },
-  {
-    id: 'advanced',
-    icon: Sparkles,
-    name: { he: 'מתקדם', en: 'Advanced' },
-    tagline: { he: 'אנליטיקה ברמת פרו', en: 'Pro-grade analytics' },
-    price: { he: '₪49/חודש', en: '$14/mo' },
-    accent: '#22d3ee',
-    glow: 'rgba(34,211,238,0.55)',
-    features: [
-      { he: 'כל יתרונות סטנדרט', en: 'Everything in Standard' },
-      { he: 'מפת חום ביצועי סשן', en: 'Session performance heatmap' },
-      { he: 'התפלגות רצפי הצלחה/הפסד', en: 'Streak distribution' },
-      { he: 'משך עסקה מול R', en: 'Trade duration vs R' },
-      { he: 'ניתוח שחיקת עמלות', en: 'Fee drag impact' },
+      { he: 'אנליטיקה מקצועית — התמונה הגדולה', en: 'Pro analytics — Big Picture' },
       { he: 'מצב Dual R/$ בכל הגרפים', en: 'Dual R/$ mode everywhere' },
+      { he: 'עד 2 תיקים', en: 'Up to 2 portfolios' },
     ],
   },
   {
-    id: 'ultimate',
+    id: 'pro',
     icon: Crown,
-    name: { he: 'אולטימייט', en: 'Ultimate' },
+    name: { he: 'פרו', en: 'Pro' },
     tagline: { he: 'מנוע כמותי מלא', en: 'Full quant engine' },
     price: { he: '₪129/חודש', en: '$39/mo' },
     accent: '#d4af37',
     glow: 'rgba(212,175,55,0.55)',
     features: [
-      { he: 'כל יתרונות מתקדם', en: 'Everything in Advanced' },
-      { he: 'אוטוקורלציה Lag-1', en: 'Lag-1 autocorrelation' },
-      { he: 'התפלגות זמן בין עסקאות', en: 'Inter-trade interval analysis' },
+      { he: 'כל מה שיש בחינם', en: 'Everything in Free' },
+      { he: 'ערוץ פילוח וחלוקה', en: 'Breakdown & Distribution channel' },
+      { he: 'מעבדת קוונט מלאה', en: 'Full Quant Lab channel' },
       { he: 'קלי אופטימלי (Full/Half)', en: 'Optimal Kelly sizing' },
-      { he: 'יחס MAR מצטבר', en: 'Cumulative MAR ratio' },
-      { he: 'מבנה Drawdown מלא', en: 'Full drawdown structure' },
+      { he: 'אוטוקורלציה Lag-1 וזמן בין עסקאות', en: 'Lag-1 autocorrelation & inter-trade timing' },
+      { he: 'יחס MAR מצטבר ומבנה Drawdown', en: 'Cumulative MAR & drawdown structure' },
       { he: 'יעילות הון מתגלגלת', en: 'Rolling capital efficiency' },
+      { he: 'עד 10 תיקים', en: 'Up to 10 portfolios' },
     ],
   },
 ];
@@ -102,7 +89,7 @@ export function UpgradeModal() {
   const { lang } = useLang();
   const { tier: currentTier } = useEntitlement();
   const [open, setOpen] = useState(false);
-  const [required, setRequired] = useState<AppTier>('advanced');
+  const [required, setRequired] = useState<AppTier>('pro');
   const [checkoutTier, setCheckoutTier] = useState<AppTier | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const { startCheckout } = useSubscription();
@@ -129,11 +116,11 @@ export function UpgradeModal() {
   const isHe = lang === 'he';
   const title = isHe ? 'בחר/י את התוכנית שלך' : 'Choose your plan';
   const subtitle = isHe
-    ? '7 ימי ניסיון חינם בגישת Advanced — ללא חיוב, ניתן לבטל בכל עת'
-    : '7-day free trial with Advanced access — no charge, cancel anytime';
+    ? 'שתי תוכניות בלבד — חינם או פרו. ניתן לבטל בכל עת'
+    : 'Two plans only — Free or Pro. Cancel anytime';
 
   const startTrial = async (tier: AppTier) => {
-    if (tier === 'standard') {
+    if (tier === 'free') {
       window.dispatchEvent(new CustomEvent('orca:start-trial', { detail: { tier } }));
       setOpen(false);
       return;
@@ -141,7 +128,7 @@ export function UpgradeModal() {
     setCheckoutTier(tier);
     setCheckoutError(null);
     try {
-      await startCheckout(tier as Exclude<AppTier, 'standard'>);
+      await startCheckout('pro');
       setOpen(false);
     } catch {
       setCheckoutError(isHe
@@ -294,7 +281,7 @@ export function UpgradeModal() {
 
               {/* Tier grid */}
               <div
-                className="grid grid-cols-1 md:grid-cols-3 gap-4"
+                className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto"
                 style={{ position: 'relative', zIndex: 2 }}
               >
                 {TIERS.map((tier, idx) => {
@@ -420,7 +407,7 @@ export function UpgradeModal() {
                           ? (isHe ? 'התוכנית הפעילה' : 'Current plan')
                           : checkoutTier === tier.id
                             ? (isHe ? 'פותח תשלום…' : 'Opening checkout…')
-                            : tier.id === 'standard'
+                            : tier.id === 'free'
                               ? (isHe ? 'המשך/י בחינם' : 'Stay on Free')
                               : (isHe ? 'מעבר לתשלום' : 'Continue to payment')}
                       </button>

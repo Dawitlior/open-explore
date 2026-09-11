@@ -13,7 +13,7 @@
  *     5. cumulativeMAR        — cumulative R / max-DD trajectory
  *     6. drawdownStructure    — every DD event (depth × recovery)
  *
- * All cards wrapped in <TierGate required="ultimate">. While
+ * All cards wrapped in <TierGate required="pro">. While
  * ENFORCE_TIER_GATES=false they render with a lock badge (soft mode).
  */
 import { useMemo } from 'react';
@@ -138,7 +138,7 @@ export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllow
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginTop: 16, marginBottom: 28 }}>
 
       {registryAllows('lag1Autocorr') && (
-        <TierGate required="ultimate" label={t('אוטוקורלציה Lag-1', 'Lag-1 Autocorrelation')}>
+        <TierGate required="pro" label={t('אוטוקורלציה Lag-1', 'Lag-1 Autocorrelation')}>
           <ChartWrapper T={T} title={t('אוטוקורלציה Lag-1', 'Lag-1 Autocorrelation')} explanation={EXPLANATIONS.lag1Autocorr} unit="ρ" chartId="lag1Autocorr" onExplainClick={onExplainClick}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
               <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 6, background: `${rhoColor}18`, color: rhoColor, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
@@ -170,7 +170,7 @@ export function UltimateAnalyticsDeck({ T, trades, onExplainClick, registryAllow
       )}
 
       {registryAllows('interTradeInterval') && (
-        <TierGate required="ultimate" label={t('מרווחים בין עסקאות', 'Inter-trade Interval')}>
+        <TierGate required="pro" label={t('מרווחים בין עסקאות', 'Inter-trade Interval')}>
           <ChartWrapper T={T} title={t('מרווחים בין עסקאות', 'Inter-trade Interval (hrs)')} explanation={EXPLANATIONS.interTradeInterval} unit="h" chartId="interTradeInterval" onExplainClick={onExplainClick}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
               <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 6, background: `${medianColor}18`, color: medianColor, fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
@@ -274,7 +274,7 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: 16, marginTop: 16 }}>
       {/* 3 — Kelly */}
       {registryAllows('kellyOptimal') && (
-        <TierGate required="ultimate" label={t('אופטימום קלי', 'Kelly Optimal')}>
+        <TierGate required="pro" label={t('אופטימום קלי', 'Kelly Optimal')}>
           <ChartWrapper T={T} title={t('אופטימום קלי', 'Kelly Optimal Sizing')} explanation={EXPLANATIONS.kellyOptimal} unit="%" chartId="kellyOptimal" onExplainClick={onExplainClick}>
             {trades.length >= 5 ? (
               <div style={{ padding: '12px 4px' }}>
@@ -306,7 +306,7 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
 
       {/* 4 — Capital Efficiency */}
       {registryAllows('capitalEfficiency') && (
-        <TierGate required="ultimate" label={t('יעילות הון', 'Capital Efficiency')}>
+        <TierGate required="pro" label={t('יעילות הון', 'Capital Efficiency')}>
           <ChartWrapper T={T} title={t('יעילות הון (חלון 20)', 'Capital Efficiency (window 20)')} explanation={EXPLANATIONS.capitalEfficiency} unit="R/σ" chartId="capitalEfficiency" onExplainClick={onExplainClick}>
             {capEff.length >= 5 ? (
               <ResponsiveContainer width="100%" height={220}>
@@ -327,7 +327,7 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
 
       {/* 5 — Cumulative MAR */}
       {registryAllows('cumulativeMAR') && (
-        <TierGate required="ultimate" label={t('MAR מצטבר', 'Cumulative MAR')}>
+        <TierGate required="pro" label={t('MAR מצטבר', 'Cumulative MAR')}>
           <ChartWrapper T={T} title={t('MAR מצטבר', 'Cumulative MAR (return/DD)')} explanation={EXPLANATIONS.cumulativeMAR} unit="x" chartId="cumulativeMAR" onExplainClick={onExplainClick}>
             {marSeries.length >= 3 ? (
               <ResponsiveContainer width="100%" height={220}>
@@ -353,7 +353,7 @@ export function UltimateRiskDeck({ T, trades, privacyMode, onExplainClick, regis
 
       {/* 6 — Drawdown Structure */}
       {registryAllows('drawdownStructure') && (
-        <TierGate required="ultimate" label={t('מבנה נסיגות', 'Drawdown Structure')}>
+        <TierGate required="pro" label={t('מבנה נסיגות', 'Drawdown Structure')}>
           <ChartWrapper T={T} title={t('מבנה נסיגות (Top 12)', 'Drawdown Structure (Top 12)')} explanation={EXPLANATIONS.drawdownStructure} unit="R" chartId="drawdownStructure" onExplainClick={onExplainClick}>
             {ddEvents.length > 0 ? (
               <ResponsiveContainer width="100%" height={220}>

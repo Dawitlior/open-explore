@@ -60,14 +60,12 @@ const AdvancedPsychologyPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live'
     setDiagLoading(true);
     setTimeout(() => { setDiagLoading(false); setDiagnosisOpen(true); }, 1500);
   };
-  // SaaS tier composition: Standard / Advanced / Ultimate.
-  const isAdvancedPlan = tierAllows('advanced');
-  const isUltimatePlan = tierAllows('ultimate');
-  const tierMeta = appTier === 'ultimate'
-    ? { he: 'אולטימייט', en: 'Ultimate', sub: { he: 'מנוע פסיכולוגיה כמותי מלא', en: 'Full quantitative psychology engine' }, color: neutralRamp(T, 3)[1] }
-    : appTier === 'advanced'
-      ? { he: 'מתקדם', en: 'Advanced', sub: { he: 'דפוסי התנהגות, Tilt ולחץ לאחר הפסד', en: 'Behavior patterns, tilt, and post-loss pressure' }, color: infoColor(T) }
-      : { he: 'סטנדרט', en: 'Standard', sub: { he: 'אותות פסיכולוגיים בסיסיים ומשמעת', en: 'Baseline psychology and discipline signals' }, color: infoColor(T) };
+  // SaaS plan composition: Free / Pro.
+  const isAdvancedPlan = true; // ex-Advanced content is now part of Free
+  const isUltimatePlan = tierAllows('pro');
+  const tierMeta = appTier === 'pro'
+    ? { he: 'פרו', en: 'Pro', sub: { he: 'מנוע פסיכולוגיה כמותי מלא', en: 'Full quantitative psychology engine' }, color: neutralRamp(T, 3)[1] }
+    : { he: 'חינם', en: 'Free', sub: { he: 'דפוסי התנהגות, Tilt ולחץ לאחר הפסד', en: 'Behavior patterns, tilt, and post-loss pressure' }, color: infoColor(T) };
 
   // What sections each SaaS tier shows
   const showRadar          = isAdvancedPlan;

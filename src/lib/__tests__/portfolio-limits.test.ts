@@ -2,7 +2,7 @@
  * Stage 7 — smoke tests for the Multi-Portfolio limit + lock engine.
  *
  * These guard the two product rules we agreed on:
- *   - Tier caps: standard=2, advanced=3, ultimate=10.
+ *   - Plan caps: free=2, pro=10.
  *   - Downgrade behavior: extras become read-only; default + oldest stay editable.
  */
 import { describe, it, expect } from 'vitest';
@@ -31,13 +31,12 @@ const mk = (overrides: Partial<Portfolio>): Portfolio => ({
 
 describe('portfolio-limits — tier caps', () => {
   it('exposes the agreed plan caps', () => {
-    expect(PORTFOLIO_LIMITS).toEqual({ standard: 2, advanced: 3, ultimate: 10 });
+    expect(PORTFOLIO_LIMITS).toEqual({ free: 2, pro: 10 });
   });
 
-  it('getPortfolioLimit falls back to standard for unknown tier', () => {
-    expect(getPortfolioLimit('standard')).toBe(2);
-    expect(getPortfolioLimit('advanced')).toBe(3);
-    expect(getPortfolioLimit('ultimate')).toBe(10);
+  it('getPortfolioLimit returns the cap per plan', () => {
+    expect(getPortfolioLimit('free')).toBe(2);
+    expect(getPortfolioLimit('pro')).toBe(10);
   });
 });
 
@@ -45,16 +44,16 @@ describe('portfolio-limits — canCreatePortfolio', () => {
   it('allows up to the cap and blocks at the cap', () => {
     const one = [mk({ id: 'a' })];
     const two = [mk({ id: 'a' }), mk({ id: 'b' })];
-    expect(canCreatePortfolio(one, 'standard')).toBe(true);
-    expect(canCreatePortfolio(two, 'standard')).toBe(false);
-    expect(canCreatePortfolio(two, 'advanced')).toBe(true);
+    expect(canCreatePortfolio(one, 'free')).toBe(true);
+    expect(canCreatePortfolio(two, 'free')).toBe(false);
+    expect(canCreatePortfolio(two, 'pro')).toBe(true);
   });
 });
 
 describe('portfolio-limits — computeLockedPortfolioIds', () => {
   it('returns an empty set when within the cap', () => {
     const portfolios = [mk({ id: 'a' }), mk({ id: 'b' })];
-    expect(computeLockedPortfolioIds(portfolios, 'standard').size).toBe(0);
+    expect(computeLockedPortfolioIds(portfolios, 'free').size).toBe(0);
   });
 
   it('locks the extras on downgrade, keeping default + oldest editable', () => {
@@ -65,7 +64,7 @@ describe('portfolio-limits — computeLockedPortfolioIds', () => {
       mk({ id: 'middle', sort_order: 2, created_at: '2026-03-01T00:00:00Z' }),
       mk({ id: 'default', is_default: true, sort_order: 0, created_at: '2026-01-01T00:00:00Z' }),
     ];
-    const locked = computeLockedPortfolioIds(portfolios, 'standard');
+    const locked = computeLockedPortfolioIds(portfolios, 'free');
     expect(locked.has('default')).toBe(false); // default always editable
     expect(locked.has('older')).toBe(false);   // oldest non-default editable
     expect(locked.has('middle')).toBe(true);
@@ -73,14 +72,14 @@ describe('portfolio-limits — computeLockedPortfolioIds', () => {
     expect(locked.size).toBe(2);
   });
 
-  it('advanced cap=3 unlocks one more vs standard', () => {
+  it('pro cap=10 unlocks everything', () => {
     const portfolios = [
       mk({ id: 'a', is_default: true, sort_order: 0 }),
       mk({ id: 'b', sort_order: 1 }),
       mk({ id: 'c', sort_order: 2 }),
       mk({ id: 'd', sort_order: 3 }),
     ];
-    expect(computeLockedPortfolioIds(portfolios, 'advanced')).toEqual(new Set(['d']));
-    expect(computeLockedPortfolioIds(portfolios, 'ultimate').size).toBe(0);
+    expect(computeLockedPortfolioIds(portfolios, 'free')).toEqual(new Set(['c', 'd']));
+    expect(computeLockedPortfolioIds(portfolios, 'pro').size).toBe(0);
   });
 });
