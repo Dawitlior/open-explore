@@ -65,3 +65,23 @@ export const LOCKED_COPY: Record<'breakdown' | 'quant', { he: string; en: string
     en: 'Day & hour opportunity windows, return vs holding time and multi-view quarterly analysis.',
   },
 };
+
+/* ─────────────── Performance page sub-channels ─────────────── */
+
+export type PerfChannelId = 'all' | 'core' | 'risk' | 'dynamics' | 'temporal';
+
+export interface PerfChannelDef {
+  id: PerfChannelId;
+  he: string;
+  en: string;
+  icon: string;
+}
+
+/** Sub-channels shown under the Performance row in the sidebar. */
+export const PERF_CHANNELS: PerfChannelDef[] = [
+  { id: 'all', he: 'הכל', en: 'All', icon: '◈' },
+  { id: 'core', he: 'ליבה', en: 'Core', icon: '◎' },
+  { id: 'risk', he: 'סיכון', en: 'Risk', icon: '⚠' },
+  { id: 'dynamics', he: 'דינמיקה', en: 'Dynamics', icon: '∿' },
+  { id: 'temporal', he: 'זמן', en: 'Timing', icon: '◷' },
+];
