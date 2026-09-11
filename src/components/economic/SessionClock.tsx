@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLang } from '@/hooks/use-lang';
 import { WORLD_LAND_PATH } from '@/lib/world-map-path';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 /* ─────────────────────────────────────────────────────────────
  * Session Clock — interactive world map of the four FX sessions.
- *   • Live UTC clock + local time
- *   • Day / night terminator over an equirectangular world map
- *   • Market pins: hover or click to focus a session
- *   • Per-market local time, open / closed state and countdown
+ *   • Collapsible compact strip by default (does not dominate page)
+ *   • Expanded view shows live UTC clock, day/night world map,
+ *     market pins, and per-market local time / open / closed state.
  * ───────────────────────────────────────────────────────────── */
 
 interface MarketDef {
@@ -101,13 +101,15 @@ function fmtCountdown(mins: number, isRTL: boolean): string {
 
 interface Props {
   T?: any;
+  compact?: boolean;
 }
 
-export default function SessionClock({ T }: Props) {
+export default function SessionClock({ T, compact: compactProp = true }: Props) {
   const { lang } = useLang();
   const isRTL = lang === 'he';
   const [now, setNow] = useState(() => new Date());
   const [focus, setFocus] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(!compactProp);
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 1000);
@@ -126,7 +128,6 @@ export default function SessionClock({ T }: Props) {
 
   const markets = useMemo(
     () => MARKETS.map(m => computeMarket(m, now)),
-    // Recompute each tick; `now` changes every second.
     [now],
   );
 
@@ -162,169 +163,254 @@ export default function SessionClock({ T }: Props) {
   const nextUp = markets.filter(m => !m.isOpen).sort((a, b) => a.countdown - b.countdown)[0];
   const focused = markets.find(m => m.def.id === focus) ?? null;
 
+  const ExpandIcon = expanded ? ChevronUp : ChevronDown;
+
   return (
     <div
       dir={isRTL ? 'rtl' : 'ltr'}
       className="rounded-xl overflow-hidden"
       style={{ background: PANEL, border: `1px solid ${BORDER}`, fontFamily: "'Poppins', sans-serif" }}
     >
-      <div className="flex flex-col md:flex-row">
-        {/* ── Clock + map ── */}
-        <div className="relative flex-1 min-w-0 p-4 md:p-5">
-          <div className="text-[10px] uppercase tracking-[0.22em] font-semibold" style={{ color: TEXT_DIM }}>
-            {isRTL ? 'שעון סשנים' : 'Session Clock'}
+      {/* ── Compact header strip ── */}
+      <div
+        className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 p-3 md:px-4 md:py-2.5"
+        style={{ background: SURFACE }}
+      >
+        {/* Clock block */}
+        <div className="flex items-center gap-3 min-w-0">
+          <div>
+            <div className="text-[9px] uppercase tracking-[0.2em] font-semibold" style={{ color: TEXT_DIM }}>
+              {isRTL ? 'שעון סשנים' : 'Session Clock'}
+            </div>
+            <div
+              className="text-[22px] md:text-[26px] font-bold leading-none tabular-nums"
+              style={{ color: TEXT, fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '-0.01em' }}
+            >
+              {utcLabel} <span style={{ fontSize: '0.42em', color: TEXT_DIM, letterSpacing: '0.12em' }}>UTC</span>
+            </div>
+            <div className="text-[10px] leading-none" style={{ color: TEXT_DIM }}>
+              {isRTL ? 'מקומי' : 'Local'} {localLabel} · {localZone}
+            </div>
           </div>
-          <div
-            className="text-[30px] md:text-[38px] font-bold leading-none mt-1 tabular-nums"
-            style={{ color: TEXT, fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '-0.01em' }}
-          >
-            {utcLabel} <span style={{ fontSize: '0.42em', color: TEXT_DIM, letterSpacing: '0.12em' }}>UTC</span>
-          </div>
-          <div className="text-[11px] mt-1" style={{ color: TEXT_DIM }}>
-            {isRTL ? 'מקומי' : 'Local'} {localLabel} · {localZone}
-          </div>
+        </div>
 
-          {/* World map */}
-          <div className="relative mt-3" style={{ width: '100%' }}>
-            <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
-              <defs>
-                <linearGradient id="sc-night" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#00060f" stopOpacity="0" />
-                  <stop offset="28%" stopColor="#00060f" stopOpacity="0.62" />
-                  <stop offset="72%" stopColor="#00060f" stopOpacity="0.62" />
-                  <stop offset="100%" stopColor="#00060f" stopOpacity="0" />
-                </linearGradient>
-              </defs>
+        {/* Market chips */}
+        <div className="flex flex-1 flex-wrap items-center gap-2 min-w-0">
+          {markets.map(m => {
+            const active = focus === m.def.id;
+            return (
+              <button
+                key={m.def.id}
+                type="button"
+                onMouseEnter={() => setFocus(m.def.id)}
+                onMouseLeave={() => setFocus(null)}
+                onClick={() => setFocus(f => (f === m.def.id ? null : m.def.id))}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-lg transition"
+                style={{
+                  background: active ? `${ACCENT}14` : 'rgba(255,255,255,0.03)',
+                  border: `1px solid ${active ? `${ACCENT}55` : BORDER_SOFT}`,
+                }}
+              >
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{
+                    background: m.isOpen ? OPEN_C : TEXT_DIM,
+                    boxShadow: m.isOpen ? `0 0 8px ${OPEN_C}` : 'none',
+                  }}
+                />
+                <span className="text-[11px] font-medium whitespace-nowrap" style={{ color: m.isOpen ? TEXT : TEXT_MUTED }}>
+                  {m.def[isRTL ? 'he' : 'en']}
+                </span>
+                <span
+                  className="text-[11px] tabular-nums whitespace-nowrap"
+                  style={{ color: m.isOpen ? TEXT : TEXT_DIM, fontFamily: "'IBM Plex Mono', monospace" }}
+                >
+                  {m.localLabel}
+                </span>
+                <span className="text-[9px] hidden sm:inline" style={{ color: TEXT_DIM }}>
+                  {m.isOpen
+                    ? (isRTL ? `נסגר בעוד ${fmtCountdown(m.countdown, true)}` : `closes ${fmtCountdown(m.countdown, false)}`)
+                    : (isRTL ? `נפתח בעוד ${fmtCountdown(m.countdown, true)}` : `opens ${fmtCountdown(m.countdown, false)}`)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
-              {/* Graticule */}
-              {[-60, -30, 0, 30, 60].map(lat => (
-                <line key={`la${lat}`} x1={0} x2={MAP_W} y1={projY(lat)} y2={projY(lat)} stroke={BORDER_SOFT} strokeWidth={1} />
-              ))}
-              {[-120, -60, 0, 60, 120].map(lon => (
-                <line key={`lo${lon}`} y1={0} y2={MAP_H} x1={projX(lon)} x2={projX(lon)} stroke={BORDER_SOFT} strokeWidth={1} />
-              ))}
-
-              {/* Land */}
-              <path d={WORLD_LAND_PATH} fill={SURFACE} stroke={BORDER} strokeWidth={0.8} />
-
-              {/* Night side */}
-              {nightBands.map((b, i) => (
-                <rect key={i} x={b.x} y={0} width={b.w} height={MAP_H} fill="url(#sc-night)" pointerEvents="none" />
-              ))}
-
-              {/* Market pins */}
-              {markets.map(m => {
-                const x = projX(m.def.lon);
-                const y = projY(m.def.lat);
-                const active = focus === null || focus === m.def.id;
-                const c = m.isOpen ? OPEN_C : TEXT_DIM;
-                return (
-                  <g
-                    key={m.def.id}
-                    style={{ cursor: 'pointer', opacity: active ? 1 : 0.3, transition: 'opacity .2s' }}
-                    onMouseEnter={() => setFocus(m.def.id)}
-                    onMouseLeave={() => setFocus(null)}
-                    onClick={() => setFocus(f => (f === m.def.id ? null : m.def.id))}
-                  >
-                    {m.isOpen && (
-                      <circle cx={x} cy={y} r={22} fill={c} opacity={0.16}>
-                        <animate attributeName="r" values="14;30;14" dur="3s" repeatCount="indefinite" />
-                        <animate attributeName="opacity" values="0.25;0;0.25" dur="3s" repeatCount="indefinite" />
-                      </circle>
-                    )}
-                    <circle cx={x} cy={y} r={9} fill={c} opacity={0.22} />
-                    <circle cx={x} cy={y} r={4.5} fill={c} stroke={PANEL} strokeWidth={1.5} />
-                    <text
-                      x={x}
-                      y={y - 14}
-                      textAnchor="middle"
-                      style={{ fontSize: 17, fill: m.isOpen ? TEXT : TEXT_DIM, fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace" }}
-                    >
-                      {m.def[isRTL ? 'he' : 'en']} {m.localLabel}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
-          </div>
-
-          {/* Status line */}
-          <div className="mt-3 text-[11px] leading-relaxed" style={{ color: TEXT_MUTED }}>
-            {focused ? (
-              <span>
-                <b style={{ color: focused.isOpen ? OPEN_C : TEXT }}>{focused.def[isRTL ? 'he' : 'en']}</b>{' '}
-                {focused.isOpen
-                  ? (isRTL ? `פתוח · נסגר בעוד ${fmtCountdown(focused.countdown, true)}` : `open · closes in ${fmtCountdown(focused.countdown, false)}`)
-                  : (isRTL ? `סגור · נפתח בעוד ${fmtCountdown(focused.countdown, true)}` : `closed · opens in ${fmtCountdown(focused.countdown, false)}`)}
-              </span>
-            ) : openCount > 0 ? (
+        {/* Status + expand toggle */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="text-[10px] leading-tight" style={{ color: TEXT_MUTED }}>
+            {openCount > 0 ? (
               <span>
                 <span style={{ color: OPEN_C, fontWeight: 700 }}>{openCount}</span>{' '}
-                {isRTL ? 'סשנים פעילים כרגע' : `session${openCount > 1 ? 's' : ''} currently active`}
+                {isRTL ? 'סשנים פעילים' : `active session${openCount > 1 ? 's' : ''}`}
               </span>
             ) : nextUp ? (
               <span>
-                {isRTL ? 'כל השווקים סגורים. ' : 'All markets closed. '}
+                {isRTL ? 'הבא: ' : 'Next: '}{' '}
                 <b style={{ color: TEXT }}>{nextUp.def[isRTL ? 'he' : 'en']}</b>{' '}
-                {isRTL ? `נפתח בעוד ${fmtCountdown(nextUp.countdown, true)}` : `opens in ${fmtCountdown(nextUp.countdown, false)}`}
+                {fmtCountdown(nextUp.countdown, isRTL)}
               </span>
             ) : null}
           </div>
-        </div>
-
-        {/* ── Market list ── */}
-        <div
-          className="w-full md:w-[230px] shrink-0 p-4 md:p-4"
-          style={{ background: SURFACE, borderInlineStart: `1px solid ${BORDER_SOFT}` }}
-        >
-          <div className="text-[10px] uppercase tracking-[0.22em] font-semibold mb-3" style={{ color: TEXT_DIM }}>
-            {isRTL ? 'שווקים' : 'Markets'}
-          </div>
-          <div className="flex flex-col gap-1.5">
-            {markets.map(m => {
-              const active = focus === m.def.id;
-              return (
-                <button
-                  key={m.def.id}
-                  type="button"
-                  onMouseEnter={() => setFocus(m.def.id)}
-                  onMouseLeave={() => setFocus(null)}
-                  onClick={() => setFocus(f => (f === m.def.id ? null : m.def.id))}
-                  className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-start transition"
-                  style={{
-                    background: active ? `${ACCENT}14` : 'transparent',
-                    border: `1px solid ${active ? `${ACCENT}55` : 'transparent'}`,
-                  }}
-                >
-                  <span
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{
-                      background: m.isOpen ? OPEN_C : TEXT_DIM,
-                      boxShadow: m.isOpen ? `0 0 8px ${OPEN_C}` : 'none',
-                    }}
-                  />
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-[12px] font-medium truncate" style={{ color: m.isOpen ? TEXT : TEXT_MUTED }}>
-                      {m.def[isRTL ? 'he' : 'en']}
-                    </span>
-                    <span className="block text-[10px]" style={{ color: TEXT_DIM }}>
-                      {m.isOpen
-                        ? (isRTL ? `נסגר בעוד ${fmtCountdown(m.countdown, true)}` : `closes in ${fmtCountdown(m.countdown, false)}`)
-                        : (isRTL ? `נפתח בעוד ${fmtCountdown(m.countdown, true)}` : `opens in ${fmtCountdown(m.countdown, false)}`)}
-                    </span>
-                  </span>
-                  <span
-                    className="text-[12px] tabular-nums"
-                    style={{ color: m.isOpen ? TEXT : TEXT_DIM, fontFamily: "'IBM Plex Mono', monospace" }}
-                  >
-                    {m.localLabel}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          <button
+            type="button"
+            onClick={() => setExpanded(e => !e)}
+            className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition"
+            style={{ color: ACCENT, border: `1px solid ${ACCENT}44`, background: `${ACCENT}0d` }}
+          >
+            {expanded ? (isRTL ? 'צמצם' : 'Collapse') : (isRTL ? 'הרחב' : 'Expand')}
+            <ExpandIcon className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
+
+      {/* ── Expanded map view ── */}
+      {expanded && (
+        <div className="flex flex-col md:flex-row">
+          <div className="relative flex-1 min-w-0 p-4 md:p-5">
+            {/* World map */}
+            <div className="relative" style={{ width: '100%' }}>
+              <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
+                <defs>
+                  <linearGradient id="sc-night" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#00060f" stopOpacity="0" />
+                    <stop offset="28%" stopColor="#00060f" stopOpacity="0.62" />
+                    <stop offset="72%" stopColor="#00060f" stopOpacity="0.62" />
+                    <stop offset="100%" stopColor="#00060f" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+
+                {/* Graticule */}
+                {[-60, -30, 0, 30, 60].map(lat => (
+                  <line key={`la${lat}`} x1={0} x2={MAP_W} y1={projY(lat)} y2={projY(lat)} stroke={BORDER_SOFT} strokeWidth={1} />
+                ))}
+                {[-120, -60, 0, 60, 120].map(lon => (
+                  <line key={`lo${lon}`} y1={0} y2={MAP_H} x1={projX(lon)} x2={projX(lon)} stroke={BORDER_SOFT} strokeWidth={1} />
+                ))}
+
+                {/* Land */}
+                <path d={WORLD_LAND_PATH} fill={SURFACE} stroke={BORDER} strokeWidth={0.8} />
+
+                {/* Night side */}
+                {nightBands.map((b, i) => (
+                  <rect key={i} x={b.x} y={0} width={b.w} height={MAP_H} fill="url(#sc-night)" pointerEvents="none" />
+                ))}
+
+                {/* Market pins */}
+                {markets.map(m => {
+                  const x = projX(m.def.lon);
+                  const y = projY(m.def.lat);
+                  const active = focus === null || focus === m.def.id;
+                  const c = m.isOpen ? OPEN_C : TEXT_DIM;
+                  return (
+                    <g
+                      key={m.def.id}
+                      style={{ cursor: 'pointer', opacity: active ? 1 : 0.3, transition: 'opacity .2s' }}
+                      onMouseEnter={() => setFocus(m.def.id)}
+                      onMouseLeave={() => setFocus(null)}
+                      onClick={() => setFocus(f => (f === m.def.id ? null : m.def.id))}
+                    >
+                      {m.isOpen && (
+                        <circle cx={x} cy={y} r={22} fill={c} opacity={0.16}>
+                          <animate attributeName="r" values="14;30;14" dur="3s" repeatCount="indefinite" />
+                          <animate attributeName="opacity" values="0.25;0;0.25" dur="3s" repeatCount="indefinite" />
+                        </circle>
+                      )}
+                      <circle cx={x} cy={y} r={9} fill={c} opacity={0.22} />
+                      <circle cx={x} cy={y} r={4.5} fill={c} stroke={PANEL} strokeWidth={1.5} />
+                      <text
+                        x={x}
+                        y={y - 14}
+                        textAnchor="middle"
+                        style={{ fontSize: 17, fill: m.isOpen ? TEXT : TEXT_DIM, fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace" }}
+                      >
+                        {m.def[isRTL ? 'he' : 'en']} {m.localLabel}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+
+            {/* Status line */}
+            <div className="mt-3 text-[11px] leading-relaxed" style={{ color: TEXT_MUTED }}>
+              {focused ? (
+                <span>
+                  <b style={{ color: focused.isOpen ? OPEN_C : TEXT }}>{focused.def[isRTL ? 'he' : 'en']}</b>{' '}
+                  {focused.isOpen
+                    ? (isRTL ? `פתוח · נסגר בעוד ${fmtCountdown(focused.countdown, true)}` : `open · closes in ${fmtCountdown(focused.countdown, false)}`)
+                    : (isRTL ? `סגור · נפתח בעוד ${fmtCountdown(focused.countdown, true)}` : `closed · opens in ${fmtCountdown(focused.countdown, false)}`)}
+                </span>
+              ) : openCount > 0 ? (
+                <span>
+                  <span style={{ color: OPEN_C, fontWeight: 700 }}>{openCount}</span>{' '}
+                  {isRTL ? 'סשנים פעילים כרגע' : `session${openCount > 1 ? 's' : ''} currently active`}
+                </span>
+              ) : nextUp ? (
+                <span>
+                  {isRTL ? 'כל השווקים סגורים. ' : 'All markets closed. '}
+                  <b style={{ color: TEXT }}>{nextUp.def[isRTL ? 'he' : 'en']}</b>{' '}
+                  {isRTL ? `נפתח בעוד ${fmtCountdown(nextUp.countdown, true)}` : `opens in ${fmtCountdown(nextUp.countdown, false)}`}
+                </span>
+              ) : null}
+            </div>
+          </div>
+
+          {/* ── Market list ── */}
+          <div
+            className="w-full md:w-[230px] shrink-0 p-4 md:p-4"
+            style={{ background: SURFACE, borderInlineStart: `1px solid ${BORDER_SOFT}` }}
+          >
+            <div className="text-[10px] uppercase tracking-[0.22em] font-semibold mb-3" style={{ color: TEXT_DIM }}>
+              {isRTL ? 'שווקים' : 'Markets'}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {markets.map(m => {
+                const active = focus === m.def.id;
+                return (
+                  <button
+                    key={m.def.id}
+                    type="button"
+                    onMouseEnter={() => setFocus(m.def.id)}
+                    onMouseLeave={() => setFocus(null)}
+                    onClick={() => setFocus(f => (f === m.def.id ? null : m.def.id))}
+                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-start transition"
+                    style={{
+                      background: active ? `${ACCENT}14` : 'transparent',
+                      border: `1px solid ${active ? `${ACCENT}55` : 'transparent'}`,
+                    }}
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{
+                        background: m.isOpen ? OPEN_C : TEXT_DIM,
+                        boxShadow: m.isOpen ? `0 0 8px ${OPEN_C}` : 'none',
+                      }}
+                    />
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-[12px] font-medium truncate" style={{ color: m.isOpen ? TEXT : TEXT_MUTED }}>
+                        {m.def[isRTL ? 'he' : 'en']}
+                      </span>
+                      <span className="block text-[10px]" style={{ color: TEXT_DIM }}>
+                        {m.isOpen
+                          ? (isRTL ? `נסגר בעוד ${fmtCountdown(m.countdown, true)}` : `closes in ${fmtCountdown(m.countdown, false)}`)
+                          : (isRTL ? `נפתח בעוד ${fmtCountdown(m.countdown, true)}` : `opens in ${fmtCountdown(m.countdown, false)}`)}
+                      </span>
+                    </span>
+                    <span
+                      className="text-[12px] tabular-nums"
+                      style={{ color: m.isOpen ? TEXT : TEXT_DIM, fontFamily: "'IBM Plex Mono', monospace" }}
+                    >
+                      {m.localLabel}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
