@@ -56,6 +56,7 @@ const AdvancedPsychologyPage = lazy(() => import('@/components/trading/AdvancedP
 const ControlRoomPage = lazy(() => import('@/components/trading/ControlRoomPage').then(m => ({ default: m.ControlRoomPage })));
 
 const AIInsightsPage = lazy(() => import('@/components/trading/AIInsightsPage').then(m => ({ default: m.AIInsightsPage })));
+const OrcaCoachPage = lazy(() => import('@/components/coach/OrcaCoachPage'));
 const WeeklyReviewPage = lazy(() => import('@/components/trading/WeeklyReviewPage').then(m => ({ default: m.WeeklyReviewPage })));
 const CalendarHubPage = lazy(() => import('@/components/trading/CalendarHubPage').then(m => ({ default: m.CalendarHubPage })));
 const EconomicCalendarPage = lazy(() => import('@/components/economic/EconomicCalendarPage').then(m => ({ default: m.EconomicCalendarPage })));
