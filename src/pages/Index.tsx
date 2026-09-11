@@ -1706,6 +1706,7 @@ const Index = () => {
           privacyMode={settings.privacyMode}
           onExplainClick={handleExplainClick}
           registryCharts={analyticsCharts}
+          perfChannel={perfChannel === 'all' ? undefined : perfChannel}
         />
       </LazyShell>
     );
@@ -2051,6 +2052,7 @@ const Index = () => {
             const activeColor = isWeekly ? '#FFD700' : infoColor(T);
             const showBadge = isWeekly && showWeeklyReminder;
             const isDash = item.id === 'dashboard';
+            const isPerf = item.id === 'analytics';
             const groupChanged = item.group && item.group !== nav[idx - 1]?.group;
             return (
             <React.Fragment key={item.id}>
