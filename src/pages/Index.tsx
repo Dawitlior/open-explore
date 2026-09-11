@@ -2071,7 +2071,7 @@ const Index = () => {
                 })}
               </div>
             )}
-            </>
+            </React.Fragment>
             );
           })}
           {bugBoardAllowed && (
