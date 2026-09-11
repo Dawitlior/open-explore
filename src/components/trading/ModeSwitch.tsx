@@ -27,14 +27,11 @@ type TierMeta = {
 };
 
 const TIER_OPTIONS: TierMeta[] = [
-  { id: 'standard', label: 'STANDARD', labelHe: 'סטנדרט', color: (T) => infoColor(T), glow: 'rgba(59,130,246,0.55)', icon: Zap,
-    desc: 'Core journal, risk limits, calendar, and baseline analytics', descHe: 'יומן, מגבלות סיכון, קלנדר ואנליטיקה בסיסית',
+  { id: 'free', label: 'FREE', labelHe: 'חינם', color: (T) => infoColor(T), glow: 'rgba(34,211,238,0.6)', icon: Zap,
+    desc: 'Journal, risk limits, calendar and the Big Picture analytics channel', descHe: 'יומן, מגבלות סיכון, קלנדר וערוץ "התמונה הגדולה"',
     tagline: 'The disciplined baseline', taglineHe: 'הבסיס למסחר ממושמע' },
-  { id: 'advanced', label: 'ADVANCED', labelHe: 'מתקדם', color: (T) => infoColor(T), glow: 'rgba(34,211,238,0.6)', icon: Sparkles,
-    desc: 'Professional analytics, R/$ chart controls, and deeper diagnostics', descHe: 'אנליטיקה מקצועית, בקרות R/$ ודיאגנוסטיקה עמוקה',
-    tagline: 'Pro-grade analytics', taglineHe: 'אנליטיקה ברמת פרו' },
-  { id: 'ultimate', label: 'ULTIMATE', labelHe: 'אולטימייט', color: (T) => neutralRamp(T, 3)[1], glow: 'rgba(168,85,247,0.6)', icon: Crown,
-    desc: 'Full quant engine, Kelly, MAR, autocorrelation, and drawdown structure', descHe: 'מנוע כמותי מלא, Kelly, MAR, אוטוקורלציה ומבנה Drawdown',
+  { id: 'pro', label: 'PRO', labelHe: 'פרו', color: (T) => neutralRamp(T, 3)[1], glow: 'rgba(168,85,247,0.6)', icon: Crown,
+    desc: 'Breakdown & Quant Lab channels, Kelly, MAR, autocorrelation and drawdown structure', descHe: 'ערוצי פילוח ומעבדת קוונט, Kelly, MAR, אוטוקורלציה ומבנה Drawdown',
     tagline: 'Full quant engine', taglineHe: 'מנוע כמותי מלא' },
 ];
 

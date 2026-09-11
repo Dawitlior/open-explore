@@ -40,7 +40,8 @@ Deno.serve(withCors(async (req) => {
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     const customer = customers.data[0];
 
-    let tier: "standard" | "advanced" | "ultimate" = "standard";
+    // DB enum keeps the legacy values; the app only knows free | pro.
+    let dbTier: "standard" | "advanced" | "ultimate" = "standard";
     let status: "active" | "canceled" = "canceled";
     let periodEnd: string | null = null;
     let subscriptionId: string | null = null;
@@ -52,7 +53,7 @@ Deno.serve(withCors(async (req) => {
       if (sub) {
         const item = sub.items.data[0];
         const productId = typeof item.price.product === "string" ? item.price.product : item.price.product.id;
-        tier = PRODUCT_TIER[productId] ?? "standard";
+        dbTier = PRODUCT_TIER[productId] ?? "standard";
         status = "active";
         subscriptionId = sub.id;
         cancelAtPeriodEnd = Boolean(sub.cancel_at_period_end);
@@ -62,10 +63,12 @@ Deno.serve(withCors(async (req) => {
       }
     }
 
-    if (tier !== "standard" || customer) {
+    const appTier: "free" | "pro" = dbTier === "standard" ? "free" : "pro";
+
+    if (dbTier !== "standard" || customer) {
       await supabase.from("subscriptions").upsert({
         user_id: user.id,
-        tier,
+        tier: dbTier,
         status,
         provider: "stripe",
         provider_customer_id: customer?.id ?? null,
@@ -78,7 +81,7 @@ Deno.serve(withCors(async (req) => {
 
     return json({
       subscribed: status === "active",
-      tier,
+      tier: appTier,
       current_period_end: periodEnd,
       cancel_at_period_end: cancelAtPeriodEnd,
     });

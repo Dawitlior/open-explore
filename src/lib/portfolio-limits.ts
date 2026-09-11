@@ -1,10 +1,9 @@
 /**
  * Stage 5 — Multi-Portfolio plan limits & read-only lock.
  *
- * Plan caps (master plan §9, user decision):
- *   standard  → 2 portfolios
- *   advanced  → 3 portfolios
- *   ultimate  → 10 portfolios
+ * Plan caps:
+ *   free → 2 portfolios
+ *   pro  → 10 portfolios
  *
  * Downgrade behavior (user decision): existing portfolios are NEVER deleted.
  * When a user has more portfolios than their current tier allows, the
@@ -23,13 +22,12 @@ import type { AppTier } from '@/hooks/use-entitlement';
 import type { Portfolio } from '@/hooks/use-portfolios';
 
 export const PORTFOLIO_LIMITS: Record<AppTier, number> = {
-  standard: 2,
-  advanced: 3,
-  ultimate: 10,
+  free: 2,
+  pro: 10,
 };
 
 export function getPortfolioLimit(tier: AppTier): number {
-  return PORTFOLIO_LIMITS[tier] ?? PORTFOLIO_LIMITS.standard;
+  return PORTFOLIO_LIMITS[tier] ?? PORTFOLIO_LIMITS.free;
 }
 
 /**

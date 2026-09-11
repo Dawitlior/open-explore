@@ -61,6 +61,44 @@ interface ReviewDashboardProps {
 
 const PV = ({ children }: { children: React.ReactNode }) => <>{children}</>;
 
+/** Advanced Analysis sub-channels. Big Picture is free; the rest are Pro. */
+type ChannelId = 'overview' | 'breakdown' | 'quant';
+const CHANNELS: { id: ChannelId; he: string; en: string; pro: boolean }[] = [
+  { id: 'overview',  he: 'התמונה הגדולה', en: 'Big Picture',            pro: false },
+  { id: 'breakdown', he: 'פילוח וחלוקה',  en: 'Breakdown & Distribution', pro: true },
+  { id: 'quant',     he: 'מעבדת קוונט',   en: 'Quant Lab',              pro: true },
+];
+
+const LOCKED_COPY: Record<'breakdown' | 'quant', { he: string; en: string }> = {
+  breakdown: {
+    he: 'פילוח לפי כיוון, חודשים ורבעונים — כולל מטריצת שנים מלאה.',
+    en: 'Direction, monthly and quarterly breakdowns — including the full year matrix.',
+  },
+  quant: {
+    he: 'חלונות הזדמנות, תשואה מול זמן החזקה וניתוח רבעוני מרובה תצוגות.',
+    en: 'Opportunity windows, return vs holding time and multi-view quarterly analysis.',
+  },
+};
+
+const LockedChannel = ({ T, isRTL, which }: { T: TradingTheme; isRTL: boolean; which: 'breakdown' | 'quant' }) => (
+  <div className="dash-channel-locked" style={{ borderColor: T.border.medium, background: T.bg.tertiary }}>
+    <div style={{ fontSize: 26 }} aria-hidden>🔒</div>
+    <div style={{ fontSize: 14, fontWeight: 800, color: T.text.primary }}>
+      {isRTL ? 'הערוץ הזה פתוח בתוכנית פרו' : 'This channel is part of Orca Pro'}
+    </div>
+    <p style={{ fontSize: 12, color: T.text.secondary, maxWidth: 460, margin: 0 }}>
+      {LOCKED_COPY[which][isRTL ? 'he' : 'en']}
+    </p>
+    <button
+      type="button"
+      className="dash-channel-cta"
+      onClick={() => window.dispatchEvent(new CustomEvent('orca:open-upgrade', { detail: { required: 'pro' } }))}
+    >
+      {isRTL ? 'שדרוג לפרו' : 'Upgrade to Pro'}
+    </button>
+  </div>
+);
+
 const parseDateMs = (raw: string) => new Date(String(raw || '').replace(' ', 'T')).getTime() || 0;
 const fmtDashValue = (v: number, isMoney: boolean) => {
   if (!Number.isFinite(v)) return '—';
@@ -101,6 +139,8 @@ export const ReviewDashboard = ({
   const { displayMode } = useDisplayMode();
   const isMoney = displayMode === 'MONEY';
   const [shareOpen, setShareOpen] = useState(false);
+  const [channel, setChannel] = useState<ChannelId>('overview');
+  const isPro = isUltimateTier;
   const equityAdvanced = useMemo(() => {
     const sorted = [...trades].sort((a, b) => parseDateMs(a.date) - parseDateMs(b.date));
     let equity = 0;
@@ -241,7 +281,30 @@ export const ReviewDashboard = ({
 
         {advancedOpen && (
           <div className="dash-advanced-body">
-            {/* Equity + Distribution */}
+            {/* Channel tabs */}
+            <div className="dash-channel-tabs" role="tablist">
+              {CHANNELS.map(ch => {
+                const locked = ch.pro && !isPro;
+                const active = channel === ch.id;
+                return (
+                  <button
+                    key={ch.id}
+                    role="tab"
+                    aria-selected={active}
+                    className="dash-channel-tab"
+                    data-active={active}
+                    data-locked={locked}
+                    onClick={() => setChannel(ch.id)}
+                  >
+                    {locked && <span aria-hidden style={{ fontSize: 11 }}>🔒</span>}
+                    <span>{isRTL ? ch.he : ch.en}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {channel === 'overview' && (
+              <>
             <div className="dash-charts-2">
               {isChartVisible('equityCurve') && (
                 <div className="dash-chart-card">
@@ -319,9 +382,9 @@ export const ReviewDashboard = ({
 
             </div>
 
-            {/* Radar + Coin + Direction */}
+            {/* Radar + Coin */}
             <div className="dash-charts-3">
-              {isAdvancedTier && isChartVisible('radarScore') && (
+              {isChartVisible('radarScore') && (
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ציון Orca — פירוט' : 'Orca Score — Breakdown'} explanation={EXPLANATIONS.radarScore} chartId="radarScore" onRemove={handleHideChart}>
                     <div className="dash-chart-h-sm dash-chart-fill">
@@ -337,7 +400,7 @@ export const ReviewDashboard = ({
                   </ChartWrapper>
                 </div>
               )}
-              {isAdvancedTier && isChartVisible('coinPerformance') && (() => {
+              {isChartVisible('coinPerformance') && (() => {
                 const coinKey = (c: any) => (isMoney ? c.pnl : (typeof c.totalR === 'number' ? c.totalR : (Number(c.avgR) || 0) * (Number(c.trades) || 0)));
                 const sorted = [...(stats.coinPerf || [])].sort((a:any,b:any)=> coinKey(b) - coinKey(a));
                 const winnerLabel = isRTL ? 'מנצח גדול' : 'Top Winner';
@@ -388,7 +451,32 @@ export const ReviewDashboard = ({
                   </div>
                 );
               })()}
-              {isUltimateTier && (
+            </div>
+
+            <AdaptiveQuickStats
+              T={T}
+              trades={trades}
+              stats={stats}
+              isRTL={isRTL}
+              privacyMode={privacyMode}
+              streakDisplay={`${stats.currentStreak} ${stats.streakType === 'Loss' ? '🔴' : '🟢'}`}
+              streakColor={T.text.primary}
+              labels={{
+                title: isRTL ? 'סטטיסטיקות מהירות' : 'Quick Stats',
+                avgWin: t.avgWin,
+                avgLoss: t.avgLoss,
+                bestTrade: t.bestTrade,
+                worstTrade: t.worstTrade,
+                profitFactor: t.profitFactor,
+                currentStreak: t.currentStreak,
+              }}
+            />
+              </>
+            )}
+
+            {channel === 'breakdown' && (isPro ? (
+              <>
+                <div className="dash-charts-3">
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.directionAnalysis} explanation={EXPLANATIONS.directionAnalysis}>
                     <div className="dash-chart-h-sm dash-chart-fill">
@@ -419,31 +507,8 @@ export const ReviewDashboard = ({
 
                   </ChartWrapper>
                 </div>
-              )}
-            </div>
-
-            {/* Quick Stats — adaptive (R / $) */}
-            <AdaptiveQuickStats
-              T={T}
-              trades={trades}
-              stats={stats}
-              isRTL={isRTL}
-              privacyMode={privacyMode}
-              streakDisplay={`${stats.currentStreak} ${stats.streakType === 'Loss' ? '🔴' : '🟢'}`}
-              streakColor={T.text.primary}
-              labels={{
-                title: isRTL ? 'סטטיסטיקות מהירות' : 'Quick Stats',
-                avgWin: t.avgWin,
-                avgLoss: t.avgLoss,
-                bestTrade: t.bestTrade,
-                worstTrade: t.worstTrade,
-                profitFactor: t.profitFactor,
-                currentStreak: t.currentStreak,
-              }}
-            />
-
-            {isAdvancedTier && (
-              <div className="dash-charts-alpha">
+                </div>
+                <div className="dash-charts-alpha">
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'רבעונים — ניצחונות / הפסדים מול שנים' : 'Quarterly Performance — Wins/Losses YoY'} explanation={EXPLANATIONS.monthlyPerformance} unit={isMoney ? '$' : 'R'}>
                     <LazyChart><QuarterlyWinsLossesYoYChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
@@ -456,42 +521,8 @@ export const ReviewDashboard = ({
                     </div>
                   </ChartWrapper>
                 </div>
-              </div>
-            )}
-
-            {/* Alpha additions */}
-            {isAlpha && (
-              <div className="dash-charts-alpha">
-                <div className="dash-chart-card">
-                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'חלונות הזדמנות — יום ושעה' : 'Opportunity Windows — Day & Hour'} explanation={EXPLANATIONS.riskAllocation}>
-                    <LazyChart><BestWorstWindowChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
-                  </ChartWrapper>
                 </div>
-
-                <div className="dash-chart-card">
-                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים רבעוניים — Multi-View' : 'Quarterly Performance — Multi-View'} explanation={EXPLANATIONS.monthlyPerformance} unit="R">
-                    <LazyChart><QuarterlyPerformanceCard T={T} trades={trades} isRTL={isRTL} /></LazyChart>
-                  </ChartWrapper>
-                </div>
-
-                <div className="dash-chart-card">
-                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ניצחונות לפי חודש — לונג / שורט' : 'Wins by Month — Long / Short'} explanation={EXPLANATIONS.monthlyPerformance}>
-                    <LazyChart><WinsByMonthChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
-                  </ChartWrapper>
-                </div>
-
-                <div className="dash-chart-card">
-                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ניצחונות לפי רבעון — לונג / שורט' : 'Wins by Quarter — Long / Short'} explanation={EXPLANATIONS.monthlyPerformance}>
-                    <LazyChart><WinsByQuarterChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
-                  </ChartWrapper>
-                </div>
-
-                <div className="dash-chart-card">
-                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'תשואה ממוצעת לשעת החזקה' : 'Return / Time Held — avg'} explanation={EXPLANATIONS.expectancy}>
-                    <LazyChart><ReturnPerTimeChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
-                  </ChartWrapper>
-                </div>
-
+                <div className="dash-charts-alpha">
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים חודשיים (R)' : 'Monthly Performance (R)'} explanation={EXPLANATIONS.monthlyPerformance} unit="R">
                     {/* Compact chip grid — 2 cols mobile, 3-4 desktop, no vertical scroll.
@@ -543,9 +574,39 @@ export const ReviewDashboard = ({
                     </div>
                   </ChartWrapper>
                 </div>
+                </div>
+              </>
+            ) : <LockedChannel T={T} isRTL={isRTL} which="breakdown" />)}
 
+            {channel === 'quant' && (isPro ? (
+              <div className="dash-charts-alpha">
+                <div className="dash-chart-card">
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'חלונות הזדמנות — יום ושעה' : 'Opportunity Windows — Day & Hour'} explanation={EXPLANATIONS.riskAllocation}>
+                    <LazyChart><BestWorstWindowChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
+                  </ChartWrapper>
+                </div>
+                <div className="dash-chart-card">
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים רבעוניים — Multi-View' : 'Quarterly Performance — Multi-View'} explanation={EXPLANATIONS.monthlyPerformance} unit="R">
+                    <LazyChart><QuarterlyPerformanceCard T={T} trades={trades} isRTL={isRTL} /></LazyChart>
+                  </ChartWrapper>
+                </div>
+                <div className="dash-chart-card">
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ניצחונות לפי חודש — לונג / שורט' : 'Wins by Month — Long / Short'} explanation={EXPLANATIONS.monthlyPerformance}>
+                    <LazyChart><WinsByMonthChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
+                  </ChartWrapper>
+                </div>
+                <div className="dash-chart-card">
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ניצחונות לפי רבעון — לונג / שורט' : 'Wins by Quarter — Long / Short'} explanation={EXPLANATIONS.monthlyPerformance}>
+                    <LazyChart><WinsByQuarterChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
+                  </ChartWrapper>
+                </div>
+                <div className="dash-chart-card">
+                  <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'תשואה ממוצעת לשעת החזקה' : 'Return / Time Held — avg'} explanation={EXPLANATIONS.expectancy}>
+                    <LazyChart><ReturnPerTimeChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
+                  </ChartWrapper>
+                </div>
               </div>
-            )}
+            ) : <LockedChannel T={T} isRTL={isRTL} which="quant" />)}
           </div>
         )}
       </div>

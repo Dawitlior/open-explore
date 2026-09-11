@@ -14,12 +14,12 @@
  */
 import { ReactNode } from 'react';
 import { Lock, Sparkles } from 'lucide-react';
-import { useEntitlement, type AppTier } from '@/hooks/use-entitlement';
+import { useEntitlement, normalizeRequirement, type AppTier, type LegacyTier } from '@/hooks/use-entitlement';
 import { useLang } from '@/hooks/use-lang';
 import { ENFORCE_TIER_GATES } from '@/lib/billing-flags';
 
 interface TierGateProps {
-  required: AppTier;
+  required: AppTier | LegacyTier;
   children: ReactNode;
   label?: string;
   /** When true, render nothing in hard mode instead of the upsell card */
@@ -27,29 +27,28 @@ interface TierGateProps {
 }
 
 const TIER_LABEL: Record<AppTier, { he: string; en: string }> = {
-  standard: { he: 'סטנדרט', en: 'Standard' },
-  advanced: { he: 'מתקדם', en: 'Advanced' },
-  ultimate: { he: 'אולטימייט', en: 'Ultimate' },
+  free: { he: 'חינם', en: 'Free' },
+  pro: { he: 'פרו', en: 'Pro' },
 };
 
 const TIER_BADGE_COLOR: Record<AppTier, string> = {
-  standard: 'bg-muted/80 text-muted-foreground border-border',
-  advanced: 'bg-primary/15 text-primary border-primary/30',
-  ultimate: 'bg-accent/15 text-accent border-accent/30',
+  free: 'bg-muted/80 text-muted-foreground border-border',
+  pro: 'bg-accent/15 text-accent border-accent/30',
 };
 
 export function TierGate({ required, children, label, silent }: TierGateProps) {
   const { allows, loading } = useEntitlement();
   const { lang } = useLang();
 
-  // While entitlement resolves, render nothing for any non-standard gate.
+  // While entitlement resolves, render nothing for Pro gates.
   // This prevents the "all charts flash then collapse" flicker on tier-aware
-  // pages. Standard charts always render immediately.
+  // pages. Free charts always render immediately.
+  const gate = normalizeRequirement(required);
   if (loading) {
-    if (required === 'standard') return <>{children}</>;
+    if (gate === 'free') return <>{children}</>;
     return null;
   }
-  const hasAccess = allows(required) || required === 'standard';
+  const hasAccess = gate === 'free' || allows(gate);
 
   // SOFT MODE — hide locked charts entirely so each tier shows a
   // visibly distinct deck. Users can switch tiers via ModeSwitch to

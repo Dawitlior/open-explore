@@ -132,14 +132,12 @@ const AdvancedRiskPage_Impl = ({ T, isRTL, isAlpha, operatingMode = 'live', cust
     });
   }, [trades]);
 
-  // SaaS tier composition: Standard / Advanced / Ultimate.
-  const isAdvancedPlan = tierAllows('advanced');
-  const isUltimatePlan = tierAllows('ultimate');
-  const tierMeta = appTier === 'ultimate'
-    ? { he: 'אולטימייט', en: 'Ultimate', sub: { he: 'מנוע סיכון כמותי מלא', en: 'Full quantitative risk engine' }, color: neutralRamp(T, 3)[1] }
-    : appTier === 'advanced'
-      ? { he: 'מתקדם', en: 'Advanced', sub: { he: 'דיאגנוסטיקה מקצועית ואנומליות סיכון', en: 'Professional diagnostics and risk anomalies' }, color: infoColor(T) }
-      : { he: 'סטנדרט', en: 'Standard', sub: { he: 'מגבלות סיכון, Drawdown והקצאה בסיסית', en: 'Risk limits, drawdown, and baseline allocation' }, color: infoColor(T) };
+  // SaaS plan composition: Free / Pro.
+  const isAdvancedPlan = true; // ex-Advanced content is now part of Free
+  const isUltimatePlan = tierAllows('pro');
+  const tierMeta = appTier === 'pro'
+    ? { he: 'פרו', en: 'Pro', sub: { he: 'מנוע סיכון כמותי מלא', en: 'Full quantitative risk engine' }, color: neutralRamp(T, 3)[1] }
+    : { he: 'חינם', en: 'Free', sub: { he: 'דיאגנוסטיקה מקצועית ואנומליות סיכון', en: 'Professional diagnostics and risk anomalies' }, color: infoColor(T) };
 
   // What each SaaS tier shows on the Risk page.
   // Standard ships a minimal deck: limit bars + KPI strip + drawdown card only.

@@ -8,7 +8,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
-import type { AppTier } from '@/hooks/use-entitlement';
+import { normalizeEntitlement, type AppTier } from '@/hooks/use-entitlement';
 
 export interface SubscriptionState {
   subscribed: boolean;
@@ -17,14 +17,14 @@ export interface SubscriptionState {
   cancelAtPeriodEnd: boolean;
   loading: boolean;
   refresh: () => Promise<void>;
-  startCheckout: (tier: Exclude<AppTier, 'standard'>) => Promise<void>;
+  startCheckout: (tier: Exclude<AppTier, 'free'>) => Promise<void>;
   openPortal: () => Promise<void>;
 }
 
 export function useSubscription(): SubscriptionState {
   const { user } = useAuth();
   const [subscribed, setSubscribed] = useState(false);
-  const [tier, setTier] = useState<AppTier>('standard');
+  const [tier, setTier] = useState<AppTier>('free');
   const [currentPeriodEnd, setCurrentPeriodEnd] = useState<string | null>(null);
   const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -32,7 +32,7 @@ export function useSubscription(): SubscriptionState {
   const refresh = useCallback(async () => {
     if (!user?.id) {
       setSubscribed(false);
-      setTier('standard');
+      setTier('free');
       return;
     }
     setLoading(true);
@@ -40,7 +40,7 @@ export function useSubscription(): SubscriptionState {
       const { data, error } = await supabase.functions.invoke('check-subscription');
       if (!error && data) {
         setSubscribed(Boolean(data.subscribed));
-        setTier((data.tier as AppTier) ?? 'standard');
+        setTier(normalizeEntitlement(data.tier as string));
         setCurrentPeriodEnd(data.current_period_end ?? null);
         setCancelAtPeriodEnd(Boolean(data.cancel_at_period_end));
       }
@@ -57,7 +57,7 @@ export function useSubscription(): SubscriptionState {
     return () => window.removeEventListener('focus', onFocus);
   }, [refresh]);
 
-  const startCheckout = useCallback(async (target: Exclude<AppTier, 'standard'>) => {
+  const startCheckout = useCallback(async (target: Exclude<AppTier, 'free'>) => {
     const { data, error } = await supabase.functions.invoke('create-checkout', {
       body: { tier: target },
     });
