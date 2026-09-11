@@ -220,6 +220,11 @@ const Index = () => {
   const [dashSubOpen, setDashSubOpen] = useState(false);
   const [perfChannel, setPerfChannel] = useState<PerfChannelId | null>(null);
   const [perfSubOpen, setPerfSubOpen] = useState(false);
+  // Control Room sub-channels (Risk / Mind) and Intelligence sub-channels.
+  const [crChannel, setCrChannel] = useState<CrChannelId>('risk');
+  const [crSubOpen, setCrSubOpen] = useState(false);
+  const [aiChannel, setAiChannel] = useState<AiChannelId>('insights');
+  const [aiSubOpen, setAiSubOpen] = useState(false);
   // Collapsible "Different Worlds" group (Trader Journey / Backtest / Trader Mind).
   const [worldsOpen, setWorldsOpen] = useState(false);
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
