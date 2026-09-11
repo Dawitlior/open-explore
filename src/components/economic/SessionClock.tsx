@@ -188,9 +188,11 @@ export default function SessionClock({ T }: Props) {
           <div className="relative mt-3" style={{ width: '100%' }}>
             <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
               <defs>
-                <linearGradient id="sc-night" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#000814" stopOpacity="0.55" />
-                  <stop offset="100%" stopColor="#000814" stopOpacity="0.55" />
+                <linearGradient id="sc-night" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#00060f" stopOpacity="0" />
+                  <stop offset="28%" stopColor="#00060f" stopOpacity="0.62" />
+                  <stop offset="72%" stopColor="#00060f" stopOpacity="0.62" />
+                  <stop offset="100%" stopColor="#00060f" stopOpacity="0" />
                 </linearGradient>
               </defs>
 
@@ -301,7 +303,6 @@ export default function SessionClock({ T }: Props) {
                       boxShadow: m.isOpen ? `0 0 8px ${OPEN_C}` : 'none',
                     }}
                   />
-                  <span className="text-[16px] leading-none">{m.def.flag}</span>
                   <span className="flex-1 min-w-0">
                     <span className="block text-[12px] font-medium truncate" style={{ color: m.isOpen ? TEXT : TEXT_MUTED }}>
                       {m.def[isRTL ? 'he' : 'en']}
