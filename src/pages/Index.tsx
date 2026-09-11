@@ -2030,7 +2030,7 @@ const Index = () => {
         background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
         borderInlineEnd: `1px solid ${T.border.subtle}`,
         display: 'flex', flexDirection: 'column',
-        transition: 'width 0.18s cubic-bezier(0.4,0,0.2,1)',
+        transition: 'width 0.32s cubic-bezier(0.22,1,0.36,1)',
         overflow: 'hidden', zIndex: 50,
         willChange: 'width',
       }}>
