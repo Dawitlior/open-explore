@@ -61,24 +61,7 @@ interface ReviewDashboardProps {
 
 const PV = ({ children }: { children: React.ReactNode }) => <>{children}</>;
 
-/** Advanced Analysis sub-channels. Big Picture is free; the rest are Pro. */
-type ChannelId = 'overview' | 'breakdown' | 'quant';
-const CHANNELS: { id: ChannelId; he: string; en: string; pro: boolean }[] = [
-  { id: 'overview',  he: 'התמונה הגדולה', en: 'Big Picture',            pro: false },
-  { id: 'breakdown', he: 'פילוח וחלוקה',  en: 'Breakdown & Distribution', pro: true },
-  { id: 'quant',     he: 'מעבדת קוונט',   en: 'Quant Lab',              pro: true },
-];
-
-const LOCKED_COPY: Record<'breakdown' | 'quant', { he: string; en: string }> = {
-  breakdown: {
-    he: 'פילוח לפי כיוון, חודשים ורבעונים — כולל מטריצת שנים מלאה.',
-    en: 'Direction, monthly and quarterly breakdowns — including the full year matrix.',
-  },
-  quant: {
-    he: 'חלונות הזדמנות, תשואה מול זמן החזקה וניתוח רבעוני מרובה תצוגות.',
-    en: 'Opportunity windows, return vs holding time and multi-view quarterly analysis.',
-  },
-};
+/** Advanced Analysis sub-channels live in `@/lib/dashboard-channels`. */
 
 const LockedChannel = ({ T, isRTL, which }: { T: TradingTheme; isRTL: boolean; which: 'breakdown' | 'quant' }) => (
   <div className="dash-channel-locked" style={{ borderColor: T.border.medium, background: T.bg.tertiary }}>
