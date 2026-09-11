@@ -128,7 +128,7 @@ export const ReviewDashboard = ({
   const [shareOpen, setShareOpen] = useState(false);
   // Channel is driven by the sidebar (Dashboard → sub-items). When the host
   // does not control it we fall back to local state + inline tabs.
-  const [localChannel, setLocalChannel] = useState<ChannelId>('overview');
+  const [localChannel, setLocalChannel] = useState<ChannelId>('home');
   const controlled = typeof channelProp === 'string';
   const channel = controlled ? (channelProp as ChannelId) : localChannel;
   const setChannel = (id: ChannelId) => (controlled ? onChannelChange?.(id) : setLocalChannel(id));
