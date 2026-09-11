@@ -30,12 +30,15 @@ interface Props {
   T: TradingTheme;
   isRTL: boolean;
   trades: Trade[];
+  /** When set, only the widgets of that performance channel render. */
+  only?: 'core' | 'risk' | 'dynamics' | 'temporal';
 }
 
 const valueOf = (t: Trade, unit: Unit) =>
   unit === 'USD' ? (Number(t.pnl) || 0) : (Number(t.returnR) || 0);
 
-export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
+export default function DashboardAdvancedLab({ T, isRTL, trades, only }: Props) {
+  const show = (c: 'core' | 'risk' | 'dynamics' | 'temporal') => !only || only === c;
   // Follow the global Dual-Currency Engine — no per-chart override.
   const { displayMode } = useDisplayMode();
   const unit: Unit = displayMode === 'MONEY' ? 'USD' : 'R';
@@ -350,6 +353,7 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
 
 
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : `repeat(auto-fit, minmax(min(100%, ${minCard}px), 1fr))`, gap: isMobile ? 10 : 14 }}>
+        {show('risk') && (<>
         {/* 1 · Monte Carlo */}
         <div style={cardStyle}>
           <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.mc}</div>
@@ -368,7 +372,9 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
             </LineChart>
           </ResponsiveContainer>
         </div>
+        </>)}
 
+        {show('core') && (<>
         {/* 2 · Monthly Box Plot */}
         <div style={cardStyle}>
           <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.box}</div>
@@ -394,7 +400,9 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
             </ResponsiveContainer>
           )}
         </div>
+        </>)}
 
+        {show('temporal') && (<>
         {/* 3 · Hour-of-Day Performance (24h bars) */}
         <div style={cardStyle}>
           <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.hour}</div>
@@ -419,8 +427,10 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
             </ResponsiveContainer>
           )}
         </div>
+        </>)}
 
 
+        {show('risk') && (<>
         {/* 4 · NEW Win Probability Cone */}
         <div style={cardStyle}>
           <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.prob}</div>
@@ -445,7 +455,9 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
             </ComposedChart>
           </ResponsiveContainer>
         </div>
+        </>)}
 
+        {show('dynamics') && (<>
         {/* 5 · NEW Risk-Reward Frontier */}
         <div style={cardStyle}>
           <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.front}</div>
@@ -470,7 +482,9 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
             </ResponsiveContainer>
           )}
         </div>
+        </>)}
 
+        {show('temporal') && (<>
         {/* 6 · NEW Trade Velocity Heatmap */}
         <div style={cardStyle}>
           <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.vel}</div>
@@ -508,7 +522,9 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
             </div>
           )}
         </div>
+        </>)}
 
+        {show('risk') && (<>
         {/* 7 · NEW Kelly-Optimal Growth Curve */}
         <div style={cardStyle}>
           <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.kelly}</div>
@@ -548,7 +564,9 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
             </>
           )}
         </div>
+        </>)}
 
+        {show('dynamics') && (<>
         {/* 8 · NEW Streak Anatomy */}
         <div style={cardStyle}>
           <div style={{ fontSize: 11, color: muted, marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }}>{L.streak}</div>
@@ -569,9 +587,11 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
             </ResponsiveContainer>
           )}
         </div>
+        </>)}
       </div>
 
       {/* NEW · Performance Regime Matrix (smart table) */}
+      {show('temporal') && (
       <div style={cardStyle}>
         <div style={{
           display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
@@ -678,6 +698,7 @@ export default function DashboardAdvancedLab({ T, isRTL, trades }: Props) {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
