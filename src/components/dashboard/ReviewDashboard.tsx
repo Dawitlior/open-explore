@@ -186,6 +186,7 @@ export const ReviewDashboard = ({
           : 'The dashboard is built in 3 layers: Trading Health (KPIs), System Health (Orca Score, Regime Fit, Discipline), and Advanced Analysis (collapsible).'}
       />
 
+      {channel === 'home' && (<>
       {/* ═══ LIVE — OPEN POSITIONS (above Trading Health) ═══ */}
       {onAddTrade && (
         <OpenPositionsPanel T={T} isRTL={isRTL} onAddTrade={onAddTrade} refreshKey={trades.length} />
