@@ -154,7 +154,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
           <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: T.text.secondary }}>
             {isRTL ? 'קונסולת אימון' : 'Coaching console'}
           </span>
-          {portfolios?.length > 1 && setActivePortfolioId && (
+          {portfolios.length > 1 && (
             <select
               value={activePortfolioId ?? ''}
               onChange={e => setActivePortfolioId(e.target.value)}
@@ -211,7 +211,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
           </div>
         )}
 
-        {error && <div style={{ padding: '0 14px 10px', color: T.accent?.red ?? '#ef4444', fontSize: 12 }}>{error}</div>}
+        {error && <div style={{ padding: '0 14px 10px', color: T.accent.red, fontSize: 12 }}>{error}</div>}
 
         {/* composer / paywall */}
         {paywall ? (
