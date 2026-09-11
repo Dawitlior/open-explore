@@ -491,6 +491,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
 
       {/* ═══ HERO KPI GRID — 8 fiat-based tiles (R-only KPIs removed) ═══ */}
+      {isMainView && (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 10, marginBottom: 16 }}>
         {[
           { label: isMoney ? t('ניצחון ממוצע ($)','Avg Win ($)') : t('ניצחון ממוצע (R)','Avg Win (R)'),
@@ -527,10 +528,12 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
           </motion.div>
         ))}
       </div>
+      )}
 
 
 
       {/* ═══ KEY OBSERVATIONS — promoted to top for instant signal ═══ */}
+      {isMainView && (
       <GlassCard T={T} glow={`${infoColor(T)}22`} style={{ marginBottom: 16, borderInlineStart: `3px solid ${infoColor(T)}` }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
           <div style={{ fontSize: 10, color: infoColor(T), textTransform: 'uppercase', letterSpacing: '0.22em', fontWeight: 800 }}>● {t('תקציר','Snapshot')}</div>
@@ -552,16 +555,17 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
           ))}
         </div>
       </GlassCard>
+      )}
 
       {/* ═══ TIME-SERIES PERFORMANCE DISTRIBUTION MATRIX — Advanced only ═══ */}
-      {showPro && !showMax && registryAllows('tsPerfMatrix') && (
+      {isMainView && showPro && !showMax && registryAllows('tsPerfMatrix') && (
         <DeferMount minHeight={360}>
           <Suspense fallback={null}><TimeSeriesPerfMatrix T={T} trades={trades} /></Suspense>
         </DeferMount>
       )}
 
       {/* ═══ EQUITY + DRAWDOWN OVERLAY ═══ */}
-      {showCore && registryAllows('equityCurve') && <GlassCard T={T} style={{ marginBottom: 16 }}>
+      {isMainView && showCore && registryAllows('equityCurve') && <GlassCard T={T} style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('עקומת הון מול נסיגה','Equity vs Drawdown')}</div>
           <div style={{ display: 'flex', gap: 14, fontSize: 10, color: T.text.muted }}>
@@ -594,7 +598,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
 
       {/* ═══ Direction Split (Win Rate) — full-width after R Distribution removal ═══ */}
-      {showCore && registryAllows('directionAnalysis') && <GlassCard T={T} style={{ marginBottom: 16 }}>
+      {isMainView && showCore && registryAllows('directionAnalysis') && <GlassCard T={T} style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיצול כיוון (אחוז הצלחה)','Direction Split (Win Rate)')}</div>
         <ResponsiveContainer width="100%" height={230}>
           <RadialBarChart innerRadius="30%" outerRadius="100%" data={dirSplit} startAngle={180} endAngle={0}>
@@ -618,7 +622,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
 
       {/* ═══ DAY × HOUR MATRIX ═══  (registry: performanceByDay) */}
-      {showMax && registryAllows('performanceByDay') && <GlassCard T={T} style={{ marginBottom: 16 }}>
+      {isMainView && showMax && registryAllows('performanceByDay') && <GlassCard T={T} style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>{t('מפת ביצועים — יום × שעה','Performance Heatmap — Day × Hour')}</div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ borderCollapse: 'separate', borderSpacing: 2, fontSize: 10, fontFamily: "'JetBrains Mono', monospace", margin: '0 auto' }}>
@@ -666,7 +670,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       </GlassCard>}
 
       {/* ═══ RISK-ADJUSTED PERFORMANCE — moved directly below Day×Hour heatmap ═══ */}
-      {showMax && (
+      {isMainView && showMax && (
         <div style={{ marginBottom: 16 }}>
           <DeferMount minHeight={320}>
             <Suspense fallback={null}><RiskAdjustedRatiosSection T={T} isRTL={langRTL} trades={_allTrades} /></Suspense>
@@ -675,7 +679,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       )}
 
       {/* ═══ QUANT LAB ═══ */}
-      {showMax && registryAllows('rollingSharpe') && (
+      {showMax && perfChannel && registryAllows('rollingSharpe') && (
         <Suspense fallback={<div style={{ padding: 18, fontSize: 11, color: T.text.muted, opacity: 0.7 }}>Loading Quant Lab…</div>}>
           <AnalyticsQuantLab T={T} trades={trades} privacyMode={privacyMode} only={effectiveChannel} />
         </Suspense>
@@ -683,7 +687,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
 
       {/* ═══ MONTHLY HEAT TILES ═══ */}
-      {showPro && registryAllows('monthlyPerformance') && monthHeat.length > 1 && (
+      {perfChannel === 'temporal' && showPro && registryAllows('monthlyPerformance') && monthHeat.length > 1 && (
         <GlassCard T={T} style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 12 }}>{t('חום חודשי','Monthly Heat')}</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 110px), 1fr))', gap: 8 }}>
@@ -716,7 +720,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       {/* Leaderboard moved to bottom — see end of page */}
 
       {/* ═══ MONTHLY PERFORMANCE — compact single-chart visual ═══ */}
-      {showPro && registryAllows('cumWinLossRatio') && stats.monthlyPerf && stats.monthlyPerf.length > 0 && (() => {
+      {perfChannel === 'temporal' && showPro && registryAllows('cumWinLossRatio') && stats.monthlyPerf && stats.monthlyPerf.length > 0 && (() => {
         const monthly = stats.monthlyPerf.map((mp: any) => {
           const val = isMoney ? Number(mp.pnl) || 0 : (Number(mp.expectancyR) || 0) * (Number(mp.trades) || 0);
           return {
@@ -832,7 +836,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
 
       {/* ═══ QUARTERLY & YEARLY PERFORMANCE DETAIL ═══ */}
-      {showPro && stats.monthlyPerf && stats.monthlyPerf.length > 0 && (() => {
+      {perfChannel === 'temporal' && showPro && stats.monthlyPerf && stats.monthlyPerf.length > 0 && (() => {
         type Bucket = { label: string; pnl: number; trades: number; wins: number; totalR: number };
         const aggregate = (keyFn: (mp: any) => string) => {
           const map = new Map<string, Bucket>();
@@ -1035,9 +1039,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
 
       {/* ═══ ADVANCED LAYER (PRO/MAX modes) ═══ */}
-      {showPro && (registryAllows('rDistribution') || registryAllows('edgeDecay')) && (
+      {(perfChannel === 'risk' || perfChannel === 'core') && showPro && (registryAllows('rDistribution') || registryAllows('edgeDecay')) && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginBottom: 12 }}>
-          {registryAllows('rDistribution') && <GlassCard T={T} glow={`${infoColor(T)}18`}>
+          {perfChannel === 'risk' && registryAllows('rDistribution') && <GlassCard T={T} glow={`${infoColor(T)}18`}>
             <div style={{ fontSize: 11, color: infoColor(T), textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>● PRO · {t('עקומת תת-מים (Underwater)','Underwater Curve')}</div>
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={underwater}>
@@ -1055,7 +1059,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
               </AreaChart>
             </ResponsiveContainer>
           </GlassCard>}
-          {registryAllows('edgeDecay') && <GlassCard T={T} glow={`${infoColor(T)}18`}>
+          {perfChannel === 'core' && registryAllows('edgeDecay') && <GlassCard T={T} glow={`${infoColor(T)}18`}>
             <div style={{ fontSize: 11, color: T.text.secondary, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8, fontWeight: 700 }}>
               ● PRO · {t('אבולוציית Profit Factor','Profit Factor Evolution')}
               <span style={{ marginInlineStart: 8, color: T.text.muted, fontSize: 9.5, letterSpacing: '0.12em' }}>· {isMoney ? '$' : 'R'}</span>
@@ -1113,6 +1117,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
 
       {/* ═══ ULTIMATE-TIER DECK (Phase 4) ═══ */}
+      {perfChannel === 'core' && (
       <DeferMount minHeight={420}>
         <Suspense fallback={null}>
           <UltimateAnalyticsDeck
@@ -1123,9 +1128,10 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
           />
         </Suspense>
       </DeferMount>
+      )}
 
       {/* ═══ SETUP LEADERBOARD — bottom of page ═══ */}
-      {showPro && registryAllows('strategyExpectancy') && <GlassCard T={T} style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
+      {perfChannel === 'core' && showPro && registryAllows('strategyExpectancy') && <GlassCard T={T} style={{ marginBottom: 16, padding: 0, overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px 8px', gap: 8, flexWrap: 'wrap' }}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700 }}>{t('טבלת מובילים — לפי נכס','Leaderboard — by asset')}</div>
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
@@ -1176,7 +1182,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       </GlassCard>}
 
       {/* ═══ ULTIMATE-ONLY · Advanced Analytics Lab (Risk-Adjusted moved below Day×Hour heatmap) ═══ */}
-      {showMax && (
+      {showMax && perfChannel && (
         <div style={{ marginTop: 24 }}>
           <DeferMount minHeight={480}>
             <Suspense fallback={null}><DashboardAdvancedLab T={T} isRTL={langRTL} trades={_allTrades} only={effectiveChannel} /></Suspense>
