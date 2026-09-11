@@ -604,6 +604,7 @@ export const ReviewDashboard = ({
           </div>
         )}
       </div>
+      )}
 
       {/* Advanced Analytics Lab + Risk-Adjusted Ratios moved to /analytics (Ultimate-tier only) */}
     </div>
