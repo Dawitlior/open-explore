@@ -476,7 +476,7 @@ export const ReviewDashboard = ({
 
             {channel === 'breakdown' && (isPro ? (
               <>
-                <div className="dash-charts-3">
+                <div className="dash-charts-alpha">
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={t.directionAnalysis} explanation={EXPLANATIONS.directionAnalysis}>
                     <div className="dash-chart-h-sm dash-chart-fill">
@@ -507,8 +507,6 @@ export const ReviewDashboard = ({
 
                   </ChartWrapper>
                 </div>
-                </div>
-                <div className="dash-charts-alpha">
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'רבעונים — ניצחונות / הפסדים מול שנים' : 'Quarterly Performance — Wins/Losses YoY'} explanation={EXPLANATIONS.monthlyPerformance} unit={isMoney ? '$' : 'R'}>
                     <LazyChart><QuarterlyWinsLossesYoYChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
@@ -522,7 +520,6 @@ export const ReviewDashboard = ({
                   </ChartWrapper>
                 </div>
                 </div>
-                <div className="dash-charts-alpha">
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'ביצועים חודשיים (R)' : 'Monthly Performance (R)'} explanation={EXPLANATIONS.monthlyPerformance} unit="R">
                     {/* Compact chip grid — 2 cols mobile, 3-4 desktop, no vertical scroll.
