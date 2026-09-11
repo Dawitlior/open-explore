@@ -364,6 +364,10 @@ html[dir="ltr"] .dash-kpi-grid .orca-metric-sub {
   display: flex;
   flex-direction: column;
   min-height: 320px;
+  /* Never stretch to match a taller neighbour in the same grid row —
+     a chart with many months must not drag its sibling to the bottom. */
+  align-self: start;
+  height: auto;
 }
 .dash-advanced-body .dash-charts-2 > .dash-chart-card > *,
 .dash-advanced-body .dash-charts-3 > .dash-chart-card > *,

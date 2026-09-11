@@ -207,11 +207,17 @@ export function ImportPreflightRoot() {
     >
       <style>{`
         @keyframes orcaUieFadeIn { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes orcaUieScaleIn { from { transform: scale(0.97); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+        @keyframes orcaUieScaleIn { from { transform: scale(0.97) translateY(8px); opacity: 0 } to { transform: scale(1) translateY(0); opacity: 1 } }
+        @keyframes orcaUieSheen { from { background-position: -160% 0 } to { background-position: 260% 0 } }
         .orca-uie-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
         .orca-uie-scroll::-webkit-scrollbar-track { background: transparent; }
         .orca-uie-scroll::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.18); border-radius: 8px; }
         .orca-uie-scroll::-webkit-scrollbar-thumb:hover { background: rgba(201,168,76,0.32); }
+        .orca-uie-row { transition: background 140ms ease; }
+        .orca-uie-row:hover { background: rgba(201,168,76,0.06) !important; }
+        .orca-uie-panel { transition: border-color 160ms ease, box-shadow 160ms ease; }
+        .orca-uie-panel:hover { border-color: rgba(201,168,76,0.28) !important; }
+        .orca-uie-thead { position: sticky; top: 0; z-index: 2; backdrop-filter: blur(6px); }
       `}</style>
 
       <div
@@ -219,15 +225,24 @@ export function ImportPreflightRoot() {
           width: 'min(1080px, 96vw)', maxHeight: '92vh',
           background: `linear-gradient(180deg, ${T.surface} 0%, ${T.bg} 100%)`,
           border: `1px solid ${T.hairline}`,
-          borderRadius: 16,
-          boxShadow: `0 32px 80px rgba(0,0,0,0.65), 0 0 0 1px ${T.goldGlow} inset`,
+          borderRadius: 18,
+          boxShadow: `0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px ${T.goldGlow} inset`,
           display: 'flex', flexDirection: 'column',
           overflow: 'hidden',
-          animation: 'orcaUieScaleIn 320ms cubic-bezier(0.16,1,0.3,1)',
+          animation: 'orcaUieScaleIn 340ms cubic-bezier(0.16,1,0.3,1)',
         }}
       >
+        {/* Gold sheen accent */}
+        <div style={{
+          height: 2, flex: '0 0 2px',
+          background: `linear-gradient(90deg, transparent, ${T.gold}, transparent)`,
+          backgroundSize: '220% 100%',
+          animation: 'orcaUieSheen 4.5s ease-in-out infinite',
+          opacity: 0.7,
+        }} />
+
         {/* ── Header ──────────────────────────────────────────────────────── */}
-        <div style={{ padding: '22px 32px', borderBottom: `1px solid ${T.hairline}`, display: 'flex', alignItems: 'center', gap: 18 }}>
+        <div style={{ padding: '22px 32px', borderBottom: `1px solid ${T.hairline}`, display: 'flex', alignItems: 'center', gap: 18, background: 'linear-gradient(180deg, rgba(201,168,76,0.05), transparent)' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 19, fontWeight: 600, color: T.text, letterSpacing: 0.1 }}>
               {rtl ? 'בדיקת קובץ לפני ייבוא' : 'Review file before import'}
@@ -278,9 +293,11 @@ export function ImportPreflightRoot() {
           {/* Readiness + Counts */}
           <div style={{ display: 'flex', gap: 18, alignItems: 'stretch', flexWrap: 'wrap' }}>
             {/* Readiness ring */}
-            <div style={{
-              minWidth: 240, padding: '20px 24px', borderRadius: 14,
-              background: T.surfaceSoft, border: `1px solid ${T.hairline}`,
+            <div className="orca-uie-panel" style={{
+              minWidth: 240, padding: '20px 24px', borderRadius: 16,
+              background: `linear-gradient(160deg, ${T.surfaceSoft}, rgba(2,5,12,0.35))`,
+              border: `1px solid ${T.hairline}`,
+              boxShadow: '0 10px 28px rgba(0,0,0,0.28)',
               display: 'flex', alignItems: 'center', gap: 18,
             }}>
               <div style={{
@@ -310,7 +327,7 @@ export function ImportPreflightRoot() {
             </div>
 
             {/* Counts */}
-            <div style={{ flex: 1, minWidth: 320, padding: '20px 24px', borderRadius: 14, background: T.surfaceSoft, border: `1px solid ${T.hairline}` }}>
+            <div className="orca-uie-panel" style={{ flex: 1, minWidth: 320, padding: '20px 24px', borderRadius: 16, background: `linear-gradient(160deg, ${T.surfaceSoft}, rgba(2,5,12,0.35))`, border: `1px solid ${T.hairline}`, boxShadow: '0 10px 28px rgba(0,0,0,0.28)' }}>
               <div style={{ fontSize: 12, color: T.textMuted, fontWeight: 500, marginBottom: 14 }}>
                 {rtl ? 'מה נמצא בקובץ' : 'What we found'}
               </div>
@@ -373,13 +390,14 @@ export function ImportPreflightRoot() {
               )}
             </div>
 
-            <div style={{ border: `1px solid ${T.hairline}`, borderRadius: 12, overflow: 'hidden', background: T.surfaceSoft }}>
+            <div style={{ border: `1px solid ${T.hairline}`, borderRadius: 14, overflow: 'hidden', background: T.surfaceSoft, boxShadow: '0 10px 28px rgba(0,0,0,0.26)' }}>
               {/* head */}
-              <div style={{
+              <div className="orca-uie-thead" style={{
                 display: 'grid',
                 gridTemplateColumns: editMode ? '36px 1.1fr 1.5fr 70px 1.4fr' : '36px 1.1fr 1.1fr 70px 1.8fr',
-                padding: '12px 18px', background: 'rgba(8,12,22,0.6)',
-                fontSize: 11, color: T.textMuted, fontWeight: 500,
+                padding: '12px 18px', background: 'rgba(8,12,22,0.85)',
+                fontSize: 10.5, color: T.textMuted, fontWeight: 600,
+                letterSpacing: 0.4, textTransform: 'uppercase',
                 borderBottom: `1px solid ${T.hairlineSoft}`,
               }}>
                 <div>#</div>
@@ -415,7 +433,7 @@ export function ImportPreflightRoot() {
                     : (fm?.field || '__unmapped__');
                   const niceName = fm?.field ? fieldHumanName(fm.field, rtl) : (rtl ? 'לא זוהה' : 'Not identified');
                   return (
-                    <div key={row.idx} style={{
+                    <div key={row.idx} className="orca-uie-row" style={{
                       display: 'grid',
                       gridTemplateColumns: editMode ? '36px 1.1fr 1.5fr 70px 1.4fr' : '36px 1.1fr 1.1fr 70px 1.8fr',
                       padding: '14px 18px', borderTop: `1px solid ${T.hairlineSoft}`,

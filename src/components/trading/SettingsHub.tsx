@@ -242,7 +242,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
     { id: 'mobile-controls', icon: SlidersHorizontal, label: { he: 'בקרות מובייל', en: 'Mobile Controls' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'תיק פעיל, תצוגת תוחלת ומצב מערכת — בגישה מהירה במובייל', en: 'Active portfolio, expectancy display and mode — quick access on mobile' }, mobileOnly: true },
     { id: 'appearance', icon: Palette, label: { he: 'מראה ושפה', en: 'Appearance' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'ערכת נושא, שפה ופרטיות', en: 'Theme, language and privacy' } },
     { id: 'theme-studio', icon: Brush, label: { he: 'אולפן צבע', en: 'Theme Studio' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'בחר צבע מבטא משלך והתאם את כל אורקה אליו', en: 'Pick your own accent and re-tint all of Orca live' } },
-    { id: 'dashboard', icon: LayoutDashboard, label: { he: 'סידור דאשבורד', en: 'Dashboard Layout' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'גרור, הסתר וסדר ווידג׳טים', en: 'Drag, hide and arrange widgets' } },
+    // Dashboard Layout tab removed from settings navigation
     { id: 'kpis', icon: Calculator, label: { he: 'מדדים מותאמים', en: 'Custom KPIs' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'בנה נוסחאות מתמטיות משלך', en: 'Build your own math formulas' } },
     { id: 'interface', icon: SlidersHorizontal, label: { he: 'ממשק, צפיפות ותנועה', en: 'Interface, Density & Motion' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'צפיפות, גודל גופן, אנימציות ואלמנטים', en: 'Density, font scale, motion and elements' } },
     { id: 'quick-actions', icon: Zap, label: { he: 'פעולות מהירות', en: 'Quick Actions' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'הפעלה, הסתרה ופתיחת לוח הפעולות המהירות', en: 'Enable, hide and open the Quick Actions palette' } },
@@ -254,7 +254,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
     { id: 'trader-mind', icon: Brush, label: { he: 'תודעת הסוחר', en: 'Trader Mind' }, group: { he: 'מסחר', en: 'Trading' }, desc: { he: 'אבחון התנהגותי וכיול ה-Coach', en: 'Behavioral diagnostic and Coach calibration' } },
     
     { id: 'install', icon: Download, label: { he: 'הורד אפליקציה', en: 'Download App' }, group: { he: 'תצוגה', en: 'Display' }, desc: { he: 'התקן את אורקה על הטלפון או המחשב', en: 'Install Orca on your phone or desktop' } },
-    { id: 'legal', icon: Scale, label: { he: 'משפטי ונגישות', en: 'Legal & Accessibility' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'תנאי שימוש, פרטיות, נגישות והסרת אחריות', en: 'Terms, privacy, accessibility and disclaimers' } },
+    // Legal & Accessibility tab removed from settings navigation
   ];
 
   const filteredNav = useMemo(() => {
