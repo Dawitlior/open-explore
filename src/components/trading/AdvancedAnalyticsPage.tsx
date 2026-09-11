@@ -66,6 +66,8 @@ interface AdvancedAnalyticsPageProps {
    * Absent ⇒ legacy behavior (all charts that pass the local tier gates).
    */
   registryCharts?: ChartSpec[];
+  /** When set, the quant labs render only the widgets of that channel. */
+  perfChannel?: 'core' | 'risk' | 'dynamics' | 'temporal';
 }
 
 const HEB_DOW = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
@@ -73,7 +75,7 @@ const ENG_DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 const HEB_DOW_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const ENG_DOW_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode, isAlpha, operatingMode = 'live', registryCharts, onExplainClick }: AdvancedAnalyticsPageProps) => {
+const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode, isAlpha, operatingMode = 'live', registryCharts, perfChannel, onExplainClick }: AdvancedAnalyticsPageProps) => {
   // Phase 3 dev-only invariant — warns if a non-canonical chart is rendered here.
   useChartGuard('analytics');
   // Registry guard — permissive when prop absent (legacy callers).
@@ -658,7 +660,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       {/* ═══ QUANT LAB ═══ */}
       {showMax && registryAllows('rollingSharpe') && (
         <Suspense fallback={<div style={{ padding: 18, fontSize: 11, color: T.text.muted, opacity: 0.7 }}>Loading Quant Lab…</div>}>
-          <AnalyticsQuantLab T={T} trades={trades} privacyMode={privacyMode} />
+          <AnalyticsQuantLab T={T} trades={trades} privacyMode={privacyMode} only={perfChannel} />
         </Suspense>
       )}
 
@@ -1160,7 +1162,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       {showMax && (
         <div style={{ marginTop: 24 }}>
           <DeferMount minHeight={480}>
-            <Suspense fallback={null}><DashboardAdvancedLab T={T} isRTL={langRTL} trades={_allTrades} /></Suspense>
+            <Suspense fallback={null}><DashboardAdvancedLab T={T} isRTL={langRTL} trades={_allTrades} only={perfChannel} /></Suspense>
           </DeferMount>
         </div>
       )}

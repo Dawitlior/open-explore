@@ -42,6 +42,8 @@ interface Props {
   T: TradingTheme;
   trades: Trade[];
   privacyMode: boolean;
+  /** When set, only the widgets belonging to that performance channel render. */
+  only?: 'core' | 'risk' | 'dynamics' | 'temporal';
 }
 
 const sessionOf = (h: number): 'Asia' | 'London' | 'NY' | 'Off' => {
@@ -51,7 +53,8 @@ const sessionOf = (h: number): 'Asia' | 'London' | 'NY' | 'Off' => {
   return 'Off';
 };
 
-const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) => {
+const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode, only }: Props) => {
+  const show = (c: 'core' | 'risk' | 'dynamics' | 'temporal') => !only || only === c;
   const { lang } = useLang();
   const isRTL = lang === 'he';
   const t = (he: string, en: string) => (isRTL ? he : en);
@@ -245,6 +248,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
       <div style={sectionStyle}>{t('◆ QUANT LAB · מעבדת מחקר מתקדמת', '◆ QUANT LAB · Advanced Research Lab')}</div>
 
       {/* Recovery factor + simple cards */}
+      {show('risk') && (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginBottom: 12 }}>
         <GlassCard T={T} style={{ padding: 12 }}>
           <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Recovery Factor</div>
@@ -275,9 +279,12 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
           <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{t('ימי מסחר פעילים', 'Active trading days')}</div>
         </GlassCard>
       </div>
+      )}
 
       {/* Row: Cumulative R + Rolling Calmar */}
+      {(show('core') || show('risk')) && (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginBottom: 12 }}>
+        {show('core') && (
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{isMoney ? t('עקומת הון מצטבר ($)', 'Cumulative Equity Curve ($)') : t('עקומת R מצטברת', 'Cumulative R Curve')}</div>
           {moneyBlocked ? (
@@ -301,7 +308,9 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
           </ResponsiveContainer>
           )}
         </GlassCard>
+        )}
 
+        {show('risk') && (
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('Calmar מתגלגל (חלון 20)', 'Rolling Calmar (window 20)')}</div>
           <ResponsiveContainer width="100%" height={220}>
@@ -315,9 +324,12 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
             </LineChart>
           </ResponsiveContainer>
         </GlassCard>
+        )}
       </div>
+      )}
 
       {/* Row: Avg W vs L + Streak distribution */}
+      {show('dynamics') && (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
@@ -351,9 +363,12 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
           </ResponsiveContainer>
         </GlassCard>
       </div>
+      )}
 
       {/* Row: Position size vs P&L + Sessions */}
+      {(show('risk') || show('temporal')) && (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginBottom: 12 }}>
+        {show('risk') && (
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('גודל פוזיציה מול P&L', 'Position Size vs P&L')}</div>
           {moneyBlocked ? (
@@ -376,7 +391,9 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
           </ResponsiveContainer>
           )}
         </GlassCard>
+        )}
 
+        {show('temporal') && (
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיצול לפי סשן (אסיה / לונדון / ניו-יורק)', 'Session Split (Asia / London / NY)')}</div>
           {moneyBlocked ? (
@@ -396,9 +413,12 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
           </ResponsiveContainer>
           )}
         </GlassCard>
+        )}
       </div>
+      )}
 
       {/* Row: Daily step equity (full-width) */}
+      {show('core') && (
       <GlassCard T={T} style={{ marginBottom: 12 }}>
         <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('הון יומי מצטבר (מדרגות)', 'Daily Cumulative Equity (Steps)')}</div>
         <ResponsiveContainer width="100%" height={240}>
@@ -417,6 +437,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode }: Props) =
           </AreaChart>
         </ResponsiveContainer>
       </GlassCard>
+      )}
         </>
       )}
     </div>
