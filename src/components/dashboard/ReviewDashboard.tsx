@@ -121,7 +121,7 @@ export const ReviewDashboard = ({
   T, t, isRTL, trades, stats, riskData, radarData, tt, privacyMode,
   isAdvancedTier, isUltimateTier, isAlpha,
   advancedOpen, setAdvancedOpen, isChartVisible, handleHideChart, handleExplainClick,
-  onAddTrade,
+  onAddTrade, channel: channelProp, onChannelChange,
 }: ReviewDashboardProps) => {
   const { displayMode } = useDisplayMode();
   const isMoney = displayMode === 'MONEY';
