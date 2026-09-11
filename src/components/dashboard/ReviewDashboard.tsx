@@ -295,6 +295,8 @@ export const ReviewDashboard = ({
                 );
               })}
             </div>
+            )}
+
 
             {channel === 'overview' && (
               <>
