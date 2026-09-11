@@ -273,7 +273,8 @@ export const ReviewDashboard = ({
 
         {advancedOpen && (
           <div className="dash-advanced-body">
-            {/* Channel tabs */}
+            {/* Channel tabs — only when the sidebar is NOT driving the channel */}
+            {!controlled && (
             <div className="dash-channel-tabs" role="tablist">
               {CHANNELS.map(ch => {
                 const locked = ch.pro && !isPro;
