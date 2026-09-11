@@ -5,6 +5,7 @@ import { useLang } from '@/hooks/use-lang';
 import { formatISTTime, computeSurprise, surpriseTone } from '@/lib/economic';
 import type { EconomicEvent, EconomicImpact } from '@/lib/economic';
 import { CURRENCY_FLAG, MACRO_TIER_COLOR } from './MacroEventStrip';
+import SessionClock from './SessionClock';
 
 /* ─────────────────────────────────────────────────────────────
  * Economic Calendar — Professional Table View
@@ -18,7 +19,7 @@ import { CURRENCY_FLAG, MACRO_TIER_COLOR } from './MacroEventStrip';
 
 const COPY = {
   he: {
-    title: 'יומן כלכלי',
+    title: 'חדשות ויומן כלכלי',
     subtitle: 'כל הדיווחים · כל האזורים · כל הרמות',
     close: 'סגור',
     today: 'היום',
@@ -45,7 +46,7 @@ const COPY = {
     results: 'תוצאות',
   },
   en: {
-    title: 'Economic Calendar',
+    title: 'News & Economic Calendar',
     subtitle: 'All releases · All regions · All tiers',
     close: 'Close',
     today: 'Today',
@@ -201,9 +202,14 @@ export function EconomicCalendarPage({ onClose, T }: Props) {
         minHeight: 'calc(100vh - 140px)',
       }}
     >
+      {/* Interactive session clock — live world map of the FX sessions */}
+      <div className="px-4 md:px-6 pt-4 md:pt-5">
+        <SessionClock T={T} />
+      </div>
+
       {/* Page Header */}
       <header
-        className="flex items-center gap-3 px-4 md:px-6 py-4 border-b"
+        className="flex items-center gap-3 px-4 md:px-6 py-4 border-b mt-4"
         style={{ borderColor: BORDER, background: PANEL }}
       >
         <CalendarIcon className="w-5 h-5" style={{ color: ACCENT }} />
