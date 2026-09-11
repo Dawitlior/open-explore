@@ -1,0 +1,170 @@
+{
+  "version": 1,
+  "sdk_version": "2.0.4",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://pqezqcbbaekohzqnpmoc.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "open-explore",
+      "version": "0.1.0",
+      "title": "open-explore"
+    },
+    "tools": [
+      {
+        "name": "list_portfolios",
+        "title": "List portfolios",
+        "description": "List the signed-in trader's portfolios (id, name, currency, starting balance).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_trades",
+        "title": "List trades",
+        "description": "List the signed-in trader's most recent trades, optionally filtered by portfolio, outcome, or date range.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "portfolio_id": {
+              "description": "Only trades in this portfolio.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "outcome": {
+              "description": "Filter by trade outcome.",
+              "type": "string",
+              "enum": [
+                "Win",
+                "Loss",
+                "Breakeven"
+              ]
+            },
+            "from": {
+              "description": "ISO date lower bound on the close date, e.g. 2026-01-01.",
+              "type": "string"
+            },
+            "to": {
+              "description": "ISO date upper bound on the close date.",
+              "type": "string"
+            },
+            "limit": {
+              "default": 30,
+              "description": "Maximum number of trades to return.",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "performance_summary",
+        "title": "Performance summary",
+        "description": "Compute the signed-in trader's performance stats (win rate, expectancy in R, profit factor, net P&L, max drawdown in R) plus per-symbol and per-weekday breakdowns.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "portfolio_id": {
+              "description": "Restrict the analysis to one portfolio.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "from": {
+              "description": "ISO date lower bound on the close date.",
+              "type": "string"
+            },
+            "to": {
+              "description": "ISO date upper bound on the close date.",
+              "type": "string"
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "trader_mind_profile",
+        "title": "Trader Mind profile",
+        "description": "Return the signed-in trader's most recent Trader Mind behavioural diagnostic result (archetype and answers), if one exists.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "log_day_note",
+        "title": "Log a journal day note",
+        "description": "Create or replace the signed-in trader's journal note for a specific calendar day.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Calendar day in YYYY-MM-DD format."
+            },
+            "note": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000,
+              "description": "The note text to store for that day."
+            },
+            "portfolio_id": {
+              "description": "Attach the note to a specific portfolio.",
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          "required": [
+            "date",
+            "note"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
