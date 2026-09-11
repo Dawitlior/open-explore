@@ -23,6 +23,7 @@ const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Accessibility = lazy(() => import("./pages/Accessibility"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 
 
 import DefaultSeo from "@/components/DefaultSeo";
@@ -172,6 +173,7 @@ const App = () => (
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/accessibility" element={<Accessibility />} />
+              <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
               <Route
                 path="/"
                 element={
