@@ -1934,7 +1934,7 @@ const Index = () => {
                     <button
                       className="mm-row"
                       data-active={isActive ? 'true' : 'false'}
-                      onClick={() => { setPage(item.id); setSbOpen(false); if (isWeekly) dismissWeeklyReminder(); }}
+                      onClick={() => { setPage(item.id); setSbOpen(false); if (item.id === 'dashboard') setDashChannel('home'); if (isWeekly) dismissWeeklyReminder(); }}
                     >
                       <span className="mm-icon" style={isWeekly ? { color: '#FFD700', borderColor: '#FFD70044', background: 'rgba(255,215,0,0.08)' } : undefined}>
                         {typeof item.icon === 'string' ? <span>{item.icon}</span> : item.icon}
