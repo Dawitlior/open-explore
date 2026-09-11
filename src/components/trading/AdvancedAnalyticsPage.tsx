@@ -76,8 +76,9 @@ const HEB_DOW_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמ�
 const ENG_DOW_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode, isAlpha, operatingMode = 'live', registryCharts, perfChannel, onExplainClick }: AdvancedAnalyticsPageProps) => {
-  const [labChannel, setLabChannel] = useState<'all' | 'core' | 'risk' | 'dynamics' | 'temporal'>('all');
-  const effectiveChannel = perfChannel ?? (labChannel === 'all' ? undefined : labChannel);
+  // Sidebar-driven channel. No channel selected ⇒ main deck (KPIs → Risk-Adjusted).
+  const effectiveChannel = perfChannel;
+  const isMainView = !perfChannel;
   // Phase 3 dev-only invariant — warns if a non-canonical chart is rendered here.
   useChartGuard('analytics');
   // Registry guard — permissive when prop absent (legacy callers).
@@ -475,38 +476,17 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         </div>
       </motion.div>
 
-      {/* ═══ PERFORMANCE CHANNELS — only when not driven by the sidebar ═══ */}
-      {!perfChannel && (
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
-        {([
-          { id: 'all', he: 'הכל', en: 'All' },
-          { id: 'core', he: 'ליבה', en: 'Core' },
-          { id: 'risk', he: 'סיכון', en: 'Risk' },
-          { id: 'dynamics', he: 'דינמיקה', en: 'Dynamics' },
-          { id: 'temporal', he: 'זמן', en: 'Timing' },
-        ] as const).map(c => {
-          const active = labChannel === c.id;
-          return (
-            <button
-              key={c.id}
-              onClick={() => setLabChannel(c.id)}
-              style={{
-                padding: '6px 14px',
-                borderRadius: 999,
-                fontSize: 11,
-                fontWeight: 700,
-                cursor: 'pointer',
-                border: `1px solid ${active ? T.accent.cyan : T.border.subtle}`,
-                background: active ? `${T.accent.cyan}1a` : 'transparent',
-                color: active ? T.accent.cyan : T.text.muted,
-                transition: 'all 0.18s ease',
-              }}
-            >
-              {t(c.he, c.en)}
-            </button>
-          );
-        })}
-      </div>
+      {/* ═══ CHANNEL HEADER — shown when a sidebar sub-channel is active ═══ */}
+      {perfChannel && (
+        <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: T.accent.cyan, boxShadow: `0 0 10px ${T.accent.cyan}88` }} />
+          <span style={{ fontSize: 11, color: T.accent.cyan, letterSpacing: '0.24em', textTransform: 'uppercase', fontWeight: 800 }}>
+            {perfChannel === 'core' ? t('ערוץ ליבה','Core Channel')
+              : perfChannel === 'risk' ? t('ערוץ סיכון','Risk Channel')
+              : perfChannel === 'dynamics' ? t('ערוץ דינמיקה','Dynamics Channel')
+              : t('ערוץ תזמון','Timing Channel')}
+          </span>
+        </div>
       )}
 
 
