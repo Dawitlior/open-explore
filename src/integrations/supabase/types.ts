@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_chat_usage: {
+        Row: {
+          message_count: number
+          period: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          message_count?: number
+          period: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          message_count?: number
+          period?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_runs: {
         Row: {
           completion_tokens: number
