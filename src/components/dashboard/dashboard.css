@@ -364,10 +364,6 @@ html[dir="ltr"] .dash-kpi-grid .orca-metric-sub {
   display: flex;
   flex-direction: column;
   min-height: 320px;
-  /* Never stretch to match a taller neighbour in the same grid row —
-     a chart with many months must not drag its sibling to the bottom. */
-  align-self: start;
-  height: auto;
 }
 .dash-advanced-body .dash-charts-2 > .dash-chart-card > *,
 .dash-advanced-body .dash-charts-3 > .dash-chart-card > *,
@@ -375,6 +371,22 @@ html[dir="ltr"] .dash-kpi-grid .orca-metric-sub {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
+}
+
+/* Scrollable chart inner — used for tall matrix charts so the card keeps
+   a sensible height and scrolls instead of stretching the whole grid row. */
+.dash-chart-scrollable-inner {
+  max-height: 300px;
+  overflow-y: auto;
+}
+.dash-chart-scrollable-inner.orca-thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 175, 90, 0.55) transparent;
+}
+@media (max-width: 768px) {
+  .dash-chart-scrollable-inner {
+    max-height: 380px;
+  }
 }
 
 /* BestWorstWindowChart — let content size itself; never clip on mobile */
