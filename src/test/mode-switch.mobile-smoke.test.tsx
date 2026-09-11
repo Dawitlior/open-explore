@@ -4,9 +4,9 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 
 vi.mock('@/hooks/use-entitlement', () => ({
   useEntitlement: () => ({
-    tier: 'standard',
+    tier: 'free',
     loading: false,
-    allows: (required: string) => required === 'standard',
+    allows: (required: string) => required === 'free',
   }),
 }));
 
@@ -28,7 +28,7 @@ describe('ModeSwitch mobile touch smoke', () => {
       fireEvent(el, event);
     };
 
-    await act(async () => touchUp(screen.getByRole('button', { name: 'אולטימייט' })));
+    await act(async () => touchUp(screen.getByRole('button', { name: 'פרו' })));
     const confirm = screen.getByRole('button', { name: 'אישור החלפה' });
 
     const zIndexes = Array.from(document.body.querySelectorAll('div'))
@@ -39,6 +39,6 @@ describe('ModeSwitch mobile touch smoke', () => {
     await act(async () => touchUp(confirm));
     await act(async () => { vi.advanceTimersByTime(1300); });
 
-    expect(localStorage.getItem('orca:tier-preview')).toBe('ultimate');
+    expect(localStorage.getItem('orca:tier-preview')).toBe('pro');
   });
 });
