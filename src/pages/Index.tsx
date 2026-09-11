@@ -39,7 +39,7 @@ import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { MobileBottomNav } from '@/components/trading/MobileBottomNav';
 import { MainPullToRefresh } from '@/components/trading/MainPullToRefresh';
 const ReviewDashboard = lazy(() => import('@/components/dashboard/ReviewDashboard').then(m => ({ default: m.ReviewDashboard })));
-import { CHANNELS, type ChannelId } from '@/lib/dashboard-channels';
+import { CHANNELS, type ChannelId, PERF_CHANNELS, type PerfChannelId } from '@/lib/dashboard-channels';
 import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
 import { JournalLayoutSwitch, type JournalLayout } from '@/components/trading/JournalLayoutSwitch';
 import { JournalDataMenu } from '@/components/trading/JournalDataMenu';
@@ -217,6 +217,8 @@ const Index = () => {
   const [dashChannel, setDashChannel] = useState<ChannelId>('home');
   // Collapsible Dashboard sub-list in the sidebar (compact, chevron-toggled).
   const [dashSubOpen, setDashSubOpen] = useState(false);
+  const [perfChannel, setPerfChannel] = useState<PerfChannelId>('all');
+  const [perfSubOpen, setPerfSubOpen] = useState(false);
   // Collapsible "Different Worlds" group (Trader Journey / Backtest / Trader Mind).
   const [worldsOpen, setWorldsOpen] = useState(false);
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
