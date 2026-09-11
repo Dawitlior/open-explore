@@ -698,21 +698,24 @@ const Index = () => {
   const nav: Array<{ id: string; icon: any; label: string; color?: string; group?: string; action?: () => void }> = [
     { id: 'dashboard', icon: Ico.dash, label: isRTL ? 'דשבורד' : 'Dashboard', group: 'workspace' },
     { id: 'calendar', icon: '📅', label: isRTL ? 'לוח שנה' : 'Calendar', group: 'workspace' },
-    { id: 'journal', icon: Ico.book, label: t.journal, group: 'workspace' },
-    { id: 'analytics', icon: Ico.bar, label: isRTL ? 'ביצועים' : 'Performance', group: 'workspace' },
+
+    { id: 'economic-radar', icon: '📡', label: isRTL ? 'חדשות' : 'News', group: 'markets' },
+
+    { id: 'journal', icon: Ico.book, label: t.journal, group: 'workspace2' },
+    { id: 'analytics', icon: Ico.bar, label: isRTL ? 'ביצועים' : 'Performance', group: 'workspace2' },
 
     { id: 'control-room', icon: Ico.shield, label: isRTL ? 'חדר בקרה' : 'Control Room', group: 'intelligence' },
     { id: 'ai', icon: Ico.star, label: t.ai, group: 'intelligence' },
     ...(weeklyReviewAllowed
       ? [{ id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: T.isLight ? '#B45309' : '#FFD700', group: 'intelligence' }]
       : []),
-
-    { id: 'economic-radar', icon: '📡', label: isRTL ? 'חדשות' : 'News', group: 'markets' },
   ];
   const NAV_GROUP_LABEL: Record<string, string> = {
     workspace: isRTL ? 'סביבת עבודה' : 'Workspace',
+    workspace2: isRTL ? 'ניתוח' : 'Analysis',
     intelligence: isRTL ? 'תובנות' : 'Intelligence',
     markets: isRTL ? 'שווקים' : 'Markets',
+    system: isRTL ? 'הגדרות' : 'Settings',
   };
 
   // Keep the loader visible until BOTH the trade list and the portfolio
@@ -2162,6 +2165,13 @@ const Index = () => {
             </React.Fragment>
             );
           })}
+          {bugBoardAllowed && (sbOpen ? (
+            <div style={{ padding: '10px 12px 4px', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: T.text.muted, fontWeight: 600 }}>
+              {NAV_GROUP_LABEL.system}
+            </div>
+          ) : (
+            <div aria-hidden style={{ height: 1, background: T.border.subtle, margin: '6px 12px' }} />
+          ))}
           {bugBoardAllowed && (
           <button onClick={goBugBoard} title={isRTL ? 'לוח באגים' : 'Bug Board'} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: 'transparent', color: T.text.muted, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 400, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: '2px solid transparent' }}>
             <span style={{ fontSize: 16, lineHeight: 1 }}>📋</span>
