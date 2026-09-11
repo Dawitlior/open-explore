@@ -495,9 +495,9 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                 fontSize: 11,
                 fontWeight: 700,
                 cursor: 'pointer',
-                border: `1px solid ${active ? T.accent.gold : T.border.subtle}`,
-                background: active ? `${T.accent.gold}1a` : 'transparent',
-                color: active ? T.accent.gold : T.text.muted,
+                border: `1px solid ${active ? T.accent.cyan : T.border.subtle}`,
+                background: active ? `${T.accent.cyan}1a` : 'transparent',
+                color: active ? T.accent.cyan : T.text.muted,
                 transition: 'all 0.18s ease',
               }}
             >
