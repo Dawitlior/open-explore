@@ -1,0 +1,329 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useLang } from '@/hooks/use-lang';
+import { WORLD_LAND_PATH } from '@/lib/world-map-path';
+
+/* ─────────────────────────────────────────────────────────────
+ * Session Clock — interactive world map of the four FX sessions.
+ *   • Live UTC clock + local time
+ *   • Day / night terminator over an equirectangular world map
+ *   • Market pins: hover or click to focus a session
+ *   • Per-market local time, open / closed state and countdown
+ * ───────────────────────────────────────────────────────────── */
+
+interface MarketDef {
+  id: string;
+  he: string;
+  en: string;
+  tz: string;
+  flag: string;
+  lon: number;
+  lat: number;
+  /** Local session window, in local hours. */
+  open: number;
+  close: number;
+}
+
+const MARKETS: MarketDef[] = [
+  { id: 'sydney', he: 'סידני', en: 'Sydney', tz: 'Australia/Sydney', flag: '🇦🇺', lon: 151.21, lat: -33.87, open: 7, close: 16 },
+  { id: 'tokyo', he: 'טוקיו', en: 'Tokyo', tz: 'Asia/Tokyo', flag: '🇯🇵', lon: 139.69, lat: 35.68, open: 9, close: 18 },
+  { id: 'london', he: 'לונדון', en: 'London', tz: 'Europe/London', flag: '🇬🇧', lon: -0.13, lat: 51.51, open: 8, close: 17 },
+  { id: 'newyork', he: 'ניו יורק', en: 'New York', tz: 'America/New_York', flag: '🇺🇸', lon: -74.01, lat: 40.71, open: 8, close: 17 },
+];
+
+const MAP_W = 1000;
+const MAP_H = 500;
+
+const projX = (lon: number) => ((lon + 180) / 360) * MAP_W;
+const projY = (lat: number) => ((90 - lat) / 180) * MAP_H;
+
+/** Offset of a time zone from UTC, in minutes, at a given instant. */
+function tzOffsetMinutes(tz: string, at: Date): number {
+  const dtf = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz, hour12: false,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  });
+  const p: Record<string, number> = {};
+  for (const part of dtf.formatToParts(at)) {
+    if (part.type !== 'literal') p[part.type] = Number(part.value);
+  }
+  const asUTC = Date.UTC(p.year, p.month - 1, p.day, p.hour % 24, p.minute, p.second);
+  return Math.round((asUTC - Math.floor(at.getTime() / 1000) * 1000) / 60000);
+}
+
+interface MarketState {
+  def: MarketDef;
+  localLabel: string;
+  localMinutes: number;
+  localDow: number;
+  isOpen: boolean;
+  /** Minutes until the session closes (when open) or opens (when closed). */
+  countdown: number;
+}
+
+function computeMarket(def: MarketDef, now: Date): MarketState {
+  const off = tzOffsetMinutes(def.tz, now);
+  const local = new Date(now.getTime() + off * 60000);
+  const dow = local.getUTCDay();
+  const minutes = local.getUTCHours() * 60 + local.getUTCMinutes();
+  const openMin = def.open * 60;
+  const closeMin = def.close * 60;
+  const weekday = dow >= 1 && dow <= 5;
+  const isOpen = weekday && minutes >= openMin && minutes < closeMin;
+
+  let countdown = 0;
+  if (isOpen) {
+    countdown = closeMin - minutes;
+  } else {
+    for (let d = 0; d <= 7; d++) {
+      const candDow = (dow + d) % 7;
+      if (candDow === 0 || candDow === 6) continue;
+      const delta = d * 1440 + openMin - minutes;
+      if (delta > 0) { countdown = delta; break; }
+    }
+  }
+
+  const hh = String(Math.floor(minutes / 60)).padStart(2, '0');
+  const mm = String(minutes % 60).padStart(2, '0');
+  return { def, localLabel: `${hh}:${mm}`, localMinutes: minutes, localDow: dow, isOpen, countdown };
+}
+
+function fmtCountdown(mins: number, isRTL: boolean): string {
+  const d = Math.floor(mins / 1440);
+  const h = Math.floor((mins % 1440) / 60);
+  const m = mins % 60;
+  const parts: string[] = [];
+  if (d > 0) parts.push(`${d}${isRTL ? ' ימים' : 'd'}`);
+  if (d > 0 || h > 0) parts.push(`${h}${isRTL ? ' ש׳' : 'h'}`);
+  parts.push(`${m}${isRTL ? ' דק׳' : 'm'}`);
+  return parts.join(' ');
+}
+
+interface Props {
+  T?: any;
+}
+
+export default function SessionClock({ T }: Props) {
+  const { lang } = useLang();
+  const isRTL = lang === 'he';
+  const [now, setNow] = useState(() => new Date());
+  const [focus, setFocus] = useState<string | null>(null);
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const PANEL = T?.bg?.card ?? '#0a1420';
+  const SURFACE = T?.bg?.tertiary ?? 'rgba(255,255,255,0.04)';
+  const BORDER = T?.border?.medium ?? 'rgba(255,255,255,0.10)';
+  const BORDER_SOFT = T?.border?.subtle ?? 'rgba(255,255,255,0.06)';
+  const TEXT = T?.text?.primary ?? '#f1f5f9';
+  const TEXT_MUTED = T?.text?.secondary ?? '#94a3b8';
+  const TEXT_DIM = T?.text?.muted ?? '#64748b';
+  const ACCENT = T?.accent?.cyan ?? '#00f2ff';
+  const OPEN_C = T?.accent?.green ?? '#22c55e';
+
+  const markets = useMemo(
+    () => MARKETS.map(m => computeMarket(m, now)),
+    // Recompute each tick; `now` changes every second.
+    [now],
+  );
+
+  const utcLabel = useMemo(() => {
+    const hh = String(now.getUTCHours()).padStart(2, '0');
+    const mm = String(now.getUTCMinutes()).padStart(2, '0');
+    const ss = String(now.getUTCSeconds()).padStart(2, '0');
+    return `${hh}:${mm}:${ss}`;
+  }, [now]);
+
+  const localLabel = useMemo(
+    () => new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }).format(now),
+    [now],
+  );
+  const localZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  /** Sub-solar longitude — drives the night overlay. */
+  const nightBands = useMemo(() => {
+    const utcMin = now.getUTCHours() * 60 + now.getUTCMinutes();
+    const solarLon = 180 - (utcMin / 1440) * 360; // longitude where it is local noon
+    const nightCenter = solarLon + 180;
+    const norm = (l: number) => ((((l + 180) % 360) + 360) % 360) - 180;
+    const start = norm(nightCenter - 90);
+    const end = norm(nightCenter + 90);
+    const x1 = projX(start);
+    const x2 = projX(end);
+    return x1 <= x2
+      ? [{ x: x1, w: x2 - x1 }]
+      : [{ x: 0, w: x2 }, { x: x1, w: MAP_W - x1 }];
+  }, [now]);
+
+  const openCount = markets.filter(m => m.isOpen).length;
+  const nextUp = markets.filter(m => !m.isOpen).sort((a, b) => a.countdown - b.countdown)[0];
+  const focused = markets.find(m => m.def.id === focus) ?? null;
+
+  return (
+    <div
+      dir={isRTL ? 'rtl' : 'ltr'}
+      className="rounded-xl overflow-hidden"
+      style={{ background: PANEL, border: `1px solid ${BORDER}`, fontFamily: "'Poppins', sans-serif" }}
+    >
+      <div className="flex flex-col md:flex-row">
+        {/* ── Clock + map ── */}
+        <div className="relative flex-1 min-w-0 p-4 md:p-5">
+          <div className="text-[10px] uppercase tracking-[0.22em] font-semibold" style={{ color: TEXT_DIM }}>
+            {isRTL ? 'שעון סשנים' : 'Session Clock'}
+          </div>
+          <div
+            className="text-[30px] md:text-[38px] font-bold leading-none mt-1 tabular-nums"
+            style={{ color: TEXT, fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '-0.01em' }}
+          >
+            {utcLabel} <span style={{ fontSize: '0.42em', color: TEXT_DIM, letterSpacing: '0.12em' }}>UTC</span>
+          </div>
+          <div className="text-[11px] mt-1" style={{ color: TEXT_DIM }}>
+            {isRTL ? 'מקומי' : 'Local'} {localLabel} · {localZone}
+          </div>
+
+          {/* World map */}
+          <div className="relative mt-3" style={{ width: '100%' }}>
+            <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
+              <defs>
+                <linearGradient id="sc-night" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#000814" stopOpacity="0.55" />
+                  <stop offset="100%" stopColor="#000814" stopOpacity="0.55" />
+                </linearGradient>
+              </defs>
+
+              {/* Graticule */}
+              {[-60, -30, 0, 30, 60].map(lat => (
+                <line key={`la${lat}`} x1={0} x2={MAP_W} y1={projY(lat)} y2={projY(lat)} stroke={BORDER_SOFT} strokeWidth={1} />
+              ))}
+              {[-120, -60, 0, 60, 120].map(lon => (
+                <line key={`lo${lon}`} y1={0} y2={MAP_H} x1={projX(lon)} x2={projX(lon)} stroke={BORDER_SOFT} strokeWidth={1} />
+              ))}
+
+              {/* Land */}
+              <path d={WORLD_LAND_PATH} fill={SURFACE} stroke={BORDER} strokeWidth={0.8} />
+
+              {/* Night side */}
+              {nightBands.map((b, i) => (
+                <rect key={i} x={b.x} y={0} width={b.w} height={MAP_H} fill="url(#sc-night)" pointerEvents="none" />
+              ))}
+
+              {/* Market pins */}
+              {markets.map(m => {
+                const x = projX(m.def.lon);
+                const y = projY(m.def.lat);
+                const active = focus === null || focus === m.def.id;
+                const c = m.isOpen ? OPEN_C : TEXT_DIM;
+                return (
+                  <g
+                    key={m.def.id}
+                    style={{ cursor: 'pointer', opacity: active ? 1 : 0.3, transition: 'opacity .2s' }}
+                    onMouseEnter={() => setFocus(m.def.id)}
+                    onMouseLeave={() => setFocus(null)}
+                    onClick={() => setFocus(f => (f === m.def.id ? null : m.def.id))}
+                  >
+                    {m.isOpen && (
+                      <circle cx={x} cy={y} r={22} fill={c} opacity={0.16}>
+                        <animate attributeName="r" values="14;30;14" dur="3s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="0.25;0;0.25" dur="3s" repeatCount="indefinite" />
+                      </circle>
+                    )}
+                    <circle cx={x} cy={y} r={9} fill={c} opacity={0.22} />
+                    <circle cx={x} cy={y} r={4.5} fill={c} stroke={PANEL} strokeWidth={1.5} />
+                    <text
+                      x={x}
+                      y={y - 14}
+                      textAnchor="middle"
+                      style={{ fontSize: 17, fill: m.isOpen ? TEXT : TEXT_DIM, fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace" }}
+                    >
+                      {m.def[isRTL ? 'he' : 'en']} {m.localLabel}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+
+          {/* Status line */}
+          <div className="mt-3 text-[11px] leading-relaxed" style={{ color: TEXT_MUTED }}>
+            {focused ? (
+              <span>
+                <b style={{ color: focused.isOpen ? OPEN_C : TEXT }}>{focused.def[isRTL ? 'he' : 'en']}</b>{' '}
+                {focused.isOpen
+                  ? (isRTL ? `פתוח · נסגר בעוד ${fmtCountdown(focused.countdown, true)}` : `open · closes in ${fmtCountdown(focused.countdown, false)}`)
+                  : (isRTL ? `סגור · נפתח בעוד ${fmtCountdown(focused.countdown, true)}` : `closed · opens in ${fmtCountdown(focused.countdown, false)}`)}
+              </span>
+            ) : openCount > 0 ? (
+              <span>
+                <span style={{ color: OPEN_C, fontWeight: 700 }}>{openCount}</span>{' '}
+                {isRTL ? 'סשנים פעילים כרגע' : `session${openCount > 1 ? 's' : ''} currently active`}
+              </span>
+            ) : nextUp ? (
+              <span>
+                {isRTL ? 'כל השווקים סגורים. ' : 'All markets closed. '}
+                <b style={{ color: TEXT }}>{nextUp.def[isRTL ? 'he' : 'en']}</b>{' '}
+                {isRTL ? `נפתח בעוד ${fmtCountdown(nextUp.countdown, true)}` : `opens in ${fmtCountdown(nextUp.countdown, false)}`}
+              </span>
+            ) : null}
+          </div>
+        </div>
+
+        {/* ── Market list ── */}
+        <div
+          className="w-full md:w-[230px] shrink-0 p-4 md:p-4"
+          style={{ background: SURFACE, borderInlineStart: `1px solid ${BORDER_SOFT}` }}
+        >
+          <div className="text-[10px] uppercase tracking-[0.22em] font-semibold mb-3" style={{ color: TEXT_DIM }}>
+            {isRTL ? 'שווקים' : 'Markets'}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {markets.map(m => {
+              const active = focus === m.def.id;
+              return (
+                <button
+                  key={m.def.id}
+                  type="button"
+                  onMouseEnter={() => setFocus(m.def.id)}
+                  onMouseLeave={() => setFocus(null)}
+                  onClick={() => setFocus(f => (f === m.def.id ? null : m.def.id))}
+                  className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-start transition"
+                  style={{
+                    background: active ? `${ACCENT}14` : 'transparent',
+                    border: `1px solid ${active ? `${ACCENT}55` : 'transparent'}`,
+                  }}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{
+                      background: m.isOpen ? OPEN_C : TEXT_DIM,
+                      boxShadow: m.isOpen ? `0 0 8px ${OPEN_C}` : 'none',
+                    }}
+                  />
+                  <span className="text-[16px] leading-none">{m.def.flag}</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-[12px] font-medium truncate" style={{ color: m.isOpen ? TEXT : TEXT_MUTED }}>
+                      {m.def[isRTL ? 'he' : 'en']}
+                    </span>
+                    <span className="block text-[10px]" style={{ color: TEXT_DIM }}>
+                      {m.isOpen
+                        ? (isRTL ? `נסגר בעוד ${fmtCountdown(m.countdown, true)}` : `closes in ${fmtCountdown(m.countdown, false)}`)
+                        : (isRTL ? `נפתח בעוד ${fmtCountdown(m.countdown, true)}` : `opens in ${fmtCountdown(m.countdown, false)}`)}
+                    </span>
+                  </span>
+                  <span
+                    className="text-[12px] tabular-nums"
+                    style={{ color: m.isOpen ? TEXT : TEXT_DIM, fontFamily: "'IBM Plex Mono', monospace" }}
+                  >
+                    {m.localLabel}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
