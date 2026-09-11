@@ -8,9 +8,10 @@
  * Free users still SEE the channels (with a lock chip) — they just get the
  * upgrade card instead of the charts.
  */
-export type ChannelId = 'overview' | 'breakdown' | 'quant';
+export type ChannelId = 'home' | 'overview' | 'breakdown' | 'quant';
 
 export const CHANNELS: { id: ChannelId; he: string; en: string; short?: { he: string; en: string }; pro: boolean; icon: string }[] = [
+  { id: 'home',      he: 'דשבורד',        en: 'Dashboard',                pro: false, icon: '▦' },
   { id: 'overview',  he: 'התמונה הגדולה', en: 'Big Picture',              pro: false, icon: '◎' },
   { id: 'breakdown', he: 'פילוח וחלוקה',  en: 'Breakdown & Distribution', short: { he: 'פילוח', en: 'Breakdown' }, pro: true, icon: '◱' },
   { id: 'quant',     he: 'מעבדת קוונט',   en: 'Quant Lab',                pro: true,  icon: '∿' },
