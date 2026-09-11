@@ -128,7 +128,7 @@ export const ReviewDashboard = ({
   const [shareOpen, setShareOpen] = useState(false);
   // Channel is driven by the sidebar (Dashboard → sub-items). When the host
   // does not control it we fall back to local state + inline tabs.
-  const [localChannel, setLocalChannel] = useState<ChannelId>('overview');
+  const [localChannel, setLocalChannel] = useState<ChannelId>('home');
   const controlled = typeof channelProp === 'string';
   const channel = controlled ? (channelProp as ChannelId) : localChannel;
   const setChannel = (id: ChannelId) => (controlled ? onChannelChange?.(id) : setLocalChannel(id));
@@ -186,6 +186,7 @@ export const ReviewDashboard = ({
           : 'The dashboard is built in 3 layers: Trading Health (KPIs), System Health (Orca Score, Regime Fit, Discipline), and Advanced Analysis (collapsible).'}
       />
 
+      {channel === 'home' && (<>
       {/* ═══ LIVE — OPEN POSITIONS (above Trading Health) ═══ */}
       {onAddTrade && (
         <OpenPositionsPanel T={T} isRTL={isRTL} onAddTrade={onAddTrade} refreshKey={trades.length} />
@@ -257,8 +258,10 @@ export const ReviewDashboard = ({
 
       {/* ═══ LAYER 2.5 — CALENDAR + LONG/SHORT BREAKDOWN ═══ */}
       <DashboardCalendarStrip T={T} t={t} isRTL={isRTL} trades={trades} />
+      </>)}
 
       {/* ═══ LAYER 3 — ADVANCED (COLLAPSIBLE) ═══ */}
+      {channel !== 'home' && (
       <div style={{ marginBottom: 18 }}>
         <button
           className="dash-advanced-toggle"
@@ -601,6 +604,7 @@ export const ReviewDashboard = ({
           </div>
         )}
       </div>
+      )}
 
       {/* Advanced Analytics Lab + Risk-Adjusted Ratios moved to /analytics (Ultimate-tier only) */}
     </div>
