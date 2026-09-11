@@ -227,7 +227,24 @@ Ground every answer in this data. Cite concrete trades, symbols and R values.`;
       console.warn("ai_runs insert failed", logErr);
     }
 
-    return new Response(JSON.stringify({ reply }), {
+    // ── Meter the successful message ────────────────────────────────────
+    let newUsed = used;
+    try {
+      newUsed = used + 1;
+      await supabase.from("ai_chat_usage").upsert({
+        user_id: u.user.id,
+        period,
+        message_count: newUsed,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id,period" });
+    } catch (mErr) {
+      console.warn("ai_chat_usage upsert failed", mErr);
+    }
+
+    return new Response(JSON.stringify({
+      reply,
+      usage: { used: newUsed, limit: isPro ? null : FREE_MONTHLY_LIMIT, pro: isPro },
+    }), {
       headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (e) {
