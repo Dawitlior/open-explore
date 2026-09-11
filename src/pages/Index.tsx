@@ -2020,12 +2020,7 @@ const Index = () => {
       )}
       {/* DESKTOP SIDEBAR — fixed overlay; in-flow spacer keeps main content stable */}
       {!isMobile && <div aria-hidden style={{ width: 62, flexShrink: 0 }} />}
-      {!isMobile && sbOpen && (
-        <div
-          onClick={() => setSbOpen(false)}
-          style={{ position: 'fixed', inset: 0, background: SURF.scrim, backdropFilter: 'blur(2px)', zIndex: 49, animation: 'fadeIn 0.18s ease-out' }}
-        />
-      )}
+      {/* No scrim on desktop — the dashboard stays fully interactive while the sidebar is open */}
       {!isMobile && (
       <aside data-app-sidebar style={{
         position: 'fixed', top: 0, bottom: 0, insetInlineStart: 0,
