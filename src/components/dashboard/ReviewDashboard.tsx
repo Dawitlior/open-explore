@@ -58,6 +58,9 @@ interface ReviewDashboardProps {
   handleHideChart: (chartId: string) => void;
   handleExplainClick: (title: string, explanation: ChartExplanation, chartId?: string) => void;
   onAddTrade?: (trade: Omit<Trade, 'id' | 'balance'>) => Promise<any> | any;
+  /** Controlled Advanced Analysis channel (driven by the sidebar). */
+  channel?: ChannelId;
+  onChannelChange?: (id: ChannelId) => void;
 }
 
 const PV = ({ children }: { children: React.ReactNode }) => <>{children}</>;
