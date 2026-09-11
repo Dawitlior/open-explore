@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Sparkles, Crown, Zap, X } from 'lucide-react';
 import { useLang } from '@/hooks/use-lang';
 import { useEntitlement, type AppTier } from '@/hooks/use-entitlement';
+import { useSubscription } from '@/hooks/use-subscription';
 import { cn } from '@/lib/utils';
 
 interface TierDef {
@@ -102,6 +103,9 @@ export function UpgradeModal() {
   const { tier: currentTier } = useEntitlement();
   const [open, setOpen] = useState(false);
   const [required, setRequired] = useState<AppTier>('advanced');
+  const [checkoutTier, setCheckoutTier] = useState<AppTier | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const { startCheckout } = useSubscription();
 
   useEffect(() => {
     const onOpen = (e: Event) => {
