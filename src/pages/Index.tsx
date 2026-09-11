@@ -1952,7 +1952,7 @@ const Index = () => {
                               onClick={() => { setPage('dashboard'); setDashChannel(ch.id); setAdvancedOpen(true); setSbOpen(false); }}
                             >
                               <span className="mm-icon" style={{ fontSize: 12 }}>{ch.icon}</span>
-                              <span className="mm-label" style={{ fontSize: 13, color: locked && !chActive ? T.text.muted : undefined }}>{isRTL ? ch.he : ch.en}</span>
+                              <span className="mm-label" style={{ fontSize: 13, color: locked && !chActive ? T.text.muted : undefined }}>{isRTL ? (ch.short?.he ?? ch.he) : (ch.short?.en ?? ch.en)}</span>
                               {locked && <span aria-hidden style={{ fontSize: 11, marginInlineStart: 'auto' }}>🔒</span>}
                             </button>
                           );
