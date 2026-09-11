@@ -128,9 +128,24 @@ export function UpgradeModal() {
     ? '7 ימי ניסיון חינם בגישת Advanced — ללא חיוב, ניתן לבטל בכל עת'
     : '7-day free trial with Advanced access — no charge, cancel anytime';
 
-  const startTrial = (tier: AppTier) => {
-    window.dispatchEvent(new CustomEvent('orca:start-trial', { detail: { tier } }));
-    setOpen(false);
+  const startTrial = async (tier: AppTier) => {
+    if (tier === 'standard') {
+      window.dispatchEvent(new CustomEvent('orca:start-trial', { detail: { tier } }));
+      setOpen(false);
+      return;
+    }
+    setCheckoutTier(tier);
+    setCheckoutError(null);
+    try {
+      await startCheckout(tier as Exclude<AppTier, 'standard'>);
+      setOpen(false);
+    } catch {
+      setCheckoutError(isHe
+        ? 'לא הצלחנו לפתוח את דף התשלום. נסה/י שוב.'
+        : 'Could not open the payment page. Please try again.');
+    } finally {
+      setCheckoutTier(null);
+    }
   };
 
   return (
