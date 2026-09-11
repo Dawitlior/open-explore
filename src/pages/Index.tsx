@@ -2110,7 +2110,7 @@ const Index = () => {
                       }}
                     >
                       <span aria-hidden style={{ width: 4, height: 4, borderRadius: '50%', flexShrink: 0, background: chActive ? infoColor(T) : T.text.muted, opacity: chActive ? 1 : 0.5 }} />
-                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{isRTL ? ch.he : ch.en}</span>
+                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{isRTL ? (ch.short?.he ?? ch.he) : (ch.short?.en ?? ch.en)}</span>
                       {locked && <span aria-hidden style={{ fontSize: 9, opacity: 0.7 }}>🔒</span>}
                     </button>
                   );
