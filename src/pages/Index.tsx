@@ -215,6 +215,8 @@ const Index = () => {
   const [advancedOpen, setAdvancedOpen] = useState(true);
   // Advanced Analysis channel — now selected from the sidebar (Dashboard sub-items).
   const [dashChannel, setDashChannel] = useState<ChannelId>('overview');
+  // Collapsible Dashboard sub-list in the sidebar (compact, chevron-toggled).
+  const [dashSubOpen, setDashSubOpen] = useState(false);
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
   const [calYear, setCalYear] = useState(() => new Date().getFullYear());
   const [selTrade, setSelTrade] = useState<Trade | null>(null);
