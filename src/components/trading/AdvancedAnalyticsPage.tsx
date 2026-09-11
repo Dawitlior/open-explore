@@ -67,7 +67,7 @@ interface AdvancedAnalyticsPageProps {
    */
   registryCharts?: ChartSpec[];
   /** When set, the quant labs render only the widgets of that channel. */
-  perfChannel?: 'core' | 'risk' | 'dynamics' | 'temporal';
+  perfChannel?: 'core' | 'risk' | 'dynamics' | 'temporal' | 'lab';
 }
 
 const HEB_DOW = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
@@ -77,7 +77,9 @@ const ENG_DOW_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'F
 
 const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode, isAlpha, operatingMode = 'live', registryCharts, perfChannel, onExplainClick }: AdvancedAnalyticsPageProps) => {
   // Sidebar-driven channel. No channel selected ⇒ main deck (KPIs → Risk-Adjusted).
-  const effectiveChannel = perfChannel;
+  // Quant Lab only understands the four analytical channels; 'lab' is the
+  // dedicated Advanced Analytics Lab channel and renders that lab in full.
+  const effectiveChannel = perfChannel === 'lab' ? undefined : perfChannel;
   const isMainView = !perfChannel;
   // Phase 3 dev-only invariant — warns if a non-canonical chart is rendered here.
   useChartGuard('analytics');
@@ -456,7 +458,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
   /* ─────────── RENDER ─────────── */
 
   return (
-    <div dir={langRTL ? 'rtl' : 'ltr'} style={{ fontFamily: langRTL ? "'Heebo', 'Inter', sans-serif" : "'Inter', 'Heebo', sans-serif" }}>
+    <div dir={langRTL ? 'rtl' : 'ltr'} style={{ fontFamily: langRTL ? "'Heebo', 'Inter', sans-serif" : "'Inter', 'Heebo', sans-serif", maxWidth: 1280, marginInline: 'auto', width: '100%' }}>
       {!isMoney && <RProxyBanner T={T} isRTL={langRTL} rEligibleCount={rEligibleCount} totalCount={totalCount} />}
       {/* HERO HEADER */}
       <motion.div
@@ -484,6 +486,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
             {perfChannel === 'core' ? t('ערוץ ליבה','Core Channel')
               : perfChannel === 'risk' ? t('ערוץ סיכון','Risk Channel')
               : perfChannel === 'dynamics' ? t('ערוץ דינמיקה','Dynamics Channel')
+              : perfChannel === 'lab' ? t('מעבדת אנליטיקה','Analytics Lab')
               : t('ערוץ תזמון','Timing Channel')}
           </span>
         </div>
@@ -679,7 +682,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       )}
 
       {/* ═══ QUANT LAB ═══ */}
-      {showMax && perfChannel && registryAllows('rollingSharpe') && (
+      {showMax && effectiveChannel && registryAllows('rollingSharpe') && (
         <Suspense fallback={<div style={{ padding: 18, fontSize: 11, color: T.text.muted, opacity: 0.7 }}>Loading Quant Lab…</div>}>
           <AnalyticsQuantLab T={T} trades={trades} privacyMode={privacyMode} only={effectiveChannel} />
         </Suspense>
@@ -1182,10 +1185,10 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       </GlassCard>}
 
       {/* ═══ ULTIMATE-ONLY · Advanced Analytics Lab (Risk-Adjusted moved below Day×Hour heatmap) ═══ */}
-      {showMax && perfChannel && (
+      {showMax && perfChannel === 'lab' && (
         <div style={{ marginTop: 24 }}>
           <DeferMount minHeight={480}>
-            <Suspense fallback={null}><DashboardAdvancedLab T={T} isRTL={langRTL} trades={_allTrades} only={effectiveChannel} /></Suspense>
+            <Suspense fallback={null}><DashboardAdvancedLab T={T} isRTL={langRTL} trades={_allTrades} /></Suspense>
           </DeferMount>
         </div>
       )}

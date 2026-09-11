@@ -68,7 +68,7 @@ export const LOCKED_COPY: Record<'breakdown' | 'quant', { he: string; en: string
 
 /* ─────────────── Performance page sub-channels ─────────────── */
 
-export type PerfChannelId = 'core' | 'risk' | 'dynamics' | 'temporal';
+export type PerfChannelId = 'core' | 'risk' | 'dynamics' | 'temporal' | 'lab';
 
 export interface PerfChannelDef {
   id: PerfChannelId;
@@ -87,4 +87,5 @@ export const PERF_CHANNELS: PerfChannelDef[] = [
   { id: 'risk', he: 'סיכון', en: 'Risk', icon: '⚠' },
   { id: 'dynamics', he: 'דינמיקה', en: 'Dynamics', icon: '∿' },
   { id: 'temporal', he: 'תזמון', en: 'Timing', icon: '◷' },
+  { id: 'lab', he: 'מעבדה', en: 'Lab', icon: '⌬' },
 ];
