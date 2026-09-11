@@ -89,3 +89,21 @@ export const PERF_CHANNELS: PerfChannelDef[] = [
   { id: 'temporal', he: 'תזמון', en: 'Timing', icon: '◷' },
   { id: 'lab', he: 'מעבדה', en: 'Lab', icon: '⌬' },
 ];
+
+/* ─────────────── Control Room sub-channels ─────────────── */
+
+export type CrChannelId = 'risk' | 'mind';
+
+export const CR_CHANNELS: Array<{ id: CrChannelId; he: string; en: string; icon: string }> = [
+  { id: 'risk', he: 'סיכון', en: 'Risk', icon: '🛡' },
+  { id: 'mind', he: 'תודעה', en: 'Mind', icon: '🧠' },
+];
+
+/* ─────────────── Intelligence / AI sub-channels ─────────────── */
+
+export type AiChannelId = 'insights' | 'coach';
+
+export const AI_CHANNELS: Array<{ id: AiChannelId; he: string; en: string; icon: string }> = [
+  { id: 'insights', he: 'תובנות AI', en: 'AI Insights', icon: '✦' },
+  { id: 'coach', he: 'Orca Coach', en: 'Orca Coach', icon: '◈' },
+];
