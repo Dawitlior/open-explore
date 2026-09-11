@@ -388,11 +388,12 @@ export function UpgradeModal() {
 
                       <button
                         type="button"
-                        disabled={isCurrent}
-                        onClick={() => startTrial(tier.id)}
+                        disabled={isCurrent || checkoutTier !== null}
+                        onClick={() => { void startTrial(tier.id); }}
                         className={cn(
                           'w-full py-2.5 rounded-lg text-sm font-bold transition-all',
                           isCurrent && 'cursor-not-allowed opacity-60',
+                          checkoutTier !== null && !isCurrent && 'opacity-80',
                         )}
                         style={{
                           background: isCurrent
@@ -417,9 +418,11 @@ export function UpgradeModal() {
                       >
                         {isCurrent
                           ? (isHe ? 'התוכנית הפעילה' : 'Current plan')
-                          : tier.id === 'standard'
-                            ? (isHe ? 'המשך/י בחינם' : 'Stay on Free')
-                            : (isHe ? 'התחל/י ניסיון 7 ימים' : 'Start 7-day trial')}
+                          : checkoutTier === tier.id
+                            ? (isHe ? 'פותח תשלום…' : 'Opening checkout…')
+                            : tier.id === 'standard'
+                              ? (isHe ? 'המשך/י בחינם' : 'Stay on Free')
+                              : (isHe ? 'מעבר לתשלום' : 'Continue to payment')}
                       </button>
                     </motion.div>
                   );
