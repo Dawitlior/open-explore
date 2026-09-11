@@ -372,7 +372,7 @@ html[dir="ltr"] .dash-kpi-grid .orca-metric-sub {
 .dash-advanced-body .dash-charts-2 > .dash-chart-card > *,
 .dash-advanced-body .dash-charts-3 > .dash-chart-card > *,
 .dash-advanced-body .dash-charts-alpha > .dash-chart-card > * {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
 }
