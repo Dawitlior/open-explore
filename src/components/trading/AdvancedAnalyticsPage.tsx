@@ -76,6 +76,8 @@ const HEB_DOW_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמ�
 const ENG_DOW_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode, isAlpha, operatingMode = 'live', registryCharts, perfChannel, onExplainClick }: AdvancedAnalyticsPageProps) => {
+  const [labChannel, setLabChannel] = useState<'all' | 'core' | 'risk' | 'dynamics' | 'temporal'>('all');
+  const effectiveChannel = perfChannel ?? (labChannel === 'all' ? undefined : labChannel);
   // Phase 3 dev-only invariant — warns if a non-canonical chart is rendered here.
   useChartGuard('analytics');
   // Registry guard — permissive when prop absent (legacy callers).
@@ -473,6 +475,38 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         </div>
       </motion.div>
 
+      {/* ═══ PERFORMANCE CHANNELS ═══ */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+        {([
+          { id: 'all', he: 'הכל', en: 'All' },
+          { id: 'core', he: 'ליבה', en: 'Core' },
+          { id: 'risk', he: 'סיכון', en: 'Risk' },
+          { id: 'dynamics', he: 'דינמיקה', en: 'Dynamics' },
+          { id: 'temporal', he: 'זמן', en: 'Timing' },
+        ] as const).map(c => {
+          const active = labChannel === c.id;
+          return (
+            <button
+              key={c.id}
+              onClick={() => setLabChannel(c.id)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 999,
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: 'pointer',
+                border: `1px solid ${active ? T.accent.cyan : T.border.subtle}`,
+                background: active ? `${T.accent.cyan}1a` : 'transparent',
+                color: active ? T.accent.cyan : T.text.muted,
+                transition: 'all 0.18s ease',
+              }}
+            >
+              {t(c.he, c.en)}
+            </button>
+          );
+        })}
+      </div>
+
       {/* ═══ HERO KPI GRID — 8 fiat-based tiles (R-only KPIs removed) ═══ */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 10, marginBottom: 16 }}>
         {[
@@ -660,7 +694,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       {/* ═══ QUANT LAB ═══ */}
       {showMax && registryAllows('rollingSharpe') && (
         <Suspense fallback={<div style={{ padding: 18, fontSize: 11, color: T.text.muted, opacity: 0.7 }}>Loading Quant Lab…</div>}>
-          <AnalyticsQuantLab T={T} trades={trades} privacyMode={privacyMode} only={perfChannel} />
+          <AnalyticsQuantLab T={T} trades={trades} privacyMode={privacyMode} only={effectiveChannel} />
         </Suspense>
       )}
 
@@ -1162,7 +1196,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
       {showMax && (
         <div style={{ marginTop: 24 }}>
           <DeferMount minHeight={480}>
-            <Suspense fallback={null}><DashboardAdvancedLab T={T} isRTL={langRTL} trades={_allTrades} only={perfChannel} /></Suspense>
+            <Suspense fallback={null}><DashboardAdvancedLab T={T} isRTL={langRTL} trades={_allTrades} only={effectiveChannel} /></Suspense>
           </DeferMount>
         </div>
       )}
