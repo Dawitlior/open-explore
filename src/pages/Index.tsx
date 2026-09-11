@@ -39,7 +39,7 @@ import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { MobileBottomNav } from '@/components/trading/MobileBottomNav';
 import { MainPullToRefresh } from '@/components/trading/MainPullToRefresh';
 const ReviewDashboard = lazy(() => import('@/components/dashboard/ReviewDashboard').then(m => ({ default: m.ReviewDashboard })));
-import { CHANNELS, type ChannelId, PERF_CHANNELS, type PerfChannelId } from '@/lib/dashboard-channels';
+import { CHANNELS, type ChannelId, PERF_CHANNELS, type PerfChannelId, CR_CHANNELS, type CrChannelId, AI_CHANNELS, type AiChannelId } from '@/lib/dashboard-channels';
 import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
 import { JournalLayoutSwitch, type JournalLayout } from '@/components/trading/JournalLayoutSwitch';
 import { JournalDataMenu } from '@/components/trading/JournalDataMenu';
