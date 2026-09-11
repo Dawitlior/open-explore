@@ -2092,8 +2092,44 @@ const Index = () => {
                   onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); setDashSubOpen(o => !o); } }}
                   style={{ display: 'inline-flex', fontSize: 10, opacity: 0.75, transform: `rotate(${dashSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', padding: '0 2px' }}
                 >▸</span>
+               )}
+              {isPerf && sbOpen && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  aria-label={isRTL ? 'הצג ערוצי ביצועים' : 'Toggle performance channels'}
+                  onClick={e => { e.stopPropagation(); setPerfSubOpen(o => !o); }}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); setPerfSubOpen(o => !o); } }}
+                  style={{ display: 'inline-flex', fontSize: 10, opacity: 0.75, transform: `rotate(${perfSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', padding: '0 2px' }}
+                >▸</span>
               )}
-            </button>
+             </button>
+            {/* Performance sub-channels */}
+            {isPerf && sbOpen && perfSubOpen && (
+              <div style={{ display: 'flex', flexDirection: 'column', margin: '1px 0 4px', paddingInlineStart: 12, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 20 }}>
+                {PERF_CHANNELS.map(ch => {
+                  const chActive = page === 'analytics' && perfChannel === ch.id;
+                  return (
+                    <button
+                      key={ch.id}
+                      onClick={() => { setPage('analytics'); setPerfChannel(ch.id); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 7, width: '100%',
+                        padding: '4px 8px', border: 'none', borderRadius: T.radius.sm,
+                        background: 'transparent',
+                        color: chActive ? infoColor(T) : T.text.secondary,
+                        fontSize: 11, lineHeight: 1.4, fontWeight: chActive ? 600 : 400, cursor: 'pointer',
+                        textAlign: isRTL ? 'right' : 'left', transition: 'color 0.2s',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}
+                    >
+                      <span aria-hidden style={{ width: 4, height: 4, borderRadius: '50%', flexShrink: 0, background: chActive ? infoColor(T) : T.text.muted, opacity: chActive ? 1 : 0.5 }} />
+                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{isRTL ? ch.he : ch.en}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             {/* Dashboard sub-channels — compact list, Pro ones show a lock */}
             {isDash && sbOpen && dashSubOpen && (
               <div style={{ display: 'flex', flexDirection: 'column', margin: '1px 0 4px', paddingInlineStart: 12, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 20 }}>
