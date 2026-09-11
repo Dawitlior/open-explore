@@ -212,6 +212,8 @@ const Index = () => {
   // explicitly requested no auto-open on refresh.
   const [sbOpen, setSbOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(true);
+  // Advanced Analysis channel — now selected from the sidebar (Dashboard sub-items).
+  const [dashChannel, setDashChannel] = useState<ChannelId>('overview');
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
   const [calYear, setCalYear] = useState(() => new Date().getFullYear());
   const [selTrade, setSelTrade] = useState<Trade | null>(null);
@@ -935,6 +937,8 @@ const Index = () => {
           handleHideChart={handleHideChart}
           handleExplainClick={handleExplainClick}
           onAddTrade={addTrade}
+          channel={dashChannel}
+          onChannelChange={setDashChannel}
         />
       </LazyShell>
     );
