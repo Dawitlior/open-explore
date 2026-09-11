@@ -39,7 +39,7 @@ import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { MobileBottomNav } from '@/components/trading/MobileBottomNav';
 import { MainPullToRefresh } from '@/components/trading/MainPullToRefresh';
 const ReviewDashboard = lazy(() => import('@/components/dashboard/ReviewDashboard').then(m => ({ default: m.ReviewDashboard })));
-import { CHANNELS, type ChannelId } from '@/lib/dashboard-channels';
+import { CHANNELS, type ChannelId, PERF_CHANNELS, type PerfChannelId } from '@/lib/dashboard-channels';
 import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
 import { JournalLayoutSwitch, type JournalLayout } from '@/components/trading/JournalLayoutSwitch';
 import { JournalDataMenu } from '@/components/trading/JournalDataMenu';
@@ -217,6 +217,8 @@ const Index = () => {
   const [dashChannel, setDashChannel] = useState<ChannelId>('home');
   // Collapsible Dashboard sub-list in the sidebar (compact, chevron-toggled).
   const [dashSubOpen, setDashSubOpen] = useState(false);
+  const [perfChannel, setPerfChannel] = useState<PerfChannelId>('all');
+  const [perfSubOpen, setPerfSubOpen] = useState(false);
   // Collapsible "Different Worlds" group (Trader Journey / Backtest / Trader Mind).
   const [worldsOpen, setWorldsOpen] = useState(false);
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
@@ -1704,6 +1706,7 @@ const Index = () => {
           privacyMode={settings.privacyMode}
           onExplainClick={handleExplainClick}
           registryCharts={analyticsCharts}
+          perfChannel={perfChannel === 'all' ? undefined : perfChannel}
         />
       </LazyShell>
     );
@@ -2049,6 +2052,7 @@ const Index = () => {
             const activeColor = isWeekly ? '#FFD700' : infoColor(T);
             const showBadge = isWeekly && showWeeklyReminder;
             const isDash = item.id === 'dashboard';
+            const isPerf = item.id === 'analytics';
             const groupChanged = item.group && item.group !== nav[idx - 1]?.group;
             return (
             <React.Fragment key={item.id}>
@@ -2060,7 +2064,7 @@ const Index = () => {
             {groupChanged && !sbOpen && idx > 0 && (
               <div aria-hidden style={{ height: 1, background: T.border.subtle, margin: '6px 12px' }} />
             )}
-            <button onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isDash) setDashSubOpen(true); if (isWeekly) dismissWeeklyReminder(); }}
+            <button onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isDash) setDashSubOpen(true); if (isPerf) setPerfSubOpen(true); if (isWeekly) dismissWeeklyReminder(); }}
               onMouseEnter={e => {
                 if (page === item.id) return;
                 e.currentTarget.style.background = `linear-gradient(110deg, transparent 0%, ${activeColor}18 50%, transparent 100%)`;
@@ -2088,8 +2092,44 @@ const Index = () => {
                   onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); setDashSubOpen(o => !o); } }}
                   style={{ display: 'inline-flex', fontSize: 10, opacity: 0.75, transform: `rotate(${dashSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', padding: '0 2px' }}
                 >▸</span>
+               )}
+              {isPerf && sbOpen && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  aria-label={isRTL ? 'הצג ערוצי ביצועים' : 'Toggle performance channels'}
+                  onClick={e => { e.stopPropagation(); setPerfSubOpen(o => !o); }}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); setPerfSubOpen(o => !o); } }}
+                  style={{ display: 'inline-flex', fontSize: 10, opacity: 0.75, transform: `rotate(${perfSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', padding: '0 2px' }}
+                >▸</span>
               )}
-            </button>
+             </button>
+            {/* Performance sub-channels */}
+            {isPerf && sbOpen && perfSubOpen && (
+              <div style={{ display: 'flex', flexDirection: 'column', margin: '1px 0 4px', paddingInlineStart: 12, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 20 }}>
+                {PERF_CHANNELS.map(ch => {
+                  const chActive = page === 'analytics' && perfChannel === ch.id;
+                  return (
+                    <button
+                      key={ch.id}
+                      onClick={() => { setPage('analytics'); setPerfChannel(ch.id); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 7, width: '100%',
+                        padding: '4px 8px', border: 'none', borderRadius: T.radius.sm,
+                        background: 'transparent',
+                        color: chActive ? infoColor(T) : T.text.secondary,
+                        fontSize: 11, lineHeight: 1.4, fontWeight: chActive ? 600 : 400, cursor: 'pointer',
+                        textAlign: isRTL ? 'right' : 'left', transition: 'color 0.2s',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}
+                    >
+                      <span aria-hidden style={{ width: 4, height: 4, borderRadius: '50%', flexShrink: 0, background: chActive ? infoColor(T) : T.text.muted, opacity: chActive ? 1 : 0.5 }} />
+                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{isRTL ? ch.he : ch.en}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             {/* Dashboard sub-channels — compact list, Pro ones show a lock */}
             {isDash && sbOpen && dashSubOpen && (
               <div style={{ display: 'flex', flexDirection: 'column', margin: '1px 0 4px', paddingInlineStart: 12, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 20 }}>
