@@ -2135,7 +2135,21 @@ const Index = () => {
           </button>
           )}
         </nav>
-        {/* Dimension Portal Buttons — visible in both expanded and collapsed sidebar */}
+        {/* ═══ DIFFERENT WORLDS — collapsible group (portals + Trader Mind) ═══ */}
+        {sbOpen && (
+          <div style={{ padding: '4px 6px' }}>
+            <button
+              onClick={() => setWorldsOpen(o => !o)}
+              aria-expanded={worldsOpen}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: 'transparent', border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', transition: 'color 0.2s, border-color 0.2s' }}
+            >
+              <span aria-hidden style={{ fontSize: 13 }}>🌐</span>
+              <span style={{ flex: 1, textAlign: isRTL ? 'right' : 'left' }}>{isRTL ? 'עולמות נוספים' : 'Different Worlds'}</span>
+              <span aria-hidden style={{ fontSize: 10, opacity: 0.75, transform: `rotate(${worldsOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease' }}>▸</span>
+            </button>
+          </div>
+        )}
+        {(!sbOpen || worldsOpen) && (<>
         <div style={{ padding: '4px 6px' }}><PortalButton onClick={() => setActiveDimension('journal')} isRTL={isRTL} expanded={sbOpen} /></div>
         <div style={{ padding: '4px 6px' }}><BacktestPortalButton onClick={() => setActiveDimension('backtest')} isRTL={isRTL} expanded={sbOpen} /></div>
         {/* Trader Mind — behavioral diagnostic (replaces legacy Oracle slot) */}
