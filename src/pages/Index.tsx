@@ -2165,6 +2165,13 @@ const Index = () => {
             </React.Fragment>
             );
           })}
+          {bugBoardAllowed && (sbOpen ? (
+            <div style={{ padding: '10px 12px 4px', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: T.text.muted, fontWeight: 600 }}>
+              {NAV_GROUP_LABEL.system}
+            </div>
+          ) : (
+            <div aria-hidden style={{ height: 1, background: T.border.subtle, margin: '6px 12px' }} />
+          ))}
           {bugBoardAllowed && (
           <button onClick={goBugBoard} title={isRTL ? 'לוח באגים' : 'Bug Board'} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: 'transparent', color: T.text.muted, border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: 400, transition: 'all 0.2s', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: '2px solid transparent' }}>
             <span style={{ fontSize: 16, lineHeight: 1 }}>📋</span>
