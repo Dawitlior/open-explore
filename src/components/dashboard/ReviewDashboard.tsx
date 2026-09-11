@@ -29,6 +29,7 @@ import { useDisplayMode, hasStrictR } from '@/lib/display-mode';
 import { getEffectiveR } from '@/lib/r-multiple';
 import { ShareStatsModal } from '@/components/trading/ShareStatsModal';
 import { Share2 } from 'lucide-react';
+import { CHANNELS, LOCKED_COPY, type ChannelId } from '@/lib/dashboard-channels';
 
 // Thin wrapper so lazy children get a graceful fallback while their chunk loads.
 const LazyChart = ({ children }: { children: React.ReactNode }) => (
@@ -122,7 +123,12 @@ export const ReviewDashboard = ({
   const { displayMode } = useDisplayMode();
   const isMoney = displayMode === 'MONEY';
   const [shareOpen, setShareOpen] = useState(false);
-  const [channel, setChannel] = useState<ChannelId>('overview');
+  // Channel is driven by the sidebar (Dashboard → sub-items). When the host
+  // does not control it we fall back to local state + inline tabs.
+  const [localChannel, setLocalChannel] = useState<ChannelId>('overview');
+  const controlled = typeof channelProp === 'string';
+  const channel = controlled ? (channelProp as ChannelId) : localChannel;
+  const setChannel = (id: ChannelId) => (controlled ? onChannelChange?.(id) : setLocalChannel(id));
   const isPro = isUltimateTier;
   const equityAdvanced = useMemo(() => {
     const sorted = [...trades].sort((a, b) => parseDateMs(a.date) - parseDateMs(b.date));
