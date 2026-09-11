@@ -1967,7 +1967,7 @@ const Index = () => {
               </div>
 
               {/* Dimensions */}
-              <div className="mm-section-label">{isRTL ? 'מרחבים' : 'Dimensions'}</div>
+              <div className="mm-section-label">{isRTL ? 'עולמות נוספים' : 'Different Worlds'}</div>
               <div style={{ padding: '0 4px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <PortalButton onClick={() => { setSbOpen(false); setActiveDimension('journal'); }} isRTL={isRTL} expanded={true} />
                 <BacktestPortalButton onClick={() => { setSbOpen(false); setActiveDimension('backtest'); }} isRTL={isRTL} expanded={true} />
