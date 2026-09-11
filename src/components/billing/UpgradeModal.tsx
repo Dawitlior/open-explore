@@ -429,10 +429,16 @@ export function UpgradeModal() {
                 })}
               </div>
 
+              {checkoutError && (
+                <p style={{ position: 'relative', zIndex: 2, textAlign: 'center', fontSize: 11, color: '#f87171', marginTop: 14, marginBottom: 0 }}>
+                  {checkoutError}
+                </p>
+              )}
+
               <p style={{ position: 'relative', zIndex: 2, textAlign: 'center', fontSize: 10, color: '#64748b', marginTop: 18, marginBottom: 0 }}>
                 {isHe
-                  ? 'אין צורך בפרטי אשראי עד תום תקופת הניסיון · ביטול בקליק'
-                  : 'No credit card required until trial ends · Cancel in one click'}
+                  ? 'תשלום מאובטח דרך Stripe · ביטול בקליק'
+                  : 'Secure payment via Stripe · Cancel in one click'}
               </p>
             </div>
           </motion.div>
