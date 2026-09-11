@@ -29,12 +29,7 @@ interface Msg { role: 'user' | 'assistant'; content: string }
 const FREE_LIMIT = 5;
 
 export default function OrcaCoachPage({ T, isRTL }: Props) {
-  const { activePortfolioId, activePortfolio, portfolios, setActivePortfolioId } = useActivePortfolio() as unknown as {
-    activePortfolioId: string | null;
-    activePortfolio: { name?: string } | null;
-    portfolios: Array<{ id: string; name: string }>;
-    setActivePortfolioId?: (id: string) => void;
-  };
+  const { activePortfolioId, activePortfolio, portfolios, setActivePortfolioId } = useActivePortfolio();
   const { tier } = useEntitlement();
   const isPro = tier === 'pro';
 
