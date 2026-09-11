@@ -258,8 +258,10 @@ export const ReviewDashboard = ({
 
       {/* ═══ LAYER 2.5 — CALENDAR + LONG/SHORT BREAKDOWN ═══ */}
       <DashboardCalendarStrip T={T} t={t} isRTL={isRTL} trades={trades} />
+      </>)}
 
       {/* ═══ LAYER 3 — ADVANCED (COLLAPSIBLE) ═══ */}
+      {channel !== 'home' && (
       <div style={{ marginBottom: 18 }}>
         <button
           className="dash-advanced-toggle"
