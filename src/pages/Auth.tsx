@@ -165,16 +165,7 @@ export default function AuthPage() {
     document.title = `${c.title} · ${c.brand}`;
   }, [lang, c]);
 
-  // A `next` query param (used by the OAuth consent flow) wins over router state,
-  // but only when it is a same-origin relative path.
-  const nextParam = (() => {
-    if (typeof window === 'undefined') return null;
-    const raw = new URLSearchParams(window.location.search).get('next');
-    if (!raw) return null;
-    return /^\/(?!\/)/.test(raw) ? raw : null;
-  })();
-  const redirectTo = nextParam || (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/';
-  const oauthReturn = `${typeof window !== 'undefined' ? window.location.origin : ''}/auth${nextParam ? `?next=${encodeURIComponent(nextParam)}` : ''}`;
+  const redirectTo = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/';
 
   useEffect(() => {
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
@@ -223,7 +214,7 @@ export default function AuthPage() {
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: oauthReturn,
+            redirectTo: `${window.location.origin}/auth`,
             queryParams: { prompt: 'select_account' },
           },
         });
@@ -231,7 +222,7 @@ export default function AuthPage() {
         return; // browser navigates away to Google
       }
       const result = await lovable.auth.signInWithOAuth('google', {
-        redirect_uri: nextParam ? oauthReturn : window.location.origin,
+        redirect_uri: window.location.origin,
         extraParams: { prompt: 'select_account' },
       });
       if (result?.error) throw result.error;
