@@ -217,7 +217,7 @@ const Index = () => {
   const [dashChannel, setDashChannel] = useState<ChannelId>('home');
   // Collapsible Dashboard sub-list in the sidebar (compact, chevron-toggled).
   const [dashSubOpen, setDashSubOpen] = useState(false);
-  const [perfChannel, setPerfChannel] = useState<PerfChannelId>('all');
+  const [perfChannel, setPerfChannel] = useState<PerfChannelId | null>(null);
   const [perfSubOpen, setPerfSubOpen] = useState(false);
   // Collapsible "Different Worlds" group (Trader Journey / Backtest / Trader Mind).
   const [worldsOpen, setWorldsOpen] = useState(false);
@@ -1706,7 +1706,7 @@ const Index = () => {
           privacyMode={settings.privacyMode}
           onExplainClick={handleExplainClick}
           registryCharts={analyticsCharts}
-          perfChannel={perfChannel === 'all' ? undefined : perfChannel}
+          perfChannel={perfChannel ?? undefined}
         />
       </LazyShell>
     );
@@ -2064,7 +2064,7 @@ const Index = () => {
             {groupChanged && !sbOpen && idx > 0 && (
               <div aria-hidden style={{ height: 1, background: T.border.subtle, margin: '6px 12px' }} />
             )}
-            <button onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isDash) setDashSubOpen(true); if (isPerf) setPerfSubOpen(true); if (isWeekly) dismissWeeklyReminder(); }}
+            <button onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isDash) setDashSubOpen(true); if (isPerf) { setPerfSubOpen(true); setPerfChannel(null); } if (isWeekly) dismissWeeklyReminder(); }}
               onMouseEnter={e => {
                 if (page === item.id) return;
                 e.currentTarget.style.background = `linear-gradient(110deg, transparent 0%, ${activeColor}18 50%, transparent 100%)`;

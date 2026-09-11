@@ -68,7 +68,7 @@ export const LOCKED_COPY: Record<'breakdown' | 'quant', { he: string; en: string
 
 /* ─────────────── Performance page sub-channels ─────────────── */
 
-export type PerfChannelId = 'all' | 'core' | 'risk' | 'dynamics' | 'temporal';
+export type PerfChannelId = 'core' | 'risk' | 'dynamics' | 'temporal';
 
 export interface PerfChannelDef {
   id: PerfChannelId;
@@ -77,11 +77,14 @@ export interface PerfChannelDef {
   icon: string;
 }
 
-/** Sub-channels shown under the Performance row in the sidebar. */
+/**
+ * Sub-channels shown under the Performance row in the sidebar.
+ * Clicking the Performance row itself shows the main deck (KPIs → Risk-Adjusted);
+ * these sub-channels hold the deep-dive labs.
+ */
 export const PERF_CHANNELS: PerfChannelDef[] = [
-  { id: 'all', he: 'הכל', en: 'All', icon: '◈' },
   { id: 'core', he: 'ליבה', en: 'Core', icon: '◎' },
   { id: 'risk', he: 'סיכון', en: 'Risk', icon: '⚠' },
   { id: 'dynamics', he: 'דינמיקה', en: 'Dynamics', icon: '∿' },
-  { id: 'temporal', he: 'זמן', en: 'Timing', icon: '◷' },
+  { id: 'temporal', he: 'תזמון', en: 'Timing', icon: '◷' },
 ];
