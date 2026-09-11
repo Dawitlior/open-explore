@@ -711,15 +711,17 @@ const Index = () => {
     { id: 'analytics', icon: Ico.bar, label: isRTL ? 'ביצועים' : 'Performance', group: 'workspace2' },
 
     { id: 'control-room', icon: Ico.shield, label: isRTL ? 'חדר בקרה' : 'Control Room', group: 'intelligence' },
-    { id: 'ai', icon: Ico.star, label: t.ai, group: 'intelligence' },
     ...(weeklyReviewAllowed
       ? [{ id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: T.isLight ? '#B45309' : '#FFD700', group: 'intelligence' }]
       : []),
+
+    { id: 'ai', icon: Ico.star, label: isRTL ? 'בינה מלאכותית' : 'AI', group: 'aiGroup' },
   ];
   const NAV_GROUP_LABEL: Record<string, string> = {
     workspace: isRTL ? 'סביבת עבודה' : 'Workspace',
     workspace2: isRTL ? 'ניתוח' : 'Analysis',
     intelligence: isRTL ? 'תובנות' : 'Intelligence',
+    aiGroup: isRTL ? 'בינה מלאכותית' : 'Intelligence · AI',
     markets: isRTL ? 'שווקים' : 'Markets',
     system: isRTL ? 'הגדרות' : 'Settings',
   };
