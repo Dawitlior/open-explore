@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Sparkles, Crown, Zap, X } from 'lucide-react';
 import { useLang } from '@/hooks/use-lang';
 import { useEntitlement, type AppTier } from '@/hooks/use-entitlement';
+import { useSubscription } from '@/hooks/use-subscription';
 import { cn } from '@/lib/utils';
 
 interface TierDef {
@@ -102,6 +103,9 @@ export function UpgradeModal() {
   const { tier: currentTier } = useEntitlement();
   const [open, setOpen] = useState(false);
   const [required, setRequired] = useState<AppTier>('advanced');
+  const [checkoutTier, setCheckoutTier] = useState<AppTier | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const { startCheckout } = useSubscription();
 
   useEffect(() => {
     const onOpen = (e: Event) => {
@@ -128,9 +132,24 @@ export function UpgradeModal() {
     ? '7 ימי ניסיון חינם בגישת Advanced — ללא חיוב, ניתן לבטל בכל עת'
     : '7-day free trial with Advanced access — no charge, cancel anytime';
 
-  const startTrial = (tier: AppTier) => {
-    window.dispatchEvent(new CustomEvent('orca:start-trial', { detail: { tier } }));
-    setOpen(false);
+  const startTrial = async (tier: AppTier) => {
+    if (tier === 'standard') {
+      window.dispatchEvent(new CustomEvent('orca:start-trial', { detail: { tier } }));
+      setOpen(false);
+      return;
+    }
+    setCheckoutTier(tier);
+    setCheckoutError(null);
+    try {
+      await startCheckout(tier as Exclude<AppTier, 'standard'>);
+      setOpen(false);
+    } catch {
+      setCheckoutError(isHe
+        ? 'לא הצלחנו לפתוח את דף התשלום. נסה/י שוב.'
+        : 'Could not open the payment page. Please try again.');
+    } finally {
+      setCheckoutTier(null);
+    }
   };
 
   return (
@@ -369,11 +388,12 @@ export function UpgradeModal() {
 
                       <button
                         type="button"
-                        disabled={isCurrent}
-                        onClick={() => startTrial(tier.id)}
+                        disabled={isCurrent || checkoutTier !== null}
+                        onClick={() => { void startTrial(tier.id); }}
                         className={cn(
                           'w-full py-2.5 rounded-lg text-sm font-bold transition-all',
                           isCurrent && 'cursor-not-allowed opacity-60',
+                          checkoutTier !== null && !isCurrent && 'opacity-80',
                         )}
                         style={{
                           background: isCurrent
@@ -398,19 +418,27 @@ export function UpgradeModal() {
                       >
                         {isCurrent
                           ? (isHe ? 'התוכנית הפעילה' : 'Current plan')
-                          : tier.id === 'standard'
-                            ? (isHe ? 'המשך/י בחינם' : 'Stay on Free')
-                            : (isHe ? 'התחל/י ניסיון 7 ימים' : 'Start 7-day trial')}
+                          : checkoutTier === tier.id
+                            ? (isHe ? 'פותח תשלום…' : 'Opening checkout…')
+                            : tier.id === 'standard'
+                              ? (isHe ? 'המשך/י בחינם' : 'Stay on Free')
+                              : (isHe ? 'מעבר לתשלום' : 'Continue to payment')}
                       </button>
                     </motion.div>
                   );
                 })}
               </div>
 
+              {checkoutError && (
+                <p style={{ position: 'relative', zIndex: 2, textAlign: 'center', fontSize: 11, color: '#f87171', marginTop: 14, marginBottom: 0 }}>
+                  {checkoutError}
+                </p>
+              )}
+
               <p style={{ position: 'relative', zIndex: 2, textAlign: 'center', fontSize: 10, color: '#64748b', marginTop: 18, marginBottom: 0 }}>
                 {isHe
-                  ? 'אין צורך בפרטי אשראי עד תום תקופת הניסיון · ביטול בקליק'
-                  : 'No credit card required until trial ends · Cancel in one click'}
+                  ? 'תשלום מאובטח דרך Stripe · ביטול בקליק'
+                  : 'Secure payment via Stripe · Cancel in one click'}
               </p>
             </div>
           </motion.div>
