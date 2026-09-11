@@ -451,7 +451,9 @@ export const ReviewDashboard = ({
                 </div>
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'מטריצת רבעונים — השוואת שנים' : 'Quarterly Year Matrix — Multi-View'} explanation={EXPLANATIONS.monthlyPerformance} unit={isMoney ? '$' : 'R'}>
-                    <LazyChart><QuarterlyYearMatrixChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
+                    <div className="dash-chart-scrollable-inner orca-thin-scroll">
+                      <LazyChart><QuarterlyYearMatrixChart T={T} trades={trades} isRTL={isRTL} tt={tt} /></LazyChart>
+                    </div>
                   </ChartWrapper>
                 </div>
               </div>
