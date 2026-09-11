@@ -2022,7 +2022,8 @@ const Index = () => {
             const activeColor = isWeekly ? '#FFD700' : infoColor(T);
             const showBadge = isWeekly && showWeeklyReminder;
             return (
-            <button key={item.id} onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isWeekly) dismissWeeklyReminder(); }}
+            <React.Fragment key={item.id}>
+            <button onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isWeekly) dismissWeeklyReminder(); }}
               onMouseEnter={e => {
                 if (page === item.id) return;
                 e.currentTarget.style.background = `linear-gradient(110deg, transparent 0%, ${activeColor}18 50%, transparent 100%)`;
