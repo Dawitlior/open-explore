@@ -207,11 +207,17 @@ export function ImportPreflightRoot() {
     >
       <style>{`
         @keyframes orcaUieFadeIn { from { opacity: 0 } to { opacity: 1 } }
-        @keyframes orcaUieScaleIn { from { transform: scale(0.97); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+        @keyframes orcaUieScaleIn { from { transform: scale(0.97) translateY(8px); opacity: 0 } to { transform: scale(1) translateY(0); opacity: 1 } }
+        @keyframes orcaUieSheen { from { background-position: -160% 0 } to { background-position: 260% 0 } }
         .orca-uie-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
         .orca-uie-scroll::-webkit-scrollbar-track { background: transparent; }
         .orca-uie-scroll::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.18); border-radius: 8px; }
         .orca-uie-scroll::-webkit-scrollbar-thumb:hover { background: rgba(201,168,76,0.32); }
+        .orca-uie-row { transition: background 140ms ease; }
+        .orca-uie-row:hover { background: rgba(201,168,76,0.06) !important; }
+        .orca-uie-panel { transition: border-color 160ms ease, box-shadow 160ms ease; }
+        .orca-uie-panel:hover { border-color: rgba(201,168,76,0.28) !important; }
+        .orca-uie-thead { position: sticky; top: 0; z-index: 2; backdrop-filter: blur(6px); }
       `}</style>
 
       <div
@@ -219,15 +225,24 @@ export function ImportPreflightRoot() {
           width: 'min(1080px, 96vw)', maxHeight: '92vh',
           background: `linear-gradient(180deg, ${T.surface} 0%, ${T.bg} 100%)`,
           border: `1px solid ${T.hairline}`,
-          borderRadius: 16,
-          boxShadow: `0 32px 80px rgba(0,0,0,0.65), 0 0 0 1px ${T.goldGlow} inset`,
+          borderRadius: 18,
+          boxShadow: `0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px ${T.goldGlow} inset`,
           display: 'flex', flexDirection: 'column',
           overflow: 'hidden',
-          animation: 'orcaUieScaleIn 320ms cubic-bezier(0.16,1,0.3,1)',
+          animation: 'orcaUieScaleIn 340ms cubic-bezier(0.16,1,0.3,1)',
         }}
       >
+        {/* Gold sheen accent */}
+        <div style={{
+          height: 2, flex: '0 0 2px',
+          background: `linear-gradient(90deg, transparent, ${T.gold}, transparent)`,
+          backgroundSize: '220% 100%',
+          animation: 'orcaUieSheen 4.5s ease-in-out infinite',
+          opacity: 0.7,
+        }} />
+
         {/* ── Header ──────────────────────────────────────────────────────── */}
-        <div style={{ padding: '22px 32px', borderBottom: `1px solid ${T.hairline}`, display: 'flex', alignItems: 'center', gap: 18 }}>
+        <div style={{ padding: '22px 32px', borderBottom: `1px solid ${T.hairline}`, display: 'flex', alignItems: 'center', gap: 18, background: 'linear-gradient(180deg, rgba(201,168,76,0.05), transparent)' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 19, fontWeight: 600, color: T.text, letterSpacing: 0.1 }}>
               {rtl ? 'בדיקת קובץ לפני ייבוא' : 'Review file before import'}
