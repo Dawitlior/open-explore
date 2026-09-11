@@ -2407,7 +2407,8 @@ const Index = () => {
                 trades={trades}
                 stats={stats}
                 limits={customRiskLimits}
-                initialTab={page === 'psychology' ? 'mind' : 'risk'}
+                key={page === 'control-room' ? crChannel : page}
+                initialTab={page === 'psychology' ? 'mind' : page === 'risk' ? 'risk' : crChannel}
                 renderRisk={renderRisk}
                 renderMind={renderPsychology}
               />
