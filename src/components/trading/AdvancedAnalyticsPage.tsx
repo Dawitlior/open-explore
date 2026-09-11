@@ -475,7 +475,8 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         </div>
       </motion.div>
 
-      {/* ═══ PERFORMANCE CHANNELS ═══ */}
+      {/* ═══ PERFORMANCE CHANNELS — only when not driven by the sidebar ═══ */}
+      {!perfChannel && (
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
         {([
           { id: 'all', he: 'הכל', en: 'All' },
