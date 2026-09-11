@@ -1602,3 +1602,61 @@ html[data-scheme="light"] { color-scheme: light; }
   outline-offset: 2px;
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--orca-session-ring, hsl(var(--ring))) 25%, transparent);
 }
+
+/* ── Orca Coach workspace ───────────────────────────────────────── */
+.orca-coach-grid { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1024px) {
+  .orca-coach-grid { grid-template-columns: minmax(0, 1fr) 320px; }
+}
+
+.orca-coach-chip { transition: border-color 140ms ease, color 140ms ease, background 140ms ease; }
+.orca-coach-chip:hover {
+  color: hsl(var(--foreground));
+  border-color: color-mix(in srgb, currentColor 45%, transparent);
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.orca-coach-shimmer {
+  background: linear-gradient(90deg, currentColor 0%, currentColor 35%, hsl(var(--foreground)) 50%, currentColor 65%, currentColor 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: orca-coach-shimmer 1.8s linear infinite;
+}
+@keyframes orca-coach-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -20% 0; }
+}
+
+.orca-coach-md > :first-child { margin-top: 0; }
+.orca-coach-md > :last-child { margin-bottom: 0; }
+.orca-coach-md p { margin: 0 0 10px; }
+.orca-coach-md h1, .orca-coach-md h2, .orca-coach-md h3 {
+  font-size: 13px; font-weight: 700; margin: 16px 0 8px; letter-spacing: 0.01em;
+}
+.orca-coach-md ul, .orca-coach-md ol { margin: 0 0 10px; padding-inline-start: 20px; }
+.orca-coach-md li { margin-bottom: 5px; }
+.orca-coach-md strong { font-weight: 700; }
+.orca-coach-md code {
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px;
+  padding: 1px 5px; border-radius: 4px;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+.orca-coach-md pre {
+  overflow-x: auto; padding: 12px; border-radius: 8px; margin: 0 0 12px;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+.orca-coach-md pre code { background: none; padding: 0; }
+.orca-coach-md blockquote {
+  margin: 0 0 12px; padding-inline-start: 12px;
+  border-inline-start: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+  opacity: 0.9;
+}
+.orca-coach-md table { width: 100%; border-collapse: collapse; margin: 0 0 12px; font-size: 12px; }
+.orca-coach-md th, .orca-coach-md td {
+  text-align: start; padding: 6px 8px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+}
+.orca-coach-md th { font-weight: 700; opacity: 0.8; }
+.orca-coach-md a { text-decoration: underline; text-underline-offset: 2px; }
