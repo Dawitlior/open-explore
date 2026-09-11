@@ -647,7 +647,7 @@ const Index = () => {
     { id: 'feature-info', label: isRTL ? 'אודות המערכת' : 'About Orca System', icon: 'ℹ️', category: isRTL ? 'מערכת' : 'System', action: () => setShowFeatureModal(true) },
     { id: 'journal-sanctuary', label: isRTL ? 'יומן מסע לסוחר' : 'Trader Journey', icon: '🏛️', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('journal') },
     { id: 'backtest-journal', label: isRTL ? 'יומן באק-טסט' : 'Backtest Journal', icon: '📊', category: isRTL ? 'ממדים' : 'Dimensions', action: () => setActiveDimension('backtest') },
-    { id: 'economic-radar', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar', icon: '📡', category: isRTL ? 'כלים' : 'Tools', action: () => setPage('economic-radar') },
+    { id: 'economic-radar', label: isRTL ? 'חדשות' : 'News', icon: '📡', category: isRTL ? 'כלים' : 'Tools', action: () => setPage('economic-radar') },
   ], [isRTL, handleExport, handleImport, handleGenerateInsights, settings]);
 
   // ─── Weekly Review reminder badge ───
@@ -707,7 +707,7 @@ const Index = () => {
       ? [{ id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: T.isLight ? '#B45309' : '#FFD700', group: 'intelligence' }]
       : []),
 
-    { id: 'economic-radar', icon: '📡', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar', group: 'markets' },
+    { id: 'economic-radar', icon: '📡', label: isRTL ? 'חדשות' : 'News', group: 'markets' },
   ];
   const NAV_GROUP_LABEL: Record<string, string> = {
     workspace: isRTL ? 'סביבת עבודה' : 'Workspace',

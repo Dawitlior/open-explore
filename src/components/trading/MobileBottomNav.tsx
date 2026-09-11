@@ -96,7 +96,7 @@ export const MobileBottomNav = ({
     { id: 'calendar',        label: isRTL ? 'לוח'  : 'Calendar', icon: 'calendar', active: page === 'calendar', onClick: () => onNavigate('calendar') },
     { id: 'journal',         label: isRTL ? 'יומן' : 'Journal',  icon: 'journal',  active: page === 'journal',  onClick: () => onNavigate('journal')  },
     { id: 'add',             label: isRTL ? 'חדש'  : 'New',      icon: 'plus',     active: false,               onClick: onAddTrade, highlight: true   },
-    { id: 'economic-radar',  label: isRTL ? 'מכ״ם' : 'Radar',    icon: 'radar',    active: false,               onClick: onOpenRadar                  },
+    { id: 'economic-radar',  label: isRTL ? 'חדשות' : 'News',    icon: 'radar',    active: false,               onClick: onOpenRadar                  },
     { id: 'more',            label: isRTL ? 'עוד'  : 'More',     icon: 'more',     active: false,               onClick: onOpenMore                   },
   ]), [isRTL, page, onNavigate, onAddTrade, onOpenRadar, onOpenMore]);
 
