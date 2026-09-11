@@ -293,9 +293,11 @@ export function ImportPreflightRoot() {
           {/* Readiness + Counts */}
           <div style={{ display: 'flex', gap: 18, alignItems: 'stretch', flexWrap: 'wrap' }}>
             {/* Readiness ring */}
-            <div style={{
-              minWidth: 240, padding: '20px 24px', borderRadius: 14,
-              background: T.surfaceSoft, border: `1px solid ${T.hairline}`,
+            <div className="orca-uie-panel" style={{
+              minWidth: 240, padding: '20px 24px', borderRadius: 16,
+              background: `linear-gradient(160deg, ${T.surfaceSoft}, rgba(2,5,12,0.35))`,
+              border: `1px solid ${T.hairline}`,
+              boxShadow: '0 10px 28px rgba(0,0,0,0.28)',
               display: 'flex', alignItems: 'center', gap: 18,
             }}>
               <div style={{
@@ -325,7 +327,7 @@ export function ImportPreflightRoot() {
             </div>
 
             {/* Counts */}
-            <div style={{ flex: 1, minWidth: 320, padding: '20px 24px', borderRadius: 14, background: T.surfaceSoft, border: `1px solid ${T.hairline}` }}>
+            <div className="orca-uie-panel" style={{ flex: 1, minWidth: 320, padding: '20px 24px', borderRadius: 16, background: `linear-gradient(160deg, ${T.surfaceSoft}, rgba(2,5,12,0.35))`, border: `1px solid ${T.hairline}`, boxShadow: '0 10px 28px rgba(0,0,0,0.28)' }}>
               <div style={{ fontSize: 12, color: T.textMuted, fontWeight: 500, marginBottom: 14 }}>
                 {rtl ? 'מה נמצא בקובץ' : 'What we found'}
               </div>
@@ -388,13 +390,14 @@ export function ImportPreflightRoot() {
               )}
             </div>
 
-            <div style={{ border: `1px solid ${T.hairline}`, borderRadius: 12, overflow: 'hidden', background: T.surfaceSoft }}>
+            <div style={{ border: `1px solid ${T.hairline}`, borderRadius: 14, overflow: 'hidden', background: T.surfaceSoft, boxShadow: '0 10px 28px rgba(0,0,0,0.26)' }}>
               {/* head */}
-              <div style={{
+              <div className="orca-uie-thead" style={{
                 display: 'grid',
                 gridTemplateColumns: editMode ? '36px 1.1fr 1.5fr 70px 1.4fr' : '36px 1.1fr 1.1fr 70px 1.8fr',
-                padding: '12px 18px', background: 'rgba(8,12,22,0.6)',
-                fontSize: 11, color: T.textMuted, fontWeight: 500,
+                padding: '12px 18px', background: 'rgba(8,12,22,0.85)',
+                fontSize: 10.5, color: T.textMuted, fontWeight: 600,
+                letterSpacing: 0.4, textTransform: 'uppercase',
                 borderBottom: `1px solid ${T.hairlineSoft}`,
               }}>
                 <div>#</div>
@@ -430,7 +433,7 @@ export function ImportPreflightRoot() {
                     : (fm?.field || '__unmapped__');
                   const niceName = fm?.field ? fieldHumanName(fm.field, rtl) : (rtl ? 'לא זוהה' : 'Not identified');
                   return (
-                    <div key={row.idx} style={{
+                    <div key={row.idx} className="orca-uie-row" style={{
                       display: 'grid',
                       gridTemplateColumns: editMode ? '36px 1.1fr 1.5fr 70px 1.4fr' : '36px 1.1fr 1.1fr 70px 1.8fr',
                       padding: '14px 18px', borderTop: `1px solid ${T.hairlineSoft}`,
