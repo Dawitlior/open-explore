@@ -1,5 +1,5 @@
 import { SURF } from '@/lib/neon-palette';
-import { useState, useMemo, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
 import { OnboardingWizard, shouldShowOnboarding } from '@/components/trading/OnboardingWizard';
 import { OrcaBootLoader } from '@/components/OrcaBootLoader';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, ComposedChart, ScatterChart, Scatter, ZAxis, ReferenceLine } from 'recharts';
