@@ -30,11 +30,42 @@ Deno.serve(withCors(async (req) => {
       });
     }
 
-    const { messages, model } = await req.json() as {
-      messages: ChatMsg[]; model?: string;
+    const { messages, model, portfolio_id } = await req.json() as {
+      messages: ChatMsg[]; model?: string; portfolio_id?: string | null;
     };
     if (!Array.isArray(messages) || messages.length === 0) {
       throw new Error("messages required");
+    }
+
+    // ── Freemium meter — 5 messages / calendar month for free users ──────
+    const FREE_MONTHLY_LIMIT = 5;
+    const period = new Date().toISOString().slice(0, 7); // YYYY-MM
+    let isPro = false;
+    try {
+      const { data: sub } = await supabase
+        .from("subscriptions")
+        .select("tier, subscribed")
+        .eq("user_id", u.user.id)
+        .maybeSingle();
+      const tier = (sub as { tier?: string } | null)?.tier ?? "standard";
+      isPro = tier === "pro" || tier === "ultimate" || tier === "advanced";
+    } catch (_) { /* treat as free */ }
+
+    const { data: usageRow } = await supabase
+      .from("ai_chat_usage")
+      .select("message_count")
+      .eq("user_id", u.user.id)
+      .eq("period", period)
+      .maybeSingle();
+    const used = Number((usageRow as { message_count?: number } | null)?.message_count ?? 0);
+
+    if (!isPro && used >= FREE_MONTHLY_LIMIT) {
+      return new Response(JSON.stringify({
+        error: "quota_exceeded",
+        paywall: true,
+        used,
+        limit: FREE_MONTHLY_LIMIT,
+      }), { status: 402, headers: { ...cors, "Content-Type": "application/json" } });
     }
 
     // ── Per-user abuse throttle (audit F-06) ────────────────────────────
