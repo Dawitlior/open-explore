@@ -2415,7 +2415,9 @@ const Index = () => {
             </LazyShell>
           )}
 
-          {page === 'ai' && renderAI()}
+          {page === 'ai' && (aiChannel === 'coach'
+            ? <LazyShell><OrcaCoachPage T={T} isRTL={isRTL} /></LazyShell>
+            : renderAI())}
 
           {page === 'economic-radar' && (
             <Suspense fallback={null}>
