@@ -2198,6 +2198,7 @@ const Index = () => {
             </button>
           </div>
         )}
+        </>)}
         {/* InstallPrompt removed from sidebar — install lives in Settings now */}
         {/* visual separation between the dimension portals and Settings */}
         <div aria-hidden style={{ height: 1, margin: '12px 12px 4px', background: `linear-gradient(90deg, transparent, ${T.border.subtle}, transparent)` }} />
