@@ -215,6 +215,8 @@ const Index = () => {
   const [advancedOpen, setAdvancedOpen] = useState(true);
   // Advanced Analysis channel — now selected from the sidebar (Dashboard sub-items).
   const [dashChannel, setDashChannel] = useState<ChannelId>('overview');
+  // Collapsible Dashboard sub-list in the sidebar (compact, chevron-toggled).
+  const [dashSubOpen, setDashSubOpen] = useState(false);
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
   const [calYear, setCalYear] = useState(() => new Date().getFullYear());
   const [selTrade, setSelTrade] = useState<Trade | null>(null);
@@ -689,19 +691,25 @@ const Index = () => {
   const WEEKLY_REVIEW_ALLOWED_EMAIL = 'dawitlior777@gmail.com';
   const weeklyReviewAllowed = (authUser?.email || '').toLowerCase() === WEEKLY_REVIEW_ALLOWED_EMAIL;
   const bugBoardAllowed = (authUser?.email || '').toLowerCase() === WEEKLY_REVIEW_ALLOWED_EMAIL;
-  const nav: Array<{ id: string; icon: any; label: string; color?: string; action?: () => void }> = [
-    { id: 'dashboard', icon: Ico.dash, label: isRTL ? 'דשבורד' : 'Dashboard' },
-    { id: 'calendar', icon: '📅', label: isRTL ? 'לוח שנה' : 'Calendar' },
-    { id: 'journal', icon: Ico.book, label: t.journal },
-    { id: 'analytics', icon: Ico.bar, label: isRTL ? 'ביצועים' : 'Performance' },
-    { id: 'control-room', icon: Ico.shield, label: isRTL ? 'חדר בקרה' : 'Control Room' },
+  const nav: Array<{ id: string; icon: any; label: string; color?: string; group?: string; action?: () => void }> = [
+    { id: 'dashboard', icon: Ico.dash, label: isRTL ? 'דשבורד' : 'Dashboard', group: 'workspace' },
+    { id: 'calendar', icon: '📅', label: isRTL ? 'לוח שנה' : 'Calendar', group: 'workspace' },
+    { id: 'journal', icon: Ico.book, label: t.journal, group: 'workspace' },
+    { id: 'analytics', icon: Ico.bar, label: isRTL ? 'ביצועים' : 'Performance', group: 'workspace' },
 
-    { id: 'ai', icon: Ico.star, label: t.ai },
-    { id: 'economic-radar', icon: '📡', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar' },
+    { id: 'control-room', icon: Ico.shield, label: isRTL ? 'חדר בקרה' : 'Control Room', group: 'intelligence' },
+    { id: 'ai', icon: Ico.star, label: t.ai, group: 'intelligence' },
     ...(weeklyReviewAllowed
-      ? [{ id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: T.isLight ? '#B45309' : '#FFD700' }]
+      ? [{ id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: T.isLight ? '#B45309' : '#FFD700', group: 'intelligence' }]
       : []),
+
+    { id: 'economic-radar', icon: '📡', label: isRTL ? 'מכ״ם כלכלי' : 'Economic Radar', group: 'markets' },
   ];
+  const NAV_GROUP_LABEL: Record<string, string> = {
+    workspace: isRTL ? 'סביבת עבודה' : 'Workspace',
+    intelligence: isRTL ? 'תובנות' : 'Intelligence',
+    markets: isRTL ? 'שווקים' : 'Markets',
+  };
 
   // Keep the loader visible until BOTH the trade list and the portfolio
   // resolution have finished.
@@ -1944,7 +1952,7 @@ const Index = () => {
                               onClick={() => { setPage('dashboard'); setDashChannel(ch.id); setAdvancedOpen(true); setSbOpen(false); }}
                             >
                               <span className="mm-icon" style={{ fontSize: 12 }}>{ch.icon}</span>
-                              <span className="mm-label" style={{ fontSize: 13, color: locked && !chActive ? T.text.muted : undefined }}>{isRTL ? ch.he : ch.en}</span>
+                              <span className="mm-label" style={{ fontSize: 13, color: locked && !chActive ? T.text.muted : undefined }}>{isRTL ? (ch.short?.he ?? ch.he) : (ch.short?.en ?? ch.en)}</span>
                               {locked && <span aria-hidden style={{ fontSize: 11, marginInlineStart: 'auto' }}>🔒</span>}
                             </button>
                           );
@@ -2012,12 +2020,7 @@ const Index = () => {
       )}
       {/* DESKTOP SIDEBAR — fixed overlay; in-flow spacer keeps main content stable */}
       {!isMobile && <div aria-hidden style={{ width: 62, flexShrink: 0 }} />}
-      {!isMobile && sbOpen && (
-        <div
-          onClick={() => setSbOpen(false)}
-          style={{ position: 'fixed', inset: 0, background: SURF.scrim, backdropFilter: 'blur(2px)', zIndex: 49, animation: 'fadeIn 0.18s ease-out' }}
-        />
-      )}
+      {/* No scrim on desktop — the dashboard stays fully interactive while the sidebar is open */}
       {!isMobile && (
       <aside data-app-sidebar style={{
         position: 'fixed', top: 0, bottom: 0, insetInlineStart: 0,
@@ -2039,13 +2042,23 @@ const Index = () => {
         {!sbOpen && <button onClick={() => setSbOpen(true)} style={{ background: 'none', border: 'none', color: T.text.muted, cursor: 'pointer', fontSize: 14, padding: '6px 0', lineHeight: 1, transition: 'color 0.2s' }}>›</button>}
         
         <nav style={{ flex: 1, padding: '0 6px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
-          {nav.map(item => {
+          {nav.map((item, idx) => {
             const isWeekly = item.id === 'weekly-review';
             const activeColor = isWeekly ? '#FFD700' : infoColor(T);
             const showBadge = isWeekly && showWeeklyReminder;
+            const isDash = item.id === 'dashboard';
+            const groupChanged = item.group && item.group !== nav[idx - 1]?.group;
             return (
             <React.Fragment key={item.id}>
-            <button onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isWeekly) dismissWeeklyReminder(); }}
+            {groupChanged && sbOpen && (
+              <div style={{ padding: '10px 12px 4px', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: T.text.muted, fontWeight: 600 }}>
+                {NAV_GROUP_LABEL[item.group!]}
+              </div>
+            )}
+            {groupChanged && !sbOpen && idx > 0 && (
+              <div aria-hidden style={{ height: 1, background: T.border.subtle, margin: '6px 12px' }} />
+            )}
+            <button onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isDash) setDashSubOpen(true); if (isWeekly) dismissWeeklyReminder(); }}
               onMouseEnter={e => {
                 if (page === item.id) return;
                 e.currentTarget.style.background = `linear-gradient(110deg, transparent 0%, ${activeColor}18 50%, transparent 100%)`;
@@ -2063,31 +2076,42 @@ const Index = () => {
                 {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}
                 {showBadge && <ReminderBadge />}
               </span>
-              {sbOpen && <span>{item.label}</span>}
+              {sbOpen && <span style={{ flex: 1 }}>{item.label}</span>}
+              {isDash && sbOpen && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  aria-label={isRTL ? 'הצג ערוצי דשבורד' : 'Toggle dashboard channels'}
+                  onClick={e => { e.stopPropagation(); setDashSubOpen(o => !o); }}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); setDashSubOpen(o => !o); } }}
+                  style={{ display: 'inline-flex', fontSize: 10, opacity: 0.75, transform: `rotate(${dashSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', padding: '0 2px' }}
+                >▸</span>
+              )}
             </button>
-            {/* Dashboard sub-channels — visible to everyone, Pro ones show a lock */}
-            {item.id === 'dashboard' && sbOpen && page === 'dashboard' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 1, margin: '2px 0 6px', paddingInlineStart: 18, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 16 }}>
+            {/* Dashboard sub-channels — compact list, Pro ones show a lock */}
+            {isDash && sbOpen && dashSubOpen && (
+              <div style={{ display: 'flex', flexDirection: 'column', margin: '1px 0 4px', paddingInlineStart: 12, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 20 }}>
                 {CHANNELS.map(ch => {
                   const locked = ch.pro && !isUltimateTier;
-                  const chActive = dashChannel === ch.id;
+                  const chActive = page === 'dashboard' && dashChannel === ch.id;
                   return (
                     <button
                       key={ch.id}
-                      onClick={() => { setDashChannel(ch.id); setAdvancedOpen(true); }}
+                      onClick={() => { setPage('dashboard'); setDashChannel(ch.id); setAdvancedOpen(true); }}
                       title={locked ? (isRTL ? 'זמין בתוכנית פרו' : 'Available on Orca Pro') : undefined}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                        padding: '6px 8px', border: 'none', borderRadius: T.radius.sm,
-                        background: chActive ? `${infoColor(T)}18` : 'transparent',
+                        display: 'flex', alignItems: 'center', gap: 7, width: '100%',
+                        padding: '4px 8px', border: 'none', borderRadius: T.radius.sm,
+                        background: 'transparent',
                         color: chActive ? infoColor(T) : (locked ? T.text.muted : T.text.secondary),
-                        fontSize: 11.5, fontWeight: chActive ? 600 : 400, cursor: 'pointer',
-                        textAlign: isRTL ? 'right' : 'left', transition: 'background 0.2s, color 0.2s',
+                        fontSize: 11, lineHeight: 1.4, fontWeight: chActive ? 600 : 400, cursor: 'pointer',
+                        textAlign: isRTL ? 'right' : 'left', transition: 'color 0.2s',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                       }}
                     >
-                      <span aria-hidden style={{ fontSize: 11, opacity: 0.8 }}>{ch.icon}</span>
-                      <span style={{ flex: 1 }}>{isRTL ? ch.he : ch.en}</span>
-                      {locked && <span aria-hidden style={{ fontSize: 10 }}>🔒</span>}
+                      <span aria-hidden style={{ width: 4, height: 4, borderRadius: '50%', flexShrink: 0, background: chActive ? infoColor(T) : T.text.muted, opacity: chActive ? 1 : 0.5 }} />
+                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{isRTL ? (ch.short?.he ?? ch.he) : (ch.short?.en ?? ch.en)}</span>
+                      {locked && <span aria-hidden style={{ fontSize: 9, opacity: 0.7 }}>🔒</span>}
                     </button>
                   );
                 })}

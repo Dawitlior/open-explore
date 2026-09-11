@@ -10,9 +10,9 @@
  */
 export type ChannelId = 'overview' | 'breakdown' | 'quant';
 
-export const CHANNELS: { id: ChannelId; he: string; en: string; pro: boolean; icon: string }[] = [
+export const CHANNELS: { id: ChannelId; he: string; en: string; short?: { he: string; en: string }; pro: boolean; icon: string }[] = [
   { id: 'overview',  he: 'התמונה הגדולה', en: 'Big Picture',              pro: false, icon: '◎' },
-  { id: 'breakdown', he: 'פילוח וחלוקה',  en: 'Breakdown & Distribution', pro: true,  icon: '◱' },
+  { id: 'breakdown', he: 'פילוח וחלוקה',  en: 'Breakdown & Distribution', short: { he: 'פילוח', en: 'Breakdown' }, pro: true, icon: '◱' },
   { id: 'quant',     he: 'מעבדת קוונט',   en: 'Quant Lab',                pro: true,  icon: '∿' },
 ];
 
