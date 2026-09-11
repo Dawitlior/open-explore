@@ -1,5 +1,5 @@
 import { SURF } from '@/lib/neon-palette';
-import { useState, useMemo, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
 import { OnboardingWizard, shouldShowOnboarding } from '@/components/trading/OnboardingWizard';
 import { OrcaBootLoader } from '@/components/OrcaBootLoader';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, ComposedChart, ScatterChart, Scatter, ZAxis, ReferenceLine } from 'recharts';
@@ -39,6 +39,7 @@ import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { MobileBottomNav } from '@/components/trading/MobileBottomNav';
 import { MainPullToRefresh } from '@/components/trading/MainPullToRefresh';
 const ReviewDashboard = lazy(() => import('@/components/dashboard/ReviewDashboard').then(m => ({ default: m.ReviewDashboard })));
+import { CHANNELS, type ChannelId } from '@/lib/dashboard-channels';
 import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
 import { JournalLayoutSwitch, type JournalLayout } from '@/components/trading/JournalLayoutSwitch';
 import { JournalDataMenu } from '@/components/trading/JournalDataMenu';
@@ -212,6 +213,8 @@ const Index = () => {
   // explicitly requested no auto-open on refresh.
   const [sbOpen, setSbOpen] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(true);
+  // Advanced Analysis channel — now selected from the sidebar (Dashboard sub-items).
+  const [dashChannel, setDashChannel] = useState<ChannelId>('overview');
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
   const [calYear, setCalYear] = useState(() => new Date().getFullYear());
   const [selTrade, setSelTrade] = useState<Trade | null>(null);
@@ -935,6 +938,8 @@ const Index = () => {
           handleHideChart={handleHideChart}
           handleExplainClick={handleExplainClick}
           onAddTrade={addTrade}
+          channel={dashChannel}
+          onChannelChange={setDashChannel}
         />
       </LazyShell>
     );
@@ -1912,8 +1917,8 @@ const Index = () => {
                   const isActive = page === item.id;
                   const showBadge = isWeekly && showWeeklyReminder;
                   return (
+                    <React.Fragment key={item.id}>
                     <button
-                      key={item.id}
                       className="mm-row"
                       data-active={isActive ? 'true' : 'false'}
                       onClick={() => { setPage(item.id); setSbOpen(false); if (isWeekly) dismissWeeklyReminder(); }}
@@ -1925,6 +1930,28 @@ const Index = () => {
                       <span className="mm-label" style={isWeekly && !isActive ? { color: '#FFD700' } : undefined}>{item.label}</span>
                       <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                     </button>
+                    {item.id === 'dashboard' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingInlineStart: 22, marginBottom: 4 }}>
+                        {CHANNELS.map(ch => {
+                          const locked = ch.pro && !isUltimateTier;
+                          const chActive = page === 'dashboard' && dashChannel === ch.id;
+                          return (
+                            <button
+                              key={ch.id}
+                              className="mm-row"
+                              data-active={chActive ? 'true' : 'false'}
+                              style={{ minHeight: 40 }}
+                              onClick={() => { setPage('dashboard'); setDashChannel(ch.id); setAdvancedOpen(true); setSbOpen(false); }}
+                            >
+                              <span className="mm-icon" style={{ fontSize: 12 }}>{ch.icon}</span>
+                              <span className="mm-label" style={{ fontSize: 13, color: locked && !chActive ? T.text.muted : undefined }}>{isRTL ? ch.he : ch.en}</span>
+                              {locked && <span aria-hidden style={{ fontSize: 11, marginInlineStart: 'auto' }}>🔒</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    </React.Fragment>
                   );
                 })}
               </div>
@@ -2017,7 +2044,8 @@ const Index = () => {
             const activeColor = isWeekly ? '#FFD700' : infoColor(T);
             const showBadge = isWeekly && showWeeklyReminder;
             return (
-            <button key={item.id} onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isWeekly) dismissWeeklyReminder(); }}
+            <React.Fragment key={item.id}>
+            <button onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isWeekly) dismissWeeklyReminder(); }}
               onMouseEnter={e => {
                 if (page === item.id) return;
                 e.currentTarget.style.background = `linear-gradient(110deg, transparent 0%, ${activeColor}18 50%, transparent 100%)`;
@@ -2037,6 +2065,35 @@ const Index = () => {
               </span>
               {sbOpen && <span>{item.label}</span>}
             </button>
+            {/* Dashboard sub-channels — visible to everyone, Pro ones show a lock */}
+            {item.id === 'dashboard' && sbOpen && page === 'dashboard' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 1, margin: '2px 0 6px', paddingInlineStart: 18, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 16 }}>
+                {CHANNELS.map(ch => {
+                  const locked = ch.pro && !isUltimateTier;
+                  const chActive = dashChannel === ch.id;
+                  return (
+                    <button
+                      key={ch.id}
+                      onClick={() => { setDashChannel(ch.id); setAdvancedOpen(true); }}
+                      title={locked ? (isRTL ? 'זמין בתוכנית פרו' : 'Available on Orca Pro') : undefined}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                        padding: '6px 8px', border: 'none', borderRadius: T.radius.sm,
+                        background: chActive ? `${infoColor(T)}18` : 'transparent',
+                        color: chActive ? infoColor(T) : (locked ? T.text.muted : T.text.secondary),
+                        fontSize: 11.5, fontWeight: chActive ? 600 : 400, cursor: 'pointer',
+                        textAlign: isRTL ? 'right' : 'left', transition: 'background 0.2s, color 0.2s',
+                      }}
+                    >
+                      <span aria-hidden style={{ fontSize: 11, opacity: 0.8 }}>{ch.icon}</span>
+                      <span style={{ flex: 1 }}>{isRTL ? ch.he : ch.en}</span>
+                      {locked && <span aria-hidden style={{ fontSize: 10 }}>🔒</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            </React.Fragment>
             );
           })}
           {bugBoardAllowed && (

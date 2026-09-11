@@ -29,6 +29,7 @@ import { useDisplayMode, hasStrictR } from '@/lib/display-mode';
 import { getEffectiveR } from '@/lib/r-multiple';
 import { ShareStatsModal } from '@/components/trading/ShareStatsModal';
 import { Share2 } from 'lucide-react';
+import { CHANNELS, LOCKED_COPY, type ChannelId } from '@/lib/dashboard-channels';
 
 // Thin wrapper so lazy children get a graceful fallback while their chunk loads.
 const LazyChart = ({ children }: { children: React.ReactNode }) => (
@@ -57,28 +58,14 @@ interface ReviewDashboardProps {
   handleHideChart: (chartId: string) => void;
   handleExplainClick: (title: string, explanation: ChartExplanation, chartId?: string) => void;
   onAddTrade?: (trade: Omit<Trade, 'id' | 'balance'>) => Promise<any> | any;
+  /** Controlled Advanced Analysis channel (driven by the sidebar). */
+  channel?: ChannelId;
+  onChannelChange?: (id: ChannelId) => void;
 }
 
 const PV = ({ children }: { children: React.ReactNode }) => <>{children}</>;
 
-/** Advanced Analysis sub-channels. Big Picture is free; the rest are Pro. */
-type ChannelId = 'overview' | 'breakdown' | 'quant';
-const CHANNELS: { id: ChannelId; he: string; en: string; pro: boolean }[] = [
-  { id: 'overview',  he: 'התמונה הגדולה', en: 'Big Picture',            pro: false },
-  { id: 'breakdown', he: 'פילוח וחלוקה',  en: 'Breakdown & Distribution', pro: true },
-  { id: 'quant',     he: 'מעבדת קוונט',   en: 'Quant Lab',              pro: true },
-];
-
-const LOCKED_COPY: Record<'breakdown' | 'quant', { he: string; en: string }> = {
-  breakdown: {
-    he: 'פילוח לפי כיוון, חודשים ורבעונים — כולל מטריצת שנים מלאה.',
-    en: 'Direction, monthly and quarterly breakdowns — including the full year matrix.',
-  },
-  quant: {
-    he: 'חלונות הזדמנות, תשואה מול זמן החזקה וניתוח רבעוני מרובה תצוגות.',
-    en: 'Opportunity windows, return vs holding time and multi-view quarterly analysis.',
-  },
-};
+/** Advanced Analysis sub-channels live in `@/lib/dashboard-channels`. */
 
 const LockedChannel = ({ T, isRTL, which }: { T: TradingTheme; isRTL: boolean; which: 'breakdown' | 'quant' }) => (
   <div className="dash-channel-locked" style={{ borderColor: T.border.medium, background: T.bg.tertiary }}>
@@ -134,12 +121,17 @@ export const ReviewDashboard = ({
   T, t, isRTL, trades, stats, riskData, radarData, tt, privacyMode,
   isAdvancedTier, isUltimateTier, isAlpha,
   advancedOpen, setAdvancedOpen, isChartVisible, handleHideChart, handleExplainClick,
-  onAddTrade,
+  onAddTrade, channel: channelProp, onChannelChange,
 }: ReviewDashboardProps) => {
   const { displayMode } = useDisplayMode();
   const isMoney = displayMode === 'MONEY';
   const [shareOpen, setShareOpen] = useState(false);
-  const [channel, setChannel] = useState<ChannelId>('overview');
+  // Channel is driven by the sidebar (Dashboard → sub-items). When the host
+  // does not control it we fall back to local state + inline tabs.
+  const [localChannel, setLocalChannel] = useState<ChannelId>('overview');
+  const controlled = typeof channelProp === 'string';
+  const channel = controlled ? (channelProp as ChannelId) : localChannel;
+  const setChannel = (id: ChannelId) => (controlled ? onChannelChange?.(id) : setLocalChannel(id));
   const isPro = isUltimateTier;
   const equityAdvanced = useMemo(() => {
     const sorted = [...trades].sort((a, b) => parseDateMs(a.date) - parseDateMs(b.date));
@@ -281,7 +273,8 @@ export const ReviewDashboard = ({
 
         {advancedOpen && (
           <div className="dash-advanced-body">
-            {/* Channel tabs */}
+            {/* Channel tabs — only when the sidebar is NOT driving the channel */}
+            {!controlled && (
             <div className="dash-channel-tabs" role="tablist">
               {CHANNELS.map(ch => {
                 const locked = ch.pro && !isPro;
@@ -302,6 +295,8 @@ export const ReviewDashboard = ({
                 );
               })}
             </div>
+            )}
+
 
             {channel === 'overview' && (
               <>
