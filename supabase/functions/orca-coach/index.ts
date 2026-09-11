@@ -30,11 +30,42 @@ Deno.serve(withCors(async (req) => {
       });
     }
 
-    const { messages, model } = await req.json() as {
-      messages: ChatMsg[]; model?: string;
+    const { messages, model, portfolio_id } = await req.json() as {
+      messages: ChatMsg[]; model?: string; portfolio_id?: string | null;
     };
     if (!Array.isArray(messages) || messages.length === 0) {
       throw new Error("messages required");
+    }
+
+    // ── Freemium meter — 5 messages / calendar month for free users ──────
+    const FREE_MONTHLY_LIMIT = 5;
+    const period = new Date().toISOString().slice(0, 7); // YYYY-MM
+    let isPro = false;
+    try {
+      const { data: sub } = await supabase
+        .from("subscriptions")
+        .select("tier, subscribed")
+        .eq("user_id", u.user.id)
+        .maybeSingle();
+      const tier = (sub as { tier?: string } | null)?.tier ?? "standard";
+      isPro = tier === "pro" || tier === "ultimate" || tier === "advanced";
+    } catch (_) { /* treat as free */ }
+
+    const { data: usageRow } = await supabase
+      .from("ai_chat_usage")
+      .select("message_count")
+      .eq("user_id", u.user.id)
+      .eq("period", period)
+      .maybeSingle();
+    const used = Number((usageRow as { message_count?: number } | null)?.message_count ?? 0);
+
+    if (!isPro && used >= FREE_MONTHLY_LIMIT) {
+      return new Response(JSON.stringify({
+        error: "quota_exceeded",
+        paywall: true,
+        used,
+        limit: FREE_MONTHLY_LIMIT,
+      }), { status: 402, headers: { ...cors, "Content-Type": "application/json" } });
     }
 
     // ── Per-user abuse throttle (audit F-06) ────────────────────────────
@@ -76,15 +107,73 @@ Deno.serve(withCors(async (req) => {
       mindLine = `\n\n[TRADER MIND — ${tm.archetype ?? "Unlabeled"}]\nLatest behavioral diagnostic snapshot for this trader:\n${summary}\n\nUse this profile to calibrate tone and coaching focus. Reference it gently; never read it back verbatim.`;
     }
 
+    // ── Portfolio-scoped trading context ────────────────────────────────
+    // Only the requested portfolio, only this user's rows.
+    let portfolioLine = "\n\n[PORTFOLIO] No portfolio selected — answer generally and ask the trader to pick one.";
+    if (portfolio_id) {
+      try {
+        const { data: rows } = await supabase
+          .from("trades")
+          .select("trade_id, data, manual_r_multiple")
+          .eq("user_id", u.user.id)
+          .eq("portfolio_id", portfolio_id)
+          .order("trade_id", { ascending: false })
+          .limit(300);
+        const trades = (rows ?? []).map((r) => {
+          const d = (r as { data?: Record<string, unknown> }).data ?? {};
+          const manual = (r as { manual_r_multiple?: number | null }).manual_r_multiple;
+          return {
+            id: (r as { trade_id?: number }).trade_id,
+            date: d.date, coin: d.coin, direction: d.direction,
+            r: typeof manual === "number" ? manual : Number(d.returnR ?? 0),
+            pnl: Number(d.pnl ?? 0),
+            outcome: d.winLoss, rules: d.rules, setup: d.orderType,
+          };
+        });
+        const n = trades.length;
+        if (n > 0) {
+          const wins = trades.filter((t) => t.r > 0);
+          const losses = trades.filter((t) => t.r < 0);
+          const sum = (a: number[]) => a.reduce((x, y) => x + y, 0);
+          const winRate = (wins.length / n) * 100;
+          const expectancyR = sum(trades.map((t) => t.r)) / n;
+          const grossWin = sum(wins.map((t) => t.pnl));
+          const grossLoss = Math.abs(sum(losses.map((t) => t.pnl)));
+          const pf = grossLoss > 0 ? grossWin / grossLoss : null;
+          let peak = 0, equity = 0, maxDD = 0;
+          for (const t of [...trades].reverse()) {
+            equity += t.pnl;
+            peak = Math.max(peak, equity);
+            maxDD = Math.min(maxDD, equity - peak);
+          }
+          const recent = trades.slice(0, 30);
+          portfolioLine = `\n\n[PORTFOLIO CONTEXT — portfolio ${portfolio_id}]
+Trades analysed: ${n}
+Win rate: ${winRate.toFixed(1)}%
+Expectancy: ${expectancyR.toFixed(2)}R per trade
+Profit factor: ${pf === null ? "n/a" : pf.toFixed(2)}
+Max drawdown: ${maxDD.toFixed(2)} (account currency)
+Last 30 trades (newest first):
+${JSON.stringify(recent).slice(0, 4000)}
+
+Ground every answer in this data. Cite concrete trades, symbols and R values.`;
+        } else {
+          portfolioLine = "\n\n[PORTFOLIO CONTEXT] This portfolio has no trades yet — coach the trader on getting started and logging clean data.";
+        }
+      } catch (ctxErr) {
+        console.warn("portfolio context failed", ctxErr);
+      }
+    }
+
     const finalMessages: ChatMsg[] = [
-      { role: "system", content: BASE_PROMPT + mindLine },
+      { role: "system", content: BASE_PROMPT + mindLine + portfolioLine },
       ...messages.filter((m) => m.role !== "system"),
     ];
 
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
 
-    const modelName = model ?? "google/gemini-2.5-flash";
+    const modelName = model ?? "google/gemini-3.8-flash";
     const startedAt = Date.now();
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -138,7 +227,24 @@ Deno.serve(withCors(async (req) => {
       console.warn("ai_runs insert failed", logErr);
     }
 
-    return new Response(JSON.stringify({ reply }), {
+    // ── Meter the successful message ────────────────────────────────────
+    let newUsed = used;
+    try {
+      newUsed = used + 1;
+      await supabase.from("ai_chat_usage").upsert({
+        user_id: u.user.id,
+        period,
+        message_count: newUsed,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id,period" });
+    } catch (mErr) {
+      console.warn("ai_chat_usage upsert failed", mErr);
+    }
+
+    return new Response(JSON.stringify({
+      reply,
+      usage: { used: newUsed, limit: isPro ? null : FREE_MONTHLY_LIMIT, pro: isPro },
+    }), {
       headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (e) {

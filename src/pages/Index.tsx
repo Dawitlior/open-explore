@@ -39,7 +39,7 @@ import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { MobileBottomNav } from '@/components/trading/MobileBottomNav';
 import { MainPullToRefresh } from '@/components/trading/MainPullToRefresh';
 const ReviewDashboard = lazy(() => import('@/components/dashboard/ReviewDashboard').then(m => ({ default: m.ReviewDashboard })));
-import { CHANNELS, type ChannelId, PERF_CHANNELS, type PerfChannelId } from '@/lib/dashboard-channels';
+import { CHANNELS, type ChannelId, PERF_CHANNELS, type PerfChannelId, CR_CHANNELS, type CrChannelId, AI_CHANNELS, type AiChannelId } from '@/lib/dashboard-channels';
 import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
 import { JournalLayoutSwitch, type JournalLayout } from '@/components/trading/JournalLayoutSwitch';
 import { JournalDataMenu } from '@/components/trading/JournalDataMenu';
@@ -56,6 +56,7 @@ const AdvancedPsychologyPage = lazy(() => import('@/components/trading/AdvancedP
 const ControlRoomPage = lazy(() => import('@/components/trading/ControlRoomPage').then(m => ({ default: m.ControlRoomPage })));
 
 const AIInsightsPage = lazy(() => import('@/components/trading/AIInsightsPage').then(m => ({ default: m.AIInsightsPage })));
+const OrcaCoachPage = lazy(() => import('@/components/coach/OrcaCoachPage'));
 const WeeklyReviewPage = lazy(() => import('@/components/trading/WeeklyReviewPage').then(m => ({ default: m.WeeklyReviewPage })));
 const CalendarHubPage = lazy(() => import('@/components/trading/CalendarHubPage').then(m => ({ default: m.CalendarHubPage })));
 const EconomicCalendarPage = lazy(() => import('@/components/economic/EconomicCalendarPage').then(m => ({ default: m.EconomicCalendarPage })));
@@ -219,6 +220,11 @@ const Index = () => {
   const [dashSubOpen, setDashSubOpen] = useState(false);
   const [perfChannel, setPerfChannel] = useState<PerfChannelId | null>(null);
   const [perfSubOpen, setPerfSubOpen] = useState(false);
+  // Control Room sub-channels (Risk / Mind) and Intelligence sub-channels.
+  const [crChannel, setCrChannel] = useState<CrChannelId>('risk');
+  const [crSubOpen, setCrSubOpen] = useState(false);
+  const [aiChannel, setAiChannel] = useState<AiChannelId>('insights');
+  const [aiSubOpen, setAiSubOpen] = useState(false);
   // Collapsible "Different Worlds" group (Trader Journey / Backtest / Trader Mind).
   const [worldsOpen, setWorldsOpen] = useState(false);
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
@@ -705,15 +711,17 @@ const Index = () => {
     { id: 'analytics', icon: Ico.bar, label: isRTL ? 'ביצועים' : 'Performance', group: 'workspace2' },
 
     { id: 'control-room', icon: Ico.shield, label: isRTL ? 'חדר בקרה' : 'Control Room', group: 'intelligence' },
-    { id: 'ai', icon: Ico.star, label: t.ai, group: 'intelligence' },
     ...(weeklyReviewAllowed
       ? [{ id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: T.isLight ? '#B45309' : '#FFD700', group: 'intelligence' }]
       : []),
+
+    { id: 'ai', icon: Ico.star, label: isRTL ? 'בינה מלאכותית' : 'AI', group: 'aiGroup' },
   ];
   const NAV_GROUP_LABEL: Record<string, string> = {
     workspace: isRTL ? 'סביבת עבודה' : 'Workspace',
     workspace2: isRTL ? 'ניתוח' : 'Analysis',
     intelligence: isRTL ? 'תובנות' : 'Intelligence',
+    aiGroup: isRTL ? 'בינה מלאכותית' : 'Intelligence · AI',
     markets: isRTL ? 'שווקים' : 'Markets',
     system: isRTL ? 'הגדרות' : 'Settings',
   };
@@ -2056,6 +2064,8 @@ const Index = () => {
             const showBadge = isWeekly && showWeeklyReminder;
             const isDash = item.id === 'dashboard';
             const isPerf = item.id === 'analytics';
+            const isCr = item.id === 'control-room';
+            const isAi = item.id === 'ai';
             const groupChanged = item.group && item.group !== nav[idx - 1]?.group;
             return (
             <React.Fragment key={item.id}>
@@ -2067,7 +2077,7 @@ const Index = () => {
             {groupChanged && !sbOpen && idx > 0 && (
               <div aria-hidden style={{ height: 1, background: T.border.subtle, margin: '6px 12px' }} />
             )}
-            <button onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isDash) { setDashChannel('home'); setDashSubOpen(true); } if (isPerf) { setPerfSubOpen(true); setPerfChannel(null); } if (isWeekly) dismissWeeklyReminder(); }}
+            <button onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isDash) { setDashChannel('home'); setDashSubOpen(true); } if (isPerf) { setPerfSubOpen(true); setPerfChannel(null); } if (isCr) { setCrSubOpen(true); setCrChannel('risk'); } if (isAi) { setAiSubOpen(true); setAiChannel('insights'); } if (isWeekly) dismissWeeklyReminder(); }}
               onMouseEnter={e => {
                 if (page === item.id) return;
                 e.currentTarget.style.background = `linear-gradient(110deg, transparent 0%, ${activeColor}18 50%, transparent 100%)`;
@@ -2106,7 +2116,77 @@ const Index = () => {
                   style={{ display: 'inline-flex', fontSize: 10, opacity: 0.75, transform: `rotate(${perfSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', padding: '0 2px' }}
                 >▸</span>
               )}
+              {isCr && sbOpen && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  aria-label={isRTL ? 'הצג ערוצי חדר בקרה' : 'Toggle control room channels'}
+                  onClick={e => { e.stopPropagation(); setCrSubOpen(o => !o); }}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); setCrSubOpen(o => !o); } }}
+                  style={{ display: 'inline-flex', fontSize: 10, opacity: 0.75, transform: `rotate(${crSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', padding: '0 2px' }}
+                >▸</span>
+              )}
+              {isAi && sbOpen && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  aria-label={isRTL ? 'הצג ערוצי בינה מלאכותית' : 'Toggle AI channels'}
+                  onClick={e => { e.stopPropagation(); setAiSubOpen(o => !o); }}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); setAiSubOpen(o => !o); } }}
+                  style={{ display: 'inline-flex', fontSize: 10, opacity: 0.75, transform: `rotate(${aiSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', padding: '0 2px' }}
+                >▸</span>
+              )}
              </button>
+            {/* Control Room sub-channels — Risk / Mind */}
+            {isCr && sbOpen && crSubOpen && (
+              <div style={{ display: 'flex', flexDirection: 'column', margin: '1px 0 4px', paddingInlineStart: 12, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 20 }}>
+                {CR_CHANNELS.map(ch => {
+                  const chActive = page === 'control-room' && crChannel === ch.id;
+                  return (
+                    <button
+                      key={ch.id}
+                      onClick={() => { setPage('control-room'); setCrChannel(ch.id); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 7, width: '100%',
+                        padding: '4px 8px', border: 'none', borderRadius: T.radius.sm, background: 'transparent',
+                        color: chActive ? infoColor(T) : T.text.secondary,
+                        fontSize: 11, lineHeight: 1.4, fontWeight: chActive ? 600 : 400, cursor: 'pointer',
+                        textAlign: isRTL ? 'right' : 'left', transition: 'color 0.2s',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}
+                    >
+                      <span aria-hidden style={{ width: 4, height: 4, borderRadius: '50%', flexShrink: 0, background: chActive ? infoColor(T) : T.text.muted, opacity: chActive ? 1 : 0.5 }} />
+                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{isRTL ? ch.he : ch.en}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            {/* AI sub-channels — Insights / Orca Coach */}
+            {isAi && sbOpen && aiSubOpen && (
+              <div style={{ display: 'flex', flexDirection: 'column', margin: '1px 0 4px', paddingInlineStart: 12, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 20 }}>
+                {AI_CHANNELS.map(ch => {
+                  const chActive = page === 'ai' && aiChannel === ch.id;
+                  return (
+                    <button
+                      key={ch.id}
+                      onClick={() => { setPage('ai'); setAiChannel(ch.id); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 7, width: '100%',
+                        padding: '4px 8px', border: 'none', borderRadius: T.radius.sm, background: 'transparent',
+                        color: chActive ? infoColor(T) : T.text.secondary,
+                        fontSize: 11, lineHeight: 1.4, fontWeight: chActive ? 600 : 400, cursor: 'pointer',
+                        textAlign: isRTL ? 'right' : 'left', transition: 'color 0.2s',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}
+                    >
+                      <span aria-hidden style={{ width: 4, height: 4, borderRadius: '50%', flexShrink: 0, background: chActive ? infoColor(T) : T.text.muted, opacity: chActive ? 1 : 0.5 }} />
+                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{isRTL ? ch.he : ch.en}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             {/* Performance sub-channels */}
             {isPerf && sbOpen && perfSubOpen && (
               <div style={{ display: 'flex', flexDirection: 'column', margin: '1px 0 4px', paddingInlineStart: 12, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 20 }}>
@@ -2327,14 +2407,17 @@ const Index = () => {
                 trades={trades}
                 stats={stats}
                 limits={customRiskLimits}
-                initialTab={page === 'psychology' ? 'mind' : 'risk'}
+                key={page === 'control-room' ? crChannel : page}
+                initialTab={page === 'psychology' ? 'mind' : page === 'risk' ? 'risk' : crChannel}
                 renderRisk={renderRisk}
                 renderMind={renderPsychology}
               />
             </LazyShell>
           )}
 
-          {page === 'ai' && renderAI()}
+          {page === 'ai' && (aiChannel === 'coach'
+            ? <LazyShell><OrcaCoachPage T={T} isRTL={isRTL} /></LazyShell>
+            : renderAI())}
 
           {page === 'economic-radar' && (
             <Suspense fallback={null}>
