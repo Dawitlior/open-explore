@@ -2021,7 +2021,7 @@ const Index = () => {
         </div>
       )}
       {/* DESKTOP SIDEBAR — fixed overlay; in-flow spacer keeps main content stable */}
-      {!isMobile && <div aria-hidden style={{ width: 62, flexShrink: 0 }} />}
+      {!isMobile && <div aria-hidden style={{ width: sbOpen ? 216 : 62, flexShrink: 0, transition: 'width 0.32s cubic-bezier(0.22,1,0.36,1)', willChange: 'width' }} />}
       {/* No scrim on desktop — the dashboard stays fully interactive while the sidebar is open */}
       {!isMobile && (
       <aside data-app-sidebar style={{
