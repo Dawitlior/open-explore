@@ -698,21 +698,24 @@ const Index = () => {
   const nav: Array<{ id: string; icon: any; label: string; color?: string; group?: string; action?: () => void }> = [
     { id: 'dashboard', icon: Ico.dash, label: isRTL ? 'דשבורד' : 'Dashboard', group: 'workspace' },
     { id: 'calendar', icon: '📅', label: isRTL ? 'לוח שנה' : 'Calendar', group: 'workspace' },
-    { id: 'journal', icon: Ico.book, label: t.journal, group: 'workspace' },
-    { id: 'analytics', icon: Ico.bar, label: isRTL ? 'ביצועים' : 'Performance', group: 'workspace' },
+
+    { id: 'economic-radar', icon: '📡', label: isRTL ? 'חדשות' : 'News', group: 'markets' },
+
+    { id: 'journal', icon: Ico.book, label: t.journal, group: 'workspace2' },
+    { id: 'analytics', icon: Ico.bar, label: isRTL ? 'ביצועים' : 'Performance', group: 'workspace2' },
 
     { id: 'control-room', icon: Ico.shield, label: isRTL ? 'חדר בקרה' : 'Control Room', group: 'intelligence' },
     { id: 'ai', icon: Ico.star, label: t.ai, group: 'intelligence' },
     ...(weeklyReviewAllowed
       ? [{ id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: T.isLight ? '#B45309' : '#FFD700', group: 'intelligence' }]
       : []),
-
-    { id: 'economic-radar', icon: '📡', label: isRTL ? 'חדשות' : 'News', group: 'markets' },
   ];
   const NAV_GROUP_LABEL: Record<string, string> = {
     workspace: isRTL ? 'סביבת עבודה' : 'Workspace',
+    workspace2: isRTL ? 'ניתוח' : 'Analysis',
     intelligence: isRTL ? 'תובנות' : 'Intelligence',
     markets: isRTL ? 'שווקים' : 'Markets',
+    system: isRTL ? 'הגדרות' : 'Settings',
   };
 
   // Keep the loader visible until BOTH the trade list and the portfolio
