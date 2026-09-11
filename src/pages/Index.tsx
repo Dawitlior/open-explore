@@ -2064,6 +2064,8 @@ const Index = () => {
             const showBadge = isWeekly && showWeeklyReminder;
             const isDash = item.id === 'dashboard';
             const isPerf = item.id === 'analytics';
+            const isCr = item.id === 'control-room';
+            const isAi = item.id === 'ai';
             const groupChanged = item.group && item.group !== nav[idx - 1]?.group;
             return (
             <React.Fragment key={item.id}>
