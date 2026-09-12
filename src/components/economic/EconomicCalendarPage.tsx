@@ -6,6 +6,7 @@ import { formatISTTime, computeSurprise, surpriseTone } from '@/lib/economic';
 import type { EconomicEvent, EconomicImpact } from '@/lib/economic';
 import { CURRENCY_FLAG, MACRO_TIER_COLOR } from './MacroEventStrip';
 import SessionClock from './SessionClock';
+import NewsWire from './NewsWire';
 
 /* ─────────────────────────────────────────────────────────────
  * Economic Calendar — Professional Table View
