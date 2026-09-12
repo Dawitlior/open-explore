@@ -304,6 +304,8 @@ Ground every answer in this data. Cite concrete trades, symbols and R values.`;
 
     return new Response(JSON.stringify({
       reply,
+      portfolio: activeId ? { id: activeId, name: activeName } : null,
+      portfolios: roster,
       usage: { used: newUsed, limit: isPro ? null : FREE_MONTHLY_LIMIT, pro: isPro },
     }), {
       headers: { ...cors, "Content-Type": "application/json" },
