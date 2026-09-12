@@ -72,8 +72,7 @@ export function TradingReportModal({ T, isRTL, trades, onClose }: Props) {
       const html = buildTradingReportHtml(scoped, {
         brand: 'ORCA Investment',
         accountName: activePortfolio?.name ?? 'Primary Portfolio',
-        accountId: (activePortfolio?.id ?? '—').slice(0, 8).toUpperCase(),
-        ownerName: (user?.user_metadata?.display_name as string | undefined) ?? user?.email ?? 'Trader',
+        ownerEmail: user?.email ?? '—',
         currency: activePortfolio?.currency ?? 'USD',
         initialDeposit: Number(activePortfolio?.starting_balance ?? 0),
         isRTL,
