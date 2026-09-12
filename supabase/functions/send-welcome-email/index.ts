@@ -36,24 +36,20 @@ function buildHtml(name: string) {
         </tr>
         <tr>
           <td style="padding:36px 40px;">
-            <h1 style="margin:0 0 16px;font-size:24px;color:#061326;text-align:right;">ברוך הבא ל-Orca, ${n}</h1>
-            <p style="margin:0 0 14px;font-size:15px;line-height:1.7;color:#3a4658;text-align:right;">
-              אנחנו שמחים שהצטרפת. החשבון שלך נפתח בהצלחה, והפלטפורמה מוכנה לשירותך —
-              יומן מסחר חכם, מנוע סיכונים בזמן אמת, ותובנות AI שילווה כל החלטה שלך.
+            <h1 style="margin:0 0 16px;font-size:24px;color:#061326;text-align:left;">Welcome to Orca, ${n}</h1>
+            <p style="margin:0 0 14px;font-size:15px;line-height:1.7;color:#3a4658;text-align:left;">
+              We're glad you joined. Your account has been opened successfully and the platform is
+              ready for you — a smart trading journal, a real-time risk engine, and AI insights
+              to back every decision you make.
             </p>
-            <p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:#3a4658;text-align:right;">
-              הצעד הראשון שלך: פתח את התיק הראשון, ותן ל-Orca להתחיל ללמוד את סגנון המסחר שלך.
+            <p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:#3a4658;text-align:left;">
+              Your first step: open your first portfolio and let Orca start learning your trading style.
             </p>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
               <tr><td align="center">
-                <a href="${APP_URL}" style="display:inline-block;background-color:#061326;color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;padding:14px 36px;border-radius:10px;">כניסה לפלטפורמה</a>
+                <a href="${APP_URL}" style="display:inline-block;background-color:#061326;color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;padding:14px 36px;border-radius:10px;">Enter the Platform</a>
               </td></tr>
             </table>
-            <hr style="border:none;border-top:1px solid #e6eaf2;margin:32px 0;"/>
-            <p style="margin:0;font-size:12px;line-height:1.6;color:#8a93a6;text-align:right;" dir="ltr">
-              Welcome to Orca, ${n}. Your account is ready — smart trade journal, real-time risk engine,
-              and AI insights for every decision.
-            </p>
           </td>
         </tr>
         <tr>
