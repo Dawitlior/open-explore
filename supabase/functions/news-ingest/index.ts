@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
       external_id: clean(o.external_id ?? o.id, 200),
       headline,
       summary: clean(o.summary ?? o.description, 1200),
-      source: clean(o.source, 80),
+      source: cleanSource(o.source),
       url: clean(o.url ?? o.link, 800),
       category: (clean(o.category, 40) ?? 'general').toLowerCase(),
       impact: IMPACTS.has(impact) ? impact : 'medium',
