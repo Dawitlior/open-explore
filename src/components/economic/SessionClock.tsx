@@ -181,6 +181,7 @@ export default function SessionClock({ T, compact: compactProp = true }: Props) 
   const openCount = markets.filter(m => m.isOpen).length;
   const nextUp = markets.filter(m => !m.isOpen).sort((a, b) => a.countdown - b.countdown)[0];
   const focused = markets.find(m => m.def.id === focus) ?? null;
+  const pinnedMarket = markets.find(m => m.def.id === pinned) ?? null;
 
   const ExpandIcon = expanded ? ChevronUp : ChevronDown;
 
