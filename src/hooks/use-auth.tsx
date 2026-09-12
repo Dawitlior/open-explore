@@ -54,7 +54,21 @@ async function ensureProfile(user: User) {
     display_name: displayName,
     avatar_url: meta.avatar_url ?? null,
   });
-  if (error) console.error('Failed to create profile:', error);
+  if (error) {
+    console.error('Failed to create profile:', error);
+    return;
+  }
+
+  // First-time signup — send the welcome email exactly once (fire-and-forget).
+  if (user.email) {
+    void supabase.functions
+      .invoke('send-welcome-email', {
+        body: { email: user.email, name: displayName },
+      })
+      .then(({ error: mailErr }) => {
+        if (mailErr) console.warn('Welcome email failed:', mailErr.message);
+      });
+  }
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
