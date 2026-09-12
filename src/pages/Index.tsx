@@ -44,6 +44,7 @@ import { CHANNELS, type ChannelId, PERF_CHANNELS, type PerfChannelId, CR_CHANNEL
 import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
 import { JournalLayoutSwitch, type JournalLayout } from '@/components/trading/JournalLayoutSwitch';
 import { JournalDataMenu } from '@/components/trading/JournalDataMenu';
+import { TradingReportModal } from '@/components/trading/TradingReportModal';
 import { JournalGallery } from '@/components/trading/JournalGallery';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
 import { toast } from 'sonner';
@@ -1472,6 +1473,7 @@ const Index = () => {
                 onImport={handleImport}
                 onExportXlsx={handleExport}
                 onExportJson={handleExportJson}
+                onTradingReport={() => setShowTradingReport(true)}
               />
             )}
             <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }} style={{ padding: '7px 18px', background: `linear-gradient(135deg, ${infoColor(T)}, ${infoColor(T)})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ {t.addTrade}</button>
