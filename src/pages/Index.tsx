@@ -214,6 +214,17 @@ const Index = () => {
   // Sidebar starts collapsed on every load (both mobile and desktop) — user
   // explicitly requested no auto-open on refresh.
   const [sbOpen, setSbOpen] = useState(false);
+  // Desktop: any click outside the sidebar collapses it instantly.
+  useEffect(() => {
+    if (!sbOpen || isMobile) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && el.closest('[data-app-sidebar]')) return;
+      setSbOpen(false);
+    };
+    window.addEventListener('pointerdown', onPointerDown, true);
+    return () => window.removeEventListener('pointerdown', onPointerDown, true);
+  }, [sbOpen, isMobile]);
   const [advancedOpen, setAdvancedOpen] = useState(true);
   // Advanced Analysis channel — now selected from the sidebar (Dashboard sub-items).
   const [dashChannel, setDashChannel] = useState<ChannelId>('home');
@@ -2050,7 +2061,7 @@ const Index = () => {
         </div>
       )}
       {/* DESKTOP SIDEBAR — fixed overlay; in-flow spacer keeps main content stable */}
-      {!isMobile && <div aria-hidden style={{ width: sbOpen ? 216 : 62, flexShrink: 0, transition: 'width 0.32s cubic-bezier(0.22,1,0.36,1)', willChange: 'width' }} />}
+      {!isMobile && <div aria-hidden style={{ width: sbOpen ? 216 : 62, flexShrink: 0, transition: 'width 0.18s cubic-bezier(0.3,0.9,0.3,1)', willChange: 'width' }} />}
       {/* No scrim on desktop — the dashboard stays fully interactive while the sidebar is open */}
       {!isMobile && (
       <aside data-app-sidebar style={{
