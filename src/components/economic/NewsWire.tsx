@@ -36,7 +36,9 @@ const COPY = {
   },
 } as const;
 
-function relTime(iso: string, t: (typeof COPY)['en']): string {
+type WireCopy = (typeof COPY)['en'] | (typeof COPY)['he'];
+
+function relTime(iso: string, t: WireCopy): string {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60_000);
   if (m < 1) return t.now;
