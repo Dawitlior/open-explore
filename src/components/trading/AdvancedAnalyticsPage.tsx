@@ -111,6 +111,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
   };
 
   const [sortKey, setSortKey] = useState<'pnl' | 'exp' | 'wr' | 'n'>('pnl');
+  const [showTradingReport, setShowTradingReport] = useState(false);
 
   /* ─────────── DERIVED DATA ─────────── */
 
@@ -466,17 +467,39 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        style={{ marginBottom: 14 }}
+        style={{ marginBottom: 14, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}
       >
-        <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.3em', marginBottom: 4 }}>
-          ORCA · PERFORMANCE DECK
+        <div>
+          <div style={{ fontSize: 10, color: T.text.muted, textTransform: 'uppercase', letterSpacing: '0.3em', marginBottom: 4 }}>
+            ORCA · PERFORMANCE DECK
+          </div>
+          <div style={{ fontSize: 22, color: T.text.primary, fontWeight: 800, letterSpacing: '-0.01em' }}>
+            {t('לוח ביצועים מתקדם','Advanced Performance Deck')}
+          </div>
+          <div style={{ fontSize: 12, color: T.text.secondary, marginTop: 2 }}>
+            {t(`ניתוח רב-ממדי של ${trades.length} עסקאות לאורך כל ההיסטוריה.`, `Multi-dimensional analysis of ${trades.length} trades across history.`)}
+          </div>
         </div>
-        <div style={{ fontSize: 22, color: T.text.primary, fontWeight: 800, letterSpacing: '-0.01em' }}>
-          {t('לוח ביצועים מתקדם','Advanced Performance Deck')}
-        </div>
-        <div style={{ fontSize: 12, color: T.text.secondary, marginTop: 2 }}>
-          {t(`ניתוח רב-ממדי של ${trades.length} עסקאות לאורך כל ההיסטוריה.`, `Multi-dimensional analysis of ${trades.length} trades across history.`)}
-        </div>
+        <button
+          type="button"
+          onClick={() => setShowTradingReport(true)}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            padding: isMobile ? '8px 14px' : '9px 18px',
+            borderRadius: 10, cursor: 'pointer',
+            border: `1px solid ${T.accent.cyan}55`,
+            background: `linear-gradient(135deg, ${T.accent.cyan}1f, ${T.accent.cyan}0a)`,
+            boxShadow: `0 0 18px ${T.accent.cyan}22, inset 0 1px 0 ${T.text.primary}14`,
+            color: T.accent.cyan,
+            fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+            transition: 'box-shadow 0.15s ease, transform 0.12s ease',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 0 26px ${T.accent.cyan}44, inset 0 1px 0 ${T.text.primary}1f`; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+          onMouseLeave={e => { e.currentTarget.style.boxShadow = `0 0 18px ${T.accent.cyan}22, inset 0 1px 0 ${T.text.primary}14`; e.currentTarget.style.transform = 'none'; }}
+        >
+          <span aria-hidden style={{ fontSize: 13 }}>▤</span>
+          {t('דוח מסחר','Trading Report')}
+        </button>
       </motion.div>
 
       {/* ═══ CHANNEL HEADER — shown when a sidebar sub-channel is active ═══ */}
