@@ -16,11 +16,8 @@ const COPY = {
     live: 'חי',
     empty: 'אין דיווחים כרגע',
     emptyHint: 'העדכונים יופיעו כאן ברגע שהזרם האוטומטי יתחיל לשדר.',
-    now: 'עכשיו',
-    min: 'ד׳',
-    hour: 'ש׳',
-    day: 'י׳',
-    read: 'למקור',
+    today: 'היום',
+    yesterday: 'אתמול',
   },
   en: {
     title: 'News Wire',
