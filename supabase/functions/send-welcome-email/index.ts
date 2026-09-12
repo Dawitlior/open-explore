@@ -55,7 +55,7 @@ function buildHtml(name: string) {
         <tr>
           <td align="center" style="background-color:#f8fafd;padding:20px 24px;">
             <p style="margin:0;font-size:11px;color:#9aa3b5;">
-              Orca Investment · מייל זה נשלח בעקבות פתיחת חשבון · אין צורך להשיב למייל זה
+              Orca Investment · This email was sent following your account registration · Please do not reply
             </p>
           </td>
         </tr>
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: FROM,
         to: [email],
-        subject: 'ברוך הבא ל-Orca Investment — החשבון שלך מוכן',
+        subject: 'Welcome to Orca Investment — your account is ready',
         html: buildHtml(name),
       }),
     });
