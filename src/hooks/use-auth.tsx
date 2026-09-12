@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { setScopedUid } from '@/lib/scoped-storage';
+import { setScopedUid, scopedStorage } from '@/lib/scoped-storage';
 import { OrcaBootLoader } from '@/components/OrcaBootLoader';
 
 
