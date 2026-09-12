@@ -22,6 +22,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useActivePortfolio } from '@/hooks/use-active-portfolio';
 import { useEntitlement } from '@/hooks/use-entitlement';
+import { useTraderMind } from '@/hooks/use-trader-mind';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { infoColor } from '@/lib/semantic-color';
 
@@ -37,6 +38,7 @@ const FREE_LIMIT = 5;
 export default function OrcaCoachPage({ T, isRTL }: Props) {
   const { activePortfolioId, portfolios, setActivePortfolioId } = useActivePortfolio();
   const { tier } = useEntitlement();
+  const { isCalibrated: tmDone, archetype: tmArchetype } = useTraderMind();
   const isPro = tier === 'pro';
 
   const [messages, setMessages] = useState<Msg[]>([]);
