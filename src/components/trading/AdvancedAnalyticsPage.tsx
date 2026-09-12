@@ -44,6 +44,7 @@ const TimeSeriesPerfMatrix = lazy(() => import('./TimeSeriesPerfMatrix').then(m 
 const UltimateAnalyticsDeck = lazy(() => import('./UltimateDeckCharts').then(m => ({ default: m.UltimateAnalyticsDeck })));
 import { useEntitlement } from '@/hooks/use-entitlement';
 const DashboardAdvancedLab = lazy(() => import('@/components/dashboard/DashboardAdvancedLab'));
+const TradingReportModal = lazy(() => import('./TradingReportModal').then(m => ({ default: m.TradingReportModal })));
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const RiskAdjustedRatiosSection = lazy(() => import('@/components/dashboard/RiskAdjustedRatiosSection').then(m => ({ default: m.RiskAdjustedRatiosSection })));
