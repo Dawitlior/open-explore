@@ -29,6 +29,7 @@ import DefaultSeo from "@/components/DefaultSeo";
 import { LegalGate } from "@/components/LegalGate";
 import { EconomicAlertBanner } from "@/components/economic/EconomicAlertBanner";
 import { UpgradeModal } from "@/components/billing/UpgradeModal";
+import { PlanCountdown } from "@/components/billing/PlanCountdown";
 import { CookieConsentRoot } from "@/components/privacy/CookieConsentRoot";
 import { A11yPanel } from "@/components/a11y/A11yPanel";
 import "@/components/a11y/a11y-engine.css";
@@ -158,6 +159,7 @@ const App = () => (
             <LegalGate />
             <EconomicAlertBanner />
             <UpgradeModal />
+            <PlanCountdown />
             <CookieConsentRoot />
             <OrcaConfirmRoot />
             <ImportPreflightRoot />
