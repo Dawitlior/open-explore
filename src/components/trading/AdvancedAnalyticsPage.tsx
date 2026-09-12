@@ -1216,6 +1216,11 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
           </DeferMount>
         </div>
       )}
+      {showTradingReport && (
+        <Suspense fallback={null}>
+          <TradingReportModal T={T} isRTL={langRTL} trades={trades} onClose={() => setShowTradingReport(false)} />
+        </Suspense>
+      )}
     </div>
   );
 };
