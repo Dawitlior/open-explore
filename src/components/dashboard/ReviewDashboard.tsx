@@ -601,7 +601,8 @@ export const ReviewDashboard = ({
                   </ChartWrapper>
                 </div>
               </div>
-            ) : <LockedChannel T={T} isRTL={isRTL} which="quant" />)}
+              </ProLockOverlay>
+            )}
           </div>
         )}
       </div>
