@@ -570,9 +570,10 @@ export const ReviewDashboard = ({
                 </div>
                 </div>
               </>
-            ) : <LockedChannel T={T} isRTL={isRTL} which="breakdown" />)}
+            )}
 
-            {channel === 'quant' && (isPro ? (
+            {channel === 'quant' && (
+              <ProLockOverlay locked={!isPro} note={LOCKED_COPY.quant[isRTL ? 'he' : 'en']}>
               <div className="dash-charts-alpha">
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'חלונות הזדמנות — יום ושעה' : 'Opportunity Windows — Day & Hour'} explanation={EXPLANATIONS.riskAllocation}>
