@@ -8,4 +8,4 @@
  *
  * Flip to `true` on launch day to activate hard gating.
  */
-export const ENFORCE_TIER_GATES = false;
+export const ENFORCE_TIER_GATES = true;
