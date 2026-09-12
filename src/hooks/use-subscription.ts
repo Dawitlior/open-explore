@@ -37,7 +37,14 @@ export function useSubscription(): SubscriptionState {
     }
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('check-subscription');
+      // Send the live access token explicitly — during session hydration the
+      // implicit header can still be the publishable key, which yields 401.
+      const { data: sess } = await supabase.auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) return;
+      const { data, error } = await supabase.functions.invoke('check-subscription', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!error && data) {
         setSubscribed(Boolean(data.subscribed));
         setTier(normalizeEntitlement(data.tier as string));
