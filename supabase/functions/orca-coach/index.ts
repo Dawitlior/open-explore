@@ -378,9 +378,15 @@ whenever more than two rows are involved.`;
       }
     }
 
+    // Conversation memory: keep the thread coherent for follow-up questions
+    // ("and that trade you mentioned?") without letting the prompt balloon.
+    // Six turns is the sweet spot between continuity and token spend; each
+    // request also carries the full pre-aggregated portfolio context anyway.
+    const HISTORY_TURNS = 6;
+    const history = messages.filter((m) => m.role !== "system").slice(-HISTORY_TURNS);
     const finalMessages: ChatMsg[] = [
       { role: "system", content: BASE_PROMPT + rosterLine + mindLine + portfolioLine },
-      ...messages.filter((m) => m.role !== "system"),
+      ...history,
     ];
 
     // ── Model routing ───────────────────────────────────────────────────
