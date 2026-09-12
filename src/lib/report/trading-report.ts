@@ -564,6 +564,9 @@ export function buildTradingReportHtml(trades: Trade[], meta: ReportMeta): strin
     </div>
   </section>
 
+  <div class="page"></div>
+  <p class="plabel">Page 2 · Results over time</p>
+
   <div class="grid2">
     <section class="block"><h2>Monthly Result</h2>${monthlyBarsSvg(list)}</section>
     <section class="block"><h2>Win / Loss Split</h2>
