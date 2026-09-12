@@ -609,6 +609,77 @@ export function buildTradingReportHtml(trades: Trade[], meta: ReportMeta): strin
     <tbody>${symbolRows}</tbody></table>
   </section>
 
+  <div class="page"></div>
+  <p class="plabel">Page 3 · Behaviour, structure and discipline</p>
+
+  <div class="grid2">
+    <section class="block">
+      <h2>Performance by Direction</h2>
+      <table><thead><tr><th>Direction</th><th>Deals</th><th>Win %</th><th>Total R</th><th>Profit</th><th>Avg / deal</th></tr></thead>
+      <tbody>${dirRows}</tbody></table>
+    </section>
+    <section class="block">
+      <h2>Performance by Setup / Order Type</h2>
+      <table><thead><tr><th>Setup</th><th>Deals</th><th>Win %</th><th>Total R</th><th>Profit</th><th>Avg / deal</th></tr></thead>
+      <tbody>${setupRows}</tbody></table>
+    </section>
+  </div>
+
+  <section class="block">
+    <h2>Performance by Day of Week</h2>
+    <table><thead><tr><th>Day</th><th>Deals</th><th>Win %</th><th>Total R</th><th>Profit</th><th>Avg / deal</th></tr></thead>
+    <tbody>${dowRows}</tbody></table>
+    <div class="note">Days with a negative average per deal are the cheapest place to cut activity before changing anything else in the strategy.</div>
+  </section>
+
+  <section class="block">
+    <h2>Month by Month</h2>
+    <table><thead><tr><th>Month</th><th>Deals</th><th>Win %</th><th>Total R</th><th>Profit</th><th>Avg / deal</th></tr></thead>
+    <tbody>${monthRows}</tbody></table>
+  </section>
+
+  <section class="block">
+    <h2>R-Multiple Distribution</h2>
+    <table><thead><tr><th>Bucket</th><th>Deals</th><th>Share</th><th>Shape</th><th>Profit</th></tr></thead>
+    <tbody>${rDistRows}</tbody></table>
+    <div class="note">A healthy distribution keeps losses clustered between -1R and 0R while the right tail (2R+) carries the account.</div>
+  </section>
+
+  <section class="block">
+    <h2>Discipline — Rules Followed vs Broken</h2>
+    <div class="grid2">
+      <div>
+        ${row('Deals following the plan', `${withRules.length} (${pct((withRules.length / Math.max(1, list.length)) * 100)})`)}
+        ${row('Win rate — plan followed', pct(winPct(withRules)))}
+        ${row('Total R — plan followed', `${num(rSum(withRules))}R`, sign(rSum(withRules)))}
+        ${row('Average P/L — plan followed', m(avgOf(withRules)), sign(avgOf(withRules)))}
+      </div>
+      <div>
+        ${row('Deals breaking the plan', `${brokeRules.length} (${pct((brokeRules.length / Math.max(1, list.length)) * 100)})`)}
+        ${row('Win rate — plan broken', pct(winPct(brokeRules)))}
+        ${row('Total R — plan broken', `${num(rSum(brokeRules))}R`, sign(rSum(brokeRules)))}
+        ${row('Average P/L — plan broken', m(avgOf(brokeRules)), sign(avgOf(brokeRules)))}
+      </div>
+    </div>
+    <div class="note">The gap between these two columns is the measurable cost of discipline — it is usually larger than any edge gained from a new setup.</div>
+  </section>
+
+  <div class="grid2">
+    <section class="block">
+      <h2>Five Best Deals</h2>
+      <table><thead><tr><th>Time</th><th>Symbol</th><th>Side</th><th>R</th><th>Profit</th><th>Rules</th></tr></thead>
+      <tbody>${bestRows}</tbody></table>
+    </section>
+    <section class="block">
+      <h2>Five Worst Deals</h2>
+      <table><thead><tr><th>Time</th><th>Symbol</th><th>Side</th><th>R</th><th>Profit</th><th>Rules</th></tr></thead>
+      <tbody>${worstRows}</tbody></table>
+    </section>
+  </div>
+
+  <div class="page"></div>
+  <p class="plabel">Page 4 · Full deal log</p>
+
   <section class="block">
     <h2>Deals</h2>
     <div class="scroll"><table><thead><tr>
