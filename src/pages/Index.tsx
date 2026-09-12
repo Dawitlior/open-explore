@@ -742,6 +742,13 @@ const Index = () => {
     { id: 'analytics', icon: Ico.bar, label: isRTL ? 'ביצועים' : 'Performance', group: 'workspace2' },
 
     { id: 'control-room', icon: Ico.shield, label: isRTL ? 'חדר בקרה' : 'Control Room', group: 'intelligence' },
+
+    { id: 'worlds', icon: '🌐', label: isRTL ? 'באק-טסט ויומן' : 'Backtest & Journal', group: 'labs', action: () => setWorldsOpen(o => !o) },
+    { id: 'test-yourself', icon: '🧠', label: isRTL ? 'בחן את עצמך' : 'Test Yourself', group: 'labs', action: () => setShowTraderMind(true) },
+  ];
+  const WORLD_CHANNELS: Array<{ id: 'backtest' | 'journal'; he: string; en: string }> = [
+    { id: 'backtest', he: 'באק-טסט', en: 'Backtest' },
+    { id: 'journal', he: 'יומן גורנל', en: 'Journal' },
   ];
   const NAV_GROUP_LABEL: Record<string, string> = {
     workspace: isRTL ? 'סביבת עבודה' : 'Workspace',
@@ -749,6 +756,7 @@ const Index = () => {
     intelligence: isRTL ? 'תובנות' : 'Intelligence',
     aiGroup: isRTL ? 'בינה מלאכותית' : 'Intelligence · AI',
     markets: isRTL ? 'שווקים' : 'Markets',
+    labs: isRTL ? 'באק-טסט ויומן' : 'Backtest & Journal',
     system: isRTL ? 'הגדרות' : 'Settings',
   };
 
