@@ -20,7 +20,11 @@ export default function RootEntry() {
   });
   const [appReady, setAppReady] = useState(false);
   useEffect(() => {
-    const markReady = () => setAppReady(true);
+    const markReady = () => {
+      setAppReady(true);
+      // Warm every channel chunk during idle time so channel switches are instant.
+      import('@/lib/channel-prefetch').then(m => m.warmChannelChunks()).catch(() => {});
+    };
     window.addEventListener('orca:index-ready', markReady);
     return () => window.removeEventListener('orca:index-ready', markReady);
   }, []);
