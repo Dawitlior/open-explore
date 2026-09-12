@@ -2173,9 +2173,37 @@ const Index = () => {
                   onClick={e => { e.stopPropagation(); setAiSubOpen(o => !o); }}
                   onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); setAiSubOpen(o => !o); } }}
                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, fontSize: 16, opacity: 0.9, transform: `rotate(${aiSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', borderRadius: T.radius.sm }}
+                 >▸</span>
+              )}
+              {isWorlds && sbOpen && (
+                <span
+                  aria-hidden
+                   style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, fontSize: 16, opacity: 0.9, transform: `rotate(${worldsOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', borderRadius: T.radius.sm }}
                 >▸</span>
               )}
              </button>
+            {/* Backtest & Journal sub-channels */}
+            {isWorlds && sbOpen && worldsOpen && (
+              <div style={{ display: 'flex', flexDirection: 'column', margin: '1px 0 4px', paddingInlineStart: 12, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 20 }}>
+                {WORLD_CHANNELS.map(ch => (
+                  <button
+                    key={ch.id}
+                    onClick={() => setActiveDimension(ch.id)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 7, width: '100%',
+                      padding: '6px 8px', minHeight: 32, border: 'none', borderRadius: T.radius.sm,
+                      background: 'transparent', color: T.text.secondary,
+                      fontSize: 12, lineHeight: 1.4, cursor: 'pointer',
+                      textAlign: isRTL ? 'right' : 'left', transition: 'color 0.2s',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}
+                  >
+                    <span aria-hidden style={{ width: 4, height: 4, borderRadius: '50%', flexShrink: 0, background: T.text.muted, opacity: 0.5 }} />
+                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{isRTL ? ch.he : ch.en}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             {/* Control Room sub-channels — Risk / Mind */}
             {isCr && sbOpen && crSubOpen && (
               <div style={{ display: 'flex', flexDirection: 'column', margin: '1px 0 4px', paddingInlineStart: 12, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 20 }}>
