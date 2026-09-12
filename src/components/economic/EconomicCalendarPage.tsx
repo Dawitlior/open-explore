@@ -396,6 +396,10 @@ export function EconomicCalendarPage({ onClose, T }: Props) {
           )}
       </div>
     </div>
+
+      {/* Live news wire — vertical rail beside the map + calendar */}
+      <NewsWire T={T} lang={lang} />
+    </div>
   );
 }
 
