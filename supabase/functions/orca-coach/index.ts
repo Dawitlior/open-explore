@@ -185,7 +185,7 @@ Deno.serve(withCors(async (req) => {
             maxDD = Math.min(maxDD, equity - peak);
           }
           const recent = trades.slice(0, 30);
-          portfolioLine = `\n\n[PORTFOLIO CONTEXT — portfolio ${portfolio_id}]
+          portfolioLine = `\n\n[PORTFOLIO CONTEXT — "${activeName ?? portfolio_id}"]
 Trades analysed: ${n}
 Win rate: ${winRate.toFixed(1)}%
 Expectancy: ${expectancyR.toFixed(2)}R per trade
