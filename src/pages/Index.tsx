@@ -2482,6 +2482,13 @@ const Index = () => {
               onManualTrade={() => { setEditingTrade(null); setShowTradeForm(true); }}
             />
           )}
+          {/* Channel surface — keyed so every channel swap gets one clean fade
+              instead of a hard, janky content replacement. */}
+          <div
+            key={`${page}:${dashChannel}:${crChannel}:${aiChannel}`}
+            className="orca-channel-surface"
+            style={{ minWidth: 0 }}
+          >
           {page === 'dashboard' && <div data-orca-dashboard="true">{trades.length > 0 && <CustomKPIPanel T={T} isRTL={isRTL} stats={stats as any} />}{renderDashboard()}</div>}
           {page === 'calendar' && (
             <LazyShell><CalendarHubPage T={T} isRTL={isRTL} t={t} trades={trades} isMobile={isMobile} onGenerateInsight={handleGenerateInsights} onSetManualR={setManualR} /></LazyShell>
