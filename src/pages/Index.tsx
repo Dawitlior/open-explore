@@ -2338,70 +2338,7 @@ const Index = () => {
           </button>
           )}
         </nav>
-        {/* ═══ DIFFERENT WORLDS — collapsible group (portals + Trader Mind) ═══ */}
-        {sbOpen && (
-          <div style={{ padding: '4px 6px' }}>
-            <button
-              onClick={() => setWorldsOpen(o => !o)}
-              aria-expanded={worldsOpen}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: 'transparent', border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', transition: 'color 0.2s, border-color 0.2s' }}
-            >
-              <span aria-hidden style={{ fontSize: 13 }}>🌐</span>
-              <span style={{ flex: 1, textAlign: isRTL ? 'right' : 'left' }}>{isRTL ? 'עולמות נוספים' : 'Different Worlds'}</span>
-              <span aria-hidden style={{ fontSize: 10, opacity: 0.75, transform: `rotate(${worldsOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease' }}>▸</span>
-            </button>
-          </div>
-        )}
-        {(!sbOpen || worldsOpen) && (<>
-        <div style={{ padding: '4px 6px' }}><PortalButton onClick={() => setActiveDimension('journal')} isRTL={isRTL} expanded={sbOpen} /></div>
-        <div style={{ padding: '4px 6px' }}><BacktestPortalButton onClick={() => setActiveDimension('backtest')} isRTL={isRTL} expanded={sbOpen} /></div>
-        {/* Trader Mind — behavioral diagnostic (replaces legacy Oracle slot) */}
-        {sbOpen && (
-          <div style={{ padding: '4px 6px' }}>
-            <button
-              onClick={() => setShowTraderMind(true)}
-              title={isRTL ? 'תודעת הסוחר — אבחון התנהגותי' : 'Trader Mind — behavioral diagnostic'}
-              onMouseEnter={e => {
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = `0 0 26px -6px ${neutralRamp(T, 3)[1] ?? infoColor(T)}cc, inset 0 0 0 1px ${neutralRamp(T, 3)[1] ?? infoColor(T)}66`;
-                e.currentTarget.style.background = `linear-gradient(135deg, ${neutralRamp(T, 3)[1] ?? infoColor(T)}22, ${infoColor(T)}18)`;
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.background = `linear-gradient(135deg, ${neutralRamp(T, 3)[1] ?? infoColor(T)}15, transparent)`;
-              }}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 12px', background: `linear-gradient(135deg, ${neutralRamp(T, 3)[1] ?? infoColor(T)}15, transparent)`, border: `1px solid ${neutralRamp(T, 3)[1] ?? infoColor(T)}40`, borderRadius: T.radius.md, color: neutralRamp(T, 3)[1] ?? infoColor(T), cursor: 'pointer', fontSize: 12, fontWeight: 700, letterSpacing: 0.3, transition: 'all 0.25s ease' }}
-            >
-              <TraderMindIcon size={17} style={{ filter: `drop-shadow(0 0 6px ${neutralRamp(T, 3)[1] ?? infoColor(T)}aa)`, flexShrink: 0 }} />
-              <span>{isRTL ? 'תודעת הסוחר' : 'Trader Mind'}</span>
-              {tmCalibrated ? (
-                <span style={{ marginInlineStart: 'auto', fontSize: 8, color: infoColor(T), fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
-                  {tmArchetype?.slice(0, 18) ?? (isRTL ? 'הושלם' : 'Complete')}
-                </span>
-              ) : (
-                <span style={{ marginInlineStart: 'auto', fontSize: 8, color: '#fbbf24', fontWeight: 700, letterSpacing: 0.5 }}>
-                  ⚠ {isRTL ? 'לא הושלם' : 'Pending'}
-                </span>
-              )}
-            </button>
-          </div>
-        )}
-        {!sbOpen && (
-          <div style={{ padding: '4px 6px', display: 'flex', justifyContent: 'center', position: 'relative' }}>
-            <button
-              onClick={() => setShowTraderMind(true)}
-              title="Trader Mind"
-              style={{ background: 'transparent', border: 'none', color: neutralRamp(T, 3)[1] ?? infoColor(T), cursor: 'pointer', fontSize: 16, position: 'relative' }}
-            >
-              <TraderMindIcon size={18} />
-              {!tmCalibrated && (
-                <span style={{ position: 'absolute', top: -2, right: -4, width: 6, height: 6, borderRadius: '50%', background: '#fbbf24', boxShadow: '0 0 6px #fbbf24aa' }} />
-              )}
-            </button>
-          </div>
-        )}
-        </>)}
+        {/* Backtest / Journal / Trader Mind now live in the main nav above. */}
         {/* InstallPrompt removed from sidebar — install lives in Settings now */}
         {/* visual separation between the dimension portals and Settings */}
         <div aria-hidden style={{ height: 1, margin: '12px 12px 4px', background: `linear-gradient(90deg, transparent, ${T.border.subtle}, transparent)` }} />
