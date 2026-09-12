@@ -614,6 +614,48 @@ export type Database = {
         }
         Relationships: []
       }
+      news_feed: {
+        Row: {
+          category: string
+          created_at: string
+          external_id: string | null
+          headline: string
+          id: string
+          impact: string
+          published_at: string
+          source: string | null
+          summary: string | null
+          symbols: string[]
+          url: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          external_id?: string | null
+          headline: string
+          id?: string
+          impact?: string
+          published_at?: string
+          source?: string | null
+          summary?: string | null
+          symbols?: string[]
+          url?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          external_id?: string | null
+          headline?: string
+          id?: string
+          impact?: string
+          published_at?: string
+          source?: string | null
+          summary?: string | null
+          symbols?: string[]
+          url?: string | null
+        }
+        Relationships: []
+      }
       open_positions: {
         Row: {
           account_label: string | null
