@@ -11,6 +11,7 @@ import { computeAnalytics, getCalDays } from '@/lib/trading-analytics';
 import { i18n } from '@/lib/trading-i18n';
 import { applyCustomTheme, applyDerivedPalette, getTheme, themeFromCustom, tintTheme, ttStyle, modeColors, type TradingTheme } from '@/lib/trading-theme';
 import { GlassCard, MetricCard, ScoreGauge, TradingBadge, Ico } from '@/components/trading/TradingUI';
+import { JournalPortalIcon, BacktestPortalIcon, TraderMindIcon } from '@/components/trading/dimension-icons';
 import { AdaptiveExpectancyCard, AdaptiveQuickStats } from '@/components/trading/AdaptiveKpiCards';
 import { ChartWrapper, EXPLANATIONS, type ChartExplanation } from '@/components/trading/ChartWrapper';
 import { ChartExplanationModal } from '@/components/trading/ChartExplanationModal';
@@ -240,6 +241,9 @@ const Index = () => {
   const [aiSubOpen, setAiSubOpen] = useState(false);
   // Collapsible "Different Worlds" group (Trader Journey / Backtest / Trader Mind).
   const [worldsOpen, setWorldsOpen] = useState(false);
+  // Mobile sheet: per-group sub-channel expansion. Dashboard & worlds start
+  // open (matches the previous always-visible look); the rest start closed.
+  const [mmSubs, setMmSubs] = useState<Record<string, boolean>>({ dashboard: true, worlds: true });
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
   const [calYear, setCalYear] = useState(() => new Date().getFullYear());
   const [selTrade, setSelTrade] = useState<Trade | null>(null);
@@ -742,8 +746,8 @@ const Index = () => {
 
     { id: 'control-room', icon: Ico.shield, label: isRTL ? 'חדר בקרה' : 'Control Room', group: 'intelligence' },
 
-    { id: 'worlds', icon: '🌐', label: isRTL ? 'באק-טסט ויומן' : 'Backtest & Journal', group: 'labs', action: () => setWorldsOpen(o => !o) },
-    { id: 'test-yourself', icon: '🧠', label: isRTL ? 'בחן את עצמך' : 'Test Yourself', group: 'labs', action: () => setShowTraderMind(true) },
+    { id: 'worlds', icon: <BacktestPortalIcon size={18} />, label: isRTL ? 'באק-טסט ויומן' : 'Backtest & Journal', group: 'labs', action: () => setWorldsOpen(o => !o) },
+    { id: 'test-yourself', icon: <TraderMindIcon size={18} />, label: isRTL ? 'תודעת הסוחר' : 'Trader Mind', group: 'mind', action: () => setShowTraderMind(true) },
   ];
   const WORLD_CHANNELS: Array<{ id: 'backtest' | 'journal'; he: string; en: string }> = [
     { id: 'backtest', he: 'באק-טסט', en: 'Backtest' },
@@ -756,6 +760,7 @@ const Index = () => {
     aiGroup: isRTL ? 'בינה מלאכותית' : 'Intelligence · AI',
     markets: isRTL ? 'שווקים' : 'Markets',
     labs: isRTL ? 'באק-טסט ויומן' : 'Backtest & Journal',
+    mind: isRTL ? 'בחן את עצמך' : 'Test Yourself',
     system: isRTL ? 'הגדרות' : 'Settings',
   };
 
@@ -1977,16 +1982,34 @@ const Index = () => {
                   const isWeekly = item.id === 'weekly-review';
                   const isActive = page === item.id;
                   const showBadge = isWeekly && showWeeklyReminder;
+                  const hasSubs = item.id === 'worlds' || item.id === 'dashboard' || item.id === 'analytics' || item.id === 'control-room' || item.id === 'ai';
+                  const subOpen = !!mmSubs[item.id];
+                  const toggleSubs = () => setMmSubs(s => ({ ...s, [item.id]: !s[item.id] }));
+                  const mmSubBtn = (key: string, active: boolean, label: string, star: boolean, onTap: () => void, icon?: React.ReactNode) => (
+                    <button
+                      key={key}
+                      className="mm-row"
+                      data-active={active ? 'true' : 'false'}
+                      style={{ minHeight: 40 }}
+                      onClick={() => { onTap(); setSbOpen(false); }}
+                    >
+                      {icon !== undefined && <span className="mm-icon" style={{ fontSize: 12, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>{icon}</span>}
+                      <span className="mm-label" style={{ fontSize: 13 }}>{label}</span>
+                      {star && <span style={{ marginInlineStart: 'auto', display: 'inline-flex' }}><ProStar /></span>}
+                    </button>
+                  );
                   return (
                     <React.Fragment key={item.id}>
                     <button
                       className="mm-row"
                       data-active={isActive ? 'true' : 'false'}
                       onClick={() => {
-                        if (item.id === 'worlds') return;
+                        if (item.id === 'worlds') { toggleSubs(); return; }
                         if (item.action) { setSbOpen(false); item.action(); return; }
-                        setPage(item.id); setSbOpen(false);
+                        setPage(item.id);
                         if (item.id === 'dashboard') setDashChannel('home');
+                        if (hasSubs && !subOpen) toggleSubs();
+                        setSbOpen(false);
                         if (isWeekly) dismissWeeklyReminder();
                       }}
                     >
@@ -1995,40 +2018,91 @@ const Index = () => {
                         {showBadge && <ReminderBadge />}
                       </span>
                       <span className="mm-label" style={isWeekly && !isActive ? { color: '#FFD700' } : undefined}>{item.label}</span>
-                      <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                      {hasSubs ? (
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          aria-label={isRTL ? 'פתח או סגור תתי ערוצים' : 'Toggle sub-channels'}
+                          aria-expanded={subOpen}
+                          onClick={e => { e.stopPropagation(); toggleSubs(); }}
+                          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); toggleSubs(); } }}
+                          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, marginInlineEnd: -6, color: T.text.muted, opacity: 0.85, transform: `rotate(${subOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', WebkitTapHighlightColor: 'transparent' }}
+                        >▸</span>
+                      ) : (
+                        <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                      )}
                     </button>
-                    {item.id === 'worlds' && (
+                    {item.id === 'worlds' && subOpen && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingInlineStart: 22, marginBottom: 4 }}>
-                        {WORLD_CHANNELS.map(ch => (
-                          <button
-                            key={ch.id}
-                            className="mm-row"
-                            style={{ minHeight: 40 }}
-                            onClick={() => { setSbOpen(false); setActiveDimension(ch.id); }}
-                          >
-                            <span className="mm-icon" style={{ fontSize: 12 }}>{ch.id === 'backtest' ? '📊' : '🏛️'}</span>
-                            <span className="mm-label" style={{ fontSize: 13 }}>{isRTL ? ch.he : ch.en}</span>
-                          </button>
+                        {WORLD_CHANNELS.map(ch => mmSubBtn(
+                          ch.id,
+                          false,
+                          isRTL ? ch.he : ch.en,
+                          false,
+                          () => setActiveDimension(ch.id),
+                          ch.id === 'backtest' ? <BacktestPortalIcon size={14} /> : <JournalPortalIcon size={14} />,
                         ))}
                       </div>
                     )}
-                    {item.id === 'dashboard' && (
+                    {item.id === 'dashboard' && subOpen && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingInlineStart: 22, marginBottom: 4 }}>
                         {CHANNELS.map(ch => {
                           const locked = ch.pro && !isUltimateTier;
                           const chActive = page === 'dashboard' && dashChannel === ch.id;
-                          return (
-                            <button
-                              key={ch.id}
-                              className="mm-row"
-                              data-active={chActive ? 'true' : 'false'}
-                              style={{ minHeight: 40 }}
-                              onClick={() => { setPage('dashboard'); setDashChannel(ch.id); setAdvancedOpen(true); setSbOpen(false); }}
-                            >
-                              <span className="mm-icon" style={{ fontSize: 12 }}>{ch.icon}</span>
-                              <span className="mm-label" style={{ fontSize: 13, color: locked && !chActive ? T.text.muted : undefined }}>{isRTL ? (ch.short?.he ?? ch.he) : (ch.short?.en ?? ch.en)}</span>
-                              {locked && <span style={{ marginInlineStart: 'auto', display: 'inline-flex' }}><ProStar /></span>}
-                            </button>
+                          return mmSubBtn(
+                            ch.id,
+                            chActive,
+                            isRTL ? (ch.short?.he ?? ch.he) : (ch.short?.en ?? ch.en),
+                            locked,
+                            () => { setPage('dashboard'); setDashChannel(ch.id); setAdvancedOpen(true); },
+                            <span style={{ fontSize: 12 }}>{ch.icon}</span>,
+                          );
+                        })}
+                      </div>
+                    )}
+                    {item.id === 'analytics' && subOpen && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingInlineStart: 22, marginBottom: 4 }}>
+                        {PERF_CHANNELS.map(ch => {
+                          const chActive = page === 'analytics' && perfChannel === ch.id;
+                          const locked = Boolean(ch.pro) && !isUltimateTier;
+                          return mmSubBtn(
+                            ch.id,
+                            chActive,
+                            isRTL ? ch.he : ch.en,
+                            locked,
+                            () => { setPage('analytics'); setPerfChannel(ch.id); },
+                            <span style={{ fontSize: 12 }}>{ch.icon}</span>,
+                          );
+                        })}
+                      </div>
+                    )}
+                    {item.id === 'control-room' && subOpen && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingInlineStart: 22, marginBottom: 4 }}>
+                        {CR_CHANNELS.map(ch => {
+                          const chActive = page === 'control-room' && crChannel === ch.id;
+                          return mmSubBtn(
+                            ch.id,
+                            chActive,
+                            isRTL ? ch.he : ch.en,
+                            Boolean(ch.pro) && !isUltimateTier,
+                            () => { setPage('control-room'); setCrChannel(ch.id); },
+                            <span style={{ fontSize: 12 }}>{ch.icon}</span>,
+                          );
+                        })}
+                      </div>
+                    )}
+                    {item.id === 'ai' && subOpen && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingInlineStart: 22, marginBottom: 4 }}>
+                        {AI_CHANNELS.map(ch => {
+                          const chActive = page === 'ai' && aiChannel === ch.id;
+                          const locked = Boolean(ch.pro) && !isUltimateTier;
+                          return mmSubBtn(
+                            ch.id,
+                            chActive,
+                            isRTL ? ch.he : ch.en,
+                            locked || ch.id === 'coach',
+                            () => { setPage('ai'); setAiChannel(ch.id); },
+                            <span style={{ fontSize: 12 }}>{ch.icon}</span>,
                           );
                         })}
                       </div>
