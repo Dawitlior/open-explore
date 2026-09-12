@@ -215,6 +215,7 @@ const Index = () => {
   // Sidebar starts collapsed on every load (both mobile and desktop) — user
   // explicitly requested no auto-open on refresh.
   const [sbOpen, setSbOpen] = useState(false);
+  const [showTradingReport, setShowTradingReport] = useState(false);
   // Desktop: any click outside the sidebar collapses it instantly.
   useEffect(() => {
     if (!sbOpen || isMobile) return;
