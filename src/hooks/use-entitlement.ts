@@ -151,22 +151,18 @@ export function useEntitlement(): EntitlementState {
     };
   }, []);
 
-  const refreshEntitlement = useCallback(async () => {
+  const refreshEntitlement = useCallback(async (force = false) => {
     if (!user?.id) {
-      setEntitlementTier('free');
-      setLoading(false);
+      setSnapshot({ userId: null, tier: 'free', resolved: false });
       return;
     }
-    setLoading(true);
-    const { data, error } = await supabase.rpc('current_entitlement', { p_user: user.id });
-    if (!error && data) setEntitlementTier(normalizeEntitlement(data as string));
-    setLoading(false);
+    await fetchEntitlement(user.id, force);
   }, [user?.id]);
 
-  useEffect(() => { void refreshEntitlement(); }, [refreshEntitlement]);
+  useEffect(() => { void refreshEntitlement(false); }, [refreshEntitlement]);
 
   useEffect(() => {
-    const refresh = () => { void refreshEntitlement(); };
+    const refresh = () => { void refreshEntitlement(true); };
     window.addEventListener('orca:entitlement-changed', refresh);
     window.addEventListener('focus', refresh);
     return () => {
