@@ -1944,7 +1944,7 @@ const Index = () => {
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 18px 14px', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <img src="/orcaIcon.ico" alt="Orca Investment" width={44} height={44} style={{ display: 'block', width: 44, height: 44, objectFit: 'contain' }} />
+                <img src="/orcaIcon.ico" alt="Orca Investment" width={76} height={54} style={{ display: 'block', width: 76, height: 54, objectFit: 'contain' }} />
               </div>
               <button
                 onClick={() => setSbOpen(false)}
@@ -2169,8 +2169,8 @@ const Index = () => {
         willChange: 'width',
       }}>
         <div style={{ padding: '18px 14px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, flexShrink: 0 }} onClick={() => setShowFeatureModal(true)}>
-            <img src="/orcaIcon.ico" alt="Orca Investment" width={34} height={34} style={{ display: 'block', width: 34, height: 34, objectFit: 'contain' }} />
+          <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: sbOpen ? 112 : 34, height: sbOpen ? 58 : 34, flexShrink: 0, transition: 'width 0.18s ease, height 0.18s ease' }} onClick={() => setShowFeatureModal(true)}>
+            <img src="/orcaIcon.ico" alt="Orca Investment" width={sbOpen ? 112 : 34} height={sbOpen ? 58 : 34} style={{ display: 'block', width: sbOpen ? 112 : 34, height: sbOpen ? 58 : 34, objectFit: 'contain' }} />
           </div>
           {sbOpen && <button onClick={() => setSbOpen(false)} style={{ marginInlineStart: 'auto', background: 'none', border: 'none', color: T.text.muted, cursor: 'pointer', fontSize: 14, padding: 4, lineHeight: 1, transition: 'color 0.2s' }}>‹</button>}
         </div>
