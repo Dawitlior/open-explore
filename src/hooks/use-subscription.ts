@@ -52,6 +52,32 @@ export function useSubscription(): SubscriptionState {
   useEffect(() => { void refresh(); }, [refresh]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('billing') !== 'success') return;
+
+    let cancelled = false;
+    const syncAfterCheckout = async () => {
+      for (let attempt = 0; attempt < 20 && !cancelled; attempt += 1) {
+        const { data, error } = await supabase.functions.invoke('check-subscription');
+        if (!error && normalizeEntitlement(data?.tier as string) === 'pro') {
+          setSubscribed(true);
+          setTier('pro');
+          setCurrentPeriodEnd(data?.current_period_end ?? null);
+          setCancelAtPeriodEnd(Boolean(data?.cancel_at_period_end));
+          window.dispatchEvent(new CustomEvent('orca:entitlement-changed'));
+          const cleanUrl = new URL(window.location.href);
+          cleanUrl.searchParams.delete('billing');
+          window.history.replaceState({}, '', `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`);
+          return;
+        }
+        await new Promise(resolve => window.setTimeout(resolve, 1500));
+      }
+    };
+    void syncAfterCheckout();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
     const onFocus = () => { void refresh(); };
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
@@ -62,7 +88,7 @@ export function useSubscription(): SubscriptionState {
       body: { tier: target },
     });
     if (error || !data?.url) throw new Error(error?.message ?? 'checkout_failed');
-    window.open(data.url as string, '_blank', 'noopener,noreferrer');
+    window.location.assign(data.url as string);
   }, []);
 
   const openPortal = useCallback(async () => {
