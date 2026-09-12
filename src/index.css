@@ -524,7 +524,9 @@
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 9998;
+  /* Above SettingsHub (9999), so palette changes visibly wash across the
+     control surface where the switch was initiated as well as the app. */
+  z-index: 10000;
   opacity: 0;
 }
 .orca-liquid-sweep[data-active="true"] {
