@@ -17,8 +17,15 @@ export function useDeviceSession() {
 
     const ping = async () => {
       try {
+        // Always send the *live* access token. Relying on the client's implicit
+        // header can fall back to the publishable key when the session is still
+        // hydrating (preview iframe), which the function rejects with 401.
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess.session?.access_token;
+        if (!token) return;
         const { data, error } = await supabase.functions.invoke('security-devices', {
           body: { action: 'register', deviceId },
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (!alive || error) return;
         if ((data as { revoked?: boolean } | null)?.revoked) {
