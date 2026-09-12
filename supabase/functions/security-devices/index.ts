@@ -54,11 +54,15 @@ Deno.serve(withCors(async (req) => {
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const authHeader = req.headers.get('Authorization') ?? '';
 
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user }, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !user) return json({ error: 'unauthorized' }, 401);
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (!token) return json({ error: 'unauthorized', reason: 'missing_token' }, 401);
+
+    const userClient = createClient(supabaseUrl, anonKey, { auth: { persistSession: false } });
+    const { data: { user }, error: userErr } = await userClient.auth.getUser(token);
+    if (userErr || !user) {
+      console.error('security-devices auth failed:', userErr?.message ?? 'no user on token');
+      return json({ error: 'unauthorized' }, 401);
+    }
 
     const body = await req.json().catch(() => ({}));
     const action = String(body?.action ?? '');
