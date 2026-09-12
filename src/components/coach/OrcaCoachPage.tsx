@@ -393,6 +393,28 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
             )
           ))}
 
+          {/* Click-to-choose portfolio chips — shown when the coach asks which book. */}
+          {needsPortfolio && !busy && portfolios.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginInlineStart: 36 }}>
+              {portfolios.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => {
+                    setActivePortfolioId(p.id);
+                    send(isRTL ? `בוא ננתח את התיק "${p.name}"` : `Let's analyse the "${p.name}" portfolio`, p.id);
+                  }}
+                  className="orca-coach-chip"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 7,
+                    background: `${accent}12`, border: `1px solid ${accent}3A`, color: T.text.primary,
+                    borderRadius: 999, padding: '8px 15px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                  }}
+                ><Briefcase size={12} style={{ color: accent }} />{p.name}</button>
+              ))}
+            </div>
+          )}
+
+
           {busy && (
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <div style={{
