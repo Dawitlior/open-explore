@@ -27,8 +27,8 @@ export interface ReportPosition {
 export interface ReportMeta {
   brand: string;
   accountName: string;
-  accountId: string;
-  ownerName: string;
+  /** Owner email — the only identity shown on the statement. */
+  ownerEmail: string;
   currency: string;
   initialDeposit: number;
   isRTL: boolean;
@@ -305,6 +305,84 @@ export function buildTradingReportHtml(trades: Trade[], meta: ReportMeta): strin
   const m = (v: number) => money(v, cur);
   const sign = (v: number) => (v > 0 ? 'pos' : v < 0 ? 'neg' : undefined);
 
+  const firstDate = String(list[0]?.date || '').slice(0, 10);
+  const lastDate = String(list[list.length - 1]?.date || '').slice(0, 10);
+  const periodLabel = firstDate && lastDate ? `${firstDate} → ${lastDate}` : '—';
+
+  /* ── Grouped analytics used by the extended pages ───────────────────── */
+  type Bucket = { trades: number; wins: number; pnl: number; r: number };
+  const groupBy = (keyOf: (t: Trade) => string) => {
+    const map = new Map<string, Bucket>();
+    for (const t of list) {
+      const k = keyOf(t) || '—';
+      const e = map.get(k) || { trades: 0, wins: 0, pnl: 0, r: 0 };
+      e.trades++; e.pnl += n(t.pnl); e.r += getEffectiveR(t);
+      if (t.winLoss === 'Win') e.wins++;
+      map.set(k, e);
+    }
+    return map;
+  };
+  const bucketRows = (map: Map<string, Bucket>, sortKey = false) => {
+    const entries = [...map.entries()];
+    entries.sort(sortKey ? (a, b) => a[0].localeCompare(b[0]) : (a, b) => b[1].pnl - a[1].pnl);
+    return entries.map(([k, v]) => `
+      <tr><td>${esc(k)}</td><td>${v.trades}</td>
+        <td>${num((v.wins / Math.max(1, v.trades)) * 100, 1)}%</td>
+        <td class="${sign(v.r) ?? ''}">${num(v.r, 2)}R</td>
+        <td class="${sign(v.pnl) ?? ''}">${m(v.pnl)}</td>
+        <td class="${sign(v.pnl / Math.max(1, v.trades)) ?? ''}">${m(v.pnl / Math.max(1, v.trades))}</td>
+      </tr>`).join('') || `<tr><td colspan="6" class="empty-cell">No deals</td></tr>`;
+  };
+
+  const DOW = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dirRows = bucketRows(groupBy(t => String(t.direction || '—')));
+  const dowRows = bucketRows(groupBy(t => {
+    const d = new Date(String(t.date || ''));
+    return isNaN(d.getTime()) ? '—' : DOW[d.getDay()];
+  }));
+  const monthRows = bucketRows(groupBy(t => String(t.date || '').slice(0, 7)), true);
+  const setupRows = bucketRows(groupBy(t => String((t as unknown as { setup?: string }).setup || t.orderType || '—')));
+
+  const ranked = [...list].sort((a, b) => n(b.pnl) - n(a.pnl));
+  const extremeRow = (t: Trade) => `
+    <tr><td>${esc(String(t.date || '').slice(0, 16).replace('T', ' '))}</td>
+      <td>${esc(t.coin)}</td>
+      <td class="${t.direction === 'Long' ? 'pos' : 'neg'}">${esc(t.direction)}</td>
+      <td class="${sign(getEffectiveR(t)) ?? ''}">${num(getEffectiveR(t), 2)}R</td>
+      <td class="${sign(n(t.pnl)) ?? ''}">${m(n(t.pnl))}</td>
+      <td>${t.rules ? '✔' : '✘'}</td></tr>`;
+  const bestRows = ranked.slice(0, 5).map(extremeRow).join('') || `<tr><td colspan="6" class="empty-cell">—</td></tr>`;
+  const worstRows = ranked.slice(-5).reverse().map(extremeRow).join('') || `<tr><td colspan="6" class="empty-cell">—</td></tr>`;
+
+  const withRules = list.filter(t => t.rules);
+  const brokeRules = list.filter(t => !t.rules);
+  const avgOf = (arr: Trade[]) => (arr.length ? arr.reduce((x, t) => x + n(t.pnl), 0) / arr.length : 0);
+  const rSum = (arr: Trade[]) => arr.reduce((x, t) => x + getEffectiveR(t), 0);
+  const winPct = (arr: Trade[]) => (arr.length ? (arr.filter(t => t.winLoss === 'Win').length / arr.length) * 100 : 0);
+
+  /* R-multiple distribution buckets. */
+  const R_BUCKETS: Array<[string, (r: number) => boolean]> = [
+    ['≤ -2R', r => r <= -2],
+    ['-2R…-1R', r => r > -2 && r <= -1],
+    ['-1R…0R', r => r > -1 && r < 0],
+    ['0R…1R', r => r >= 0 && r < 1],
+    ['1R…2R', r => r >= 1 && r < 2],
+    ['2R…3R', r => r >= 2 && r < 3],
+    ['≥ 3R', r => r >= 3],
+  ];
+  const rDist = R_BUCKETS.map(([label, test]) => {
+    const hits = list.filter(t => test(getEffectiveR(t)));
+    return { label, count: hits.length, pnl: hits.reduce((x, t) => x + n(t.pnl), 0) };
+  });
+  const rMax = Math.max(1, ...rDist.map(b => b.count));
+  const rDistRows = rDist.map(b => `
+    <tr><td>${esc(b.label)}</td><td>${b.count}</td>
+      <td>${num((b.count / Math.max(1, list.length)) * 100, 1)}%</td>
+      <td><span style="display:inline-block;height:8px;border-radius:4px;width:${((b.count / rMax) * 100).toFixed(1)}%;
+        background:${b.label.startsWith('≤') || b.label.startsWith('-') ? '#ef5350' : '#26a69a'}"></span></td>
+      <td class="${sign(b.pnl) ?? ''}">${m(b.pnl)}</td></tr>`).join('');
+
+
   const dealsRows = list.map((t, i) => `
     <tr>
       <td>${i + 1}</td>
@@ -416,6 +494,11 @@ export function buildTradingReportHtml(trades: Trade[], meta: ReportMeta): strin
   .ai p { margin:0 0 10px; line-height:1.7; color:#cfe0f5; }
   .empty, .empty-cell { color:var(--dim); text-align:center; padding:18px; font-size:11px; }
   .scroll { max-height:520px; overflow:auto; }
+  .block { break-inside:avoid; page-break-inside:avoid; }
+  .page { break-before:page; page-break-before:always; }
+  .plabel { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.22em;
+    text-transform:uppercase; color:var(--dim); margin:0 0 10px; }
+  .note { font-size:10.5px; color:var(--dim); line-height:1.7; margin-top:10px; }
   @media print { body { background:#fff; color:#111; } .block { background:#fff; border-color:#ddd; }
     .kpi { background:#fafafa; } .scroll { max-height:none; } h2 { color:#8a6d12; }
     .kv { color:#555; } .kv b, .meta b { color:#111; } .meta, .axis, .footer { color:#666; } }
@@ -427,12 +510,13 @@ export function buildTradingReportHtml(trades: Trade[], meta: ReportMeta): strin
     </div>
     <div class="meta">
       Account: <b>${esc(meta.accountName)}</b><br/>
-      Account ID: <b>${esc(meta.accountId)}</b><br/>
-      Owner: <b>${esc(meta.ownerName)}</b><br/>
+      Email: <b>${esc(meta.ownerEmail)}</b><br/>
       Currency: <b>${esc(cur)}</b><br/>
+      Period: <b>${esc(periodLabel)}</b><br/>
       Generated: <b>${esc(generated)} UTC</b>
     </div>
   </header>
+
 
   <div class="kpis">
     <div class="kpi"><span>Total Net Profit</span><b class="${sign(s.netProfit) ?? ''}">${m(s.netProfit)}</b></div>
@@ -480,6 +564,9 @@ export function buildTradingReportHtml(trades: Trade[], meta: ReportMeta): strin
     </div>
   </section>
 
+  <div class="page"></div>
+  <p class="plabel">Page 2 · Results over time</p>
+
   <div class="grid2">
     <section class="block"><h2>Monthly Result</h2>${monthlyBarsSvg(list)}</section>
     <section class="block"><h2>Win / Loss Split</h2>
@@ -521,6 +608,77 @@ export function buildTradingReportHtml(trades: Trade[], meta: ReportMeta): strin
     <table><thead><tr><th>Symbol</th><th>Deals</th><th>Win %</th><th>Total R</th><th>Profit</th></tr></thead>
     <tbody>${symbolRows}</tbody></table>
   </section>
+
+  <div class="page"></div>
+  <p class="plabel">Page 3 · Behaviour, structure and discipline</p>
+
+  <div class="grid2">
+    <section class="block">
+      <h2>Performance by Direction</h2>
+      <table><thead><tr><th>Direction</th><th>Deals</th><th>Win %</th><th>Total R</th><th>Profit</th><th>Avg / deal</th></tr></thead>
+      <tbody>${dirRows}</tbody></table>
+    </section>
+    <section class="block">
+      <h2>Performance by Setup / Order Type</h2>
+      <table><thead><tr><th>Setup</th><th>Deals</th><th>Win %</th><th>Total R</th><th>Profit</th><th>Avg / deal</th></tr></thead>
+      <tbody>${setupRows}</tbody></table>
+    </section>
+  </div>
+
+  <section class="block">
+    <h2>Performance by Day of Week</h2>
+    <table><thead><tr><th>Day</th><th>Deals</th><th>Win %</th><th>Total R</th><th>Profit</th><th>Avg / deal</th></tr></thead>
+    <tbody>${dowRows}</tbody></table>
+    <div class="note">Days with a negative average per deal are the cheapest place to cut activity before changing anything else in the strategy.</div>
+  </section>
+
+  <section class="block">
+    <h2>Month by Month</h2>
+    <table><thead><tr><th>Month</th><th>Deals</th><th>Win %</th><th>Total R</th><th>Profit</th><th>Avg / deal</th></tr></thead>
+    <tbody>${monthRows}</tbody></table>
+  </section>
+
+  <section class="block">
+    <h2>R-Multiple Distribution</h2>
+    <table><thead><tr><th>Bucket</th><th>Deals</th><th>Share</th><th>Shape</th><th>Profit</th></tr></thead>
+    <tbody>${rDistRows}</tbody></table>
+    <div class="note">A healthy distribution keeps losses clustered between -1R and 0R while the right tail (2R+) carries the account.</div>
+  </section>
+
+  <section class="block">
+    <h2>Discipline — Rules Followed vs Broken</h2>
+    <div class="grid2">
+      <div>
+        ${row('Deals following the plan', `${withRules.length} (${pct((withRules.length / Math.max(1, list.length)) * 100)})`)}
+        ${row('Win rate — plan followed', pct(winPct(withRules)))}
+        ${row('Total R — plan followed', `${num(rSum(withRules))}R`, sign(rSum(withRules)))}
+        ${row('Average P/L — plan followed', m(avgOf(withRules)), sign(avgOf(withRules)))}
+      </div>
+      <div>
+        ${row('Deals breaking the plan', `${brokeRules.length} (${pct((brokeRules.length / Math.max(1, list.length)) * 100)})`)}
+        ${row('Win rate — plan broken', pct(winPct(brokeRules)))}
+        ${row('Total R — plan broken', `${num(rSum(brokeRules))}R`, sign(rSum(brokeRules)))}
+        ${row('Average P/L — plan broken', m(avgOf(brokeRules)), sign(avgOf(brokeRules)))}
+      </div>
+    </div>
+    <div class="note">The gap between these two columns is the measurable cost of discipline — it is usually larger than any edge gained from a new setup.</div>
+  </section>
+
+  <div class="grid2">
+    <section class="block">
+      <h2>Five Best Deals</h2>
+      <table><thead><tr><th>Time</th><th>Symbol</th><th>Side</th><th>R</th><th>Profit</th><th>Rules</th></tr></thead>
+      <tbody>${bestRows}</tbody></table>
+    </section>
+    <section class="block">
+      <h2>Five Worst Deals</h2>
+      <table><thead><tr><th>Time</th><th>Symbol</th><th>Side</th><th>R</th><th>Profit</th><th>Rules</th></tr></thead>
+      <tbody>${worstRows}</tbody></table>
+    </section>
+  </div>
+
+  <div class="page"></div>
+  <p class="plabel">Page 4 · Full deal log</p>
 
   <section class="block">
     <h2>Deals</h2>

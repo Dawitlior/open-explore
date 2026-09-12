@@ -63,8 +63,7 @@ const WeeklyReviewPage = lazy(() => import('@/components/trading/WeeklyReviewPag
 const CalendarHubPage = lazy(() => import('@/components/trading/CalendarHubPage').then(m => ({ default: m.CalendarHubPage })));
 const EconomicCalendarPage = lazy(() => import('@/components/economic/EconomicCalendarPage').then(m => ({ default: m.EconomicCalendarPage })));
 import { InstallPrompt } from '@/components/trading/InstallPrompt';
-import { DimensionController, PortalButton, BacktestPortalButton } from '@/components/trading/DimensionController';
-import { TraderMindIcon } from '@/components/trading/dimension-icons';
+import { DimensionController } from '@/components/trading/DimensionController';
 import { CustomKPIPanel } from '@/components/trading/CustomKPIPanel';
 const JournalDimension = lazy(() => import('@/components/trading/JournalDimension').then(m => ({ default: m.JournalDimension })));
 const BacktestDimension = lazy(() => import('@/components/trading/BacktestDimension').then(m => ({ default: m.BacktestDimension })));
@@ -742,6 +741,13 @@ const Index = () => {
     { id: 'analytics', icon: Ico.bar, label: isRTL ? 'ביצועים' : 'Performance', group: 'workspace2' },
 
     { id: 'control-room', icon: Ico.shield, label: isRTL ? 'חדר בקרה' : 'Control Room', group: 'intelligence' },
+
+    { id: 'worlds', icon: '🌐', label: isRTL ? 'באק-טסט ויומן' : 'Backtest & Journal', group: 'labs', action: () => setWorldsOpen(o => !o) },
+    { id: 'test-yourself', icon: '🧠', label: isRTL ? 'בחן את עצמך' : 'Test Yourself', group: 'labs', action: () => setShowTraderMind(true) },
+  ];
+  const WORLD_CHANNELS: Array<{ id: 'backtest' | 'journal'; he: string; en: string }> = [
+    { id: 'backtest', he: 'באק-טסט', en: 'Backtest' },
+    { id: 'journal', he: 'יומן גורנל', en: 'Journal' },
   ];
   const NAV_GROUP_LABEL: Record<string, string> = {
     workspace: isRTL ? 'סביבת עבודה' : 'Workspace',
@@ -749,6 +755,7 @@ const Index = () => {
     intelligence: isRTL ? 'תובנות' : 'Intelligence',
     aiGroup: isRTL ? 'בינה מלאכותית' : 'Intelligence · AI',
     markets: isRTL ? 'שווקים' : 'Markets',
+    labs: isRTL ? 'באק-טסט ויומן' : 'Backtest & Journal',
     system: isRTL ? 'הגדרות' : 'Settings',
   };
 
@@ -1975,7 +1982,13 @@ const Index = () => {
                     <button
                       className="mm-row"
                       data-active={isActive ? 'true' : 'false'}
-                      onClick={() => { setPage(item.id); setSbOpen(false); if (item.id === 'dashboard') setDashChannel('home'); if (isWeekly) dismissWeeklyReminder(); }}
+                      onClick={() => {
+                        if (item.id === 'worlds') return;
+                        if (item.action) { setSbOpen(false); item.action(); return; }
+                        setPage(item.id); setSbOpen(false);
+                        if (item.id === 'dashboard') setDashChannel('home');
+                        if (isWeekly) dismissWeeklyReminder();
+                      }}
                     >
                       <span className="mm-icon" style={isWeekly ? { color: '#FFD700', borderColor: '#FFD70044', background: 'rgba(255,215,0,0.08)' } : undefined}>
                         {typeof item.icon === 'string' ? <span>{item.icon}</span> : item.icon}
@@ -1984,6 +1997,21 @@ const Index = () => {
                       <span className="mm-label" style={isWeekly && !isActive ? { color: '#FFD700' } : undefined}>{item.label}</span>
                       <svg className="mm-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                     </button>
+                    {item.id === 'worlds' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingInlineStart: 22, marginBottom: 4 }}>
+                        {WORLD_CHANNELS.map(ch => (
+                          <button
+                            key={ch.id}
+                            className="mm-row"
+                            style={{ minHeight: 40 }}
+                            onClick={() => { setSbOpen(false); setActiveDimension(ch.id); }}
+                          >
+                            <span className="mm-icon" style={{ fontSize: 12 }}>{ch.id === 'backtest' ? '📊' : '🏛️'}</span>
+                            <span className="mm-label" style={{ fontSize: 13 }}>{isRTL ? ch.he : ch.en}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     {item.id === 'dashboard' && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingInlineStart: 22, marginBottom: 4 }}>
                         {CHANNELS.map(ch => {
@@ -2010,12 +2038,6 @@ const Index = () => {
                 })}
               </div>
 
-              {/* Dimensions */}
-              <div className="mm-section-label">{isRTL ? 'עולמות נוספים' : 'Different Worlds'}</div>
-              <div style={{ padding: '0 4px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <PortalButton onClick={() => { setSbOpen(false); setActiveDimension('journal'); }} isRTL={isRTL} expanded={true} />
-                <BacktestPortalButton onClick={() => { setSbOpen(false); setActiveDimension('backtest'); }} isRTL={isRTL} expanded={true} />
-              </div>
 
               {/* Portfolio switcher — Apple-style grouped inset list. */}
               <div className="mm-section-label">{isRTL ? 'תיק' : 'Portfolio'}</div>
@@ -2096,6 +2118,7 @@ const Index = () => {
             const isPerf = item.id === 'analytics';
             const isCr = item.id === 'control-room';
             const isAi = item.id === 'ai';
+            const isWorlds = item.id === 'worlds';
             const groupChanged = item.group && item.group !== nav[idx - 1]?.group;
             return (
             <React.Fragment key={item.id}>
@@ -2107,7 +2130,7 @@ const Index = () => {
             {groupChanged && !sbOpen && idx > 0 && (
               <div aria-hidden style={{ height: 1, background: T.border.subtle, margin: '6px 12px' }} />
             )}
-            <button onClick={() => { if (item.action) { item.action(); return; } setPage(item.id); if (isDash) { setDashChannel('home'); setDashSubOpen(true); } if (isPerf) { setPerfSubOpen(true); setPerfChannel(null); } if (isCr) { setCrSubOpen(true); setCrChannel('risk'); } if (isAi) { setAiSubOpen(true); setAiChannel('insights'); } if (isWeekly) dismissWeeklyReminder(); }}
+            <button onClick={() => { if (item.id === 'worlds') { setWorldsOpen(o => !o); return; } if (item.action) { item.action(); return; } setPage(item.id); if (isDash) { setDashChannel('home'); setDashSubOpen(true); } if (isPerf) { setPerfSubOpen(true); setPerfChannel(null); } if (isCr) { setCrSubOpen(true); setCrChannel('risk'); } if (isAi) { setAiSubOpen(true); setAiChannel('insights'); } if (isWeekly) dismissWeeklyReminder(); }}
               onMouseEnter={e => {
                 if (page === item.id) return;
                 e.currentTarget.style.background = `linear-gradient(110deg, transparent 0%, ${activeColor}18 50%, transparent 100%)`;
@@ -2164,9 +2187,37 @@ const Index = () => {
                   onClick={e => { e.stopPropagation(); setAiSubOpen(o => !o); }}
                   onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); setAiSubOpen(o => !o); } }}
                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, fontSize: 16, opacity: 0.9, transform: `rotate(${aiSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', borderRadius: T.radius.sm }}
+                 >▸</span>
+              )}
+              {isWorlds && sbOpen && (
+                <span
+                  aria-hidden
+                   style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, fontSize: 16, opacity: 0.9, transform: `rotate(${worldsOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', borderRadius: T.radius.sm }}
                 >▸</span>
               )}
              </button>
+            {/* Backtest & Journal sub-channels */}
+            {isWorlds && sbOpen && worldsOpen && (
+              <div style={{ display: 'flex', flexDirection: 'column', margin: '1px 0 4px', paddingInlineStart: 12, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 20 }}>
+                {WORLD_CHANNELS.map(ch => (
+                  <button
+                    key={ch.id}
+                    onClick={() => setActiveDimension(ch.id)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 7, width: '100%',
+                      padding: '6px 8px', minHeight: 32, border: 'none', borderRadius: T.radius.sm,
+                      background: 'transparent', color: T.text.secondary,
+                      fontSize: 12, lineHeight: 1.4, cursor: 'pointer',
+                      textAlign: isRTL ? 'right' : 'left', transition: 'color 0.2s',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}
+                  >
+                    <span aria-hidden style={{ width: 4, height: 4, borderRadius: '50%', flexShrink: 0, background: T.text.muted, opacity: 0.5 }} />
+                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{isRTL ? ch.he : ch.en}</span>
+                  </button>
+                ))}
+              </div>
+            )}
             {/* Control Room sub-channels — Risk / Mind */}
             {isCr && sbOpen && crSubOpen && (
               <div style={{ display: 'flex', flexDirection: 'column', margin: '1px 0 4px', paddingInlineStart: 12, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 20 }}>
@@ -2301,70 +2352,7 @@ const Index = () => {
           </button>
           )}
         </nav>
-        {/* ═══ DIFFERENT WORLDS — collapsible group (portals + Trader Mind) ═══ */}
-        {sbOpen && (
-          <div style={{ padding: '4px 6px' }}>
-            <button
-              onClick={() => setWorldsOpen(o => !o)}
-              aria-expanded={worldsOpen}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', background: 'transparent', border: `1px solid ${T.border.subtle}`, borderRadius: T.radius.md, color: T.text.secondary, cursor: 'pointer', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', transition: 'color 0.2s, border-color 0.2s' }}
-            >
-              <span aria-hidden style={{ fontSize: 13 }}>🌐</span>
-              <span style={{ flex: 1, textAlign: isRTL ? 'right' : 'left' }}>{isRTL ? 'עולמות נוספים' : 'Different Worlds'}</span>
-              <span aria-hidden style={{ fontSize: 10, opacity: 0.75, transform: `rotate(${worldsOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease' }}>▸</span>
-            </button>
-          </div>
-        )}
-        {(!sbOpen || worldsOpen) && (<>
-        <div style={{ padding: '4px 6px' }}><PortalButton onClick={() => setActiveDimension('journal')} isRTL={isRTL} expanded={sbOpen} /></div>
-        <div style={{ padding: '4px 6px' }}><BacktestPortalButton onClick={() => setActiveDimension('backtest')} isRTL={isRTL} expanded={sbOpen} /></div>
-        {/* Trader Mind — behavioral diagnostic (replaces legacy Oracle slot) */}
-        {sbOpen && (
-          <div style={{ padding: '4px 6px' }}>
-            <button
-              onClick={() => setShowTraderMind(true)}
-              title={isRTL ? 'תודעת הסוחר — אבחון התנהגותי' : 'Trader Mind — behavioral diagnostic'}
-              onMouseEnter={e => {
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = `0 0 26px -6px ${neutralRamp(T, 3)[1] ?? infoColor(T)}cc, inset 0 0 0 1px ${neutralRamp(T, 3)[1] ?? infoColor(T)}66`;
-                e.currentTarget.style.background = `linear-gradient(135deg, ${neutralRamp(T, 3)[1] ?? infoColor(T)}22, ${infoColor(T)}18)`;
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.background = `linear-gradient(135deg, ${neutralRamp(T, 3)[1] ?? infoColor(T)}15, transparent)`;
-              }}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 12px', background: `linear-gradient(135deg, ${neutralRamp(T, 3)[1] ?? infoColor(T)}15, transparent)`, border: `1px solid ${neutralRamp(T, 3)[1] ?? infoColor(T)}40`, borderRadius: T.radius.md, color: neutralRamp(T, 3)[1] ?? infoColor(T), cursor: 'pointer', fontSize: 12, fontWeight: 700, letterSpacing: 0.3, transition: 'all 0.25s ease' }}
-            >
-              <TraderMindIcon size={17} style={{ filter: `drop-shadow(0 0 6px ${neutralRamp(T, 3)[1] ?? infoColor(T)}aa)`, flexShrink: 0 }} />
-              <span>{isRTL ? 'תודעת הסוחר' : 'Trader Mind'}</span>
-              {tmCalibrated ? (
-                <span style={{ marginInlineStart: 'auto', fontSize: 8, color: infoColor(T), fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
-                  {tmArchetype?.slice(0, 18) ?? (isRTL ? 'הושלם' : 'Complete')}
-                </span>
-              ) : (
-                <span style={{ marginInlineStart: 'auto', fontSize: 8, color: '#fbbf24', fontWeight: 700, letterSpacing: 0.5 }}>
-                  ⚠ {isRTL ? 'לא הושלם' : 'Pending'}
-                </span>
-              )}
-            </button>
-          </div>
-        )}
-        {!sbOpen && (
-          <div style={{ padding: '4px 6px', display: 'flex', justifyContent: 'center', position: 'relative' }}>
-            <button
-              onClick={() => setShowTraderMind(true)}
-              title="Trader Mind"
-              style={{ background: 'transparent', border: 'none', color: neutralRamp(T, 3)[1] ?? infoColor(T), cursor: 'pointer', fontSize: 16, position: 'relative' }}
-            >
-              <TraderMindIcon size={18} />
-              {!tmCalibrated && (
-                <span style={{ position: 'absolute', top: -2, right: -4, width: 6, height: 6, borderRadius: '50%', background: '#fbbf24', boxShadow: '0 0 6px #fbbf24aa' }} />
-              )}
-            </button>
-          </div>
-        )}
-        </>)}
+        {/* Backtest / Journal / Trader Mind now live in the main nav above. */}
         {/* InstallPrompt removed from sidebar — install lives in Settings now */}
         {/* visual separation between the dimension portals and Settings */}
         <div aria-hidden style={{ height: 1, margin: '12px 12px 4px', background: `linear-gradient(90deg, transparent, ${T.border.subtle}, transparent)` }} />

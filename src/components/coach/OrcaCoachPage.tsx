@@ -22,6 +22,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useActivePortfolio } from '@/hooks/use-active-portfolio';
 import { useEntitlement } from '@/hooks/use-entitlement';
+import { useTraderMind } from '@/hooks/use-trader-mind';
 import type { TradingTheme } from '@/lib/trading-theme';
 import { infoColor } from '@/lib/semantic-color';
 
@@ -37,6 +38,7 @@ const FREE_LIMIT = 5;
 export default function OrcaCoachPage({ T, isRTL }: Props) {
   const { activePortfolioId, portfolios, setActivePortfolioId } = useActivePortfolio();
   const { tier } = useEntitlement();
+  const { isCalibrated: tmDone, archetype: tmArchetype } = useTraderMind();
   const isPro = tier === 'pro';
 
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -181,6 +183,31 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
     { Icon: Clock3, he: 'תזמון וסשנים', en: 'Timing & sessions', dhe: 'איך שעת היום והסשן מעצבים את התוצאות שלך.', den: 'How time of day and session choice shape your outcomes.' },
     { Icon: InfinityIcon, he: 'החלפת תיקים בצ׳אט', en: 'Switch books in chat', dhe: 'בקשו "תעבור לתיק הסווינג" והקואצ׳ יטען את הנתונים של אותו תיק.', den: 'Say “switch to my swing book” and the coach loads that portfolio’s data.' },
   ];
+
+  /* Starred question — only for traders who finished the Trader Mind test. */
+  const tmPrompt = isRTL
+    ? 'מה המבחן של תודעת הסוחר אומר עליי? נתח את תוצאות האבחון שלי יחד עם העסקאות בפועל — איפה הפרופיל ההתנהגותי מופיע בנתונים, ומה כדאי לי לעשות עם זה.'
+    : 'What does my Trader Mind test say about me? Analyse my diagnostic result together with my actual trades — where the behavioural profile shows up in the data, and what I should do about it.';
+
+  const starredQuestion = tmDone ? (
+    <button
+      onClick={() => send(tmPrompt)}
+      className="orca-coach-chip"
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 8,
+        background: `linear-gradient(110deg, ${T.accent.orange}1F, transparent 80%)`,
+        border: `1px solid ${T.accent.orange}55`, color: T.text.primary,
+        borderRadius: 999, padding: '9px 16px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+        boxShadow: `0 0 22px -10px ${T.accent.orange}`,
+      }}
+    >
+      <span aria-hidden style={{ color: T.accent.orange, textShadow: `0 0 8px ${T.accent.orange}` }}>★</span>
+      {isRTL ? 'מה המבחן אומר עליי?' : 'What does my test say about me?'}
+      {tmArchetype && (
+        <span style={{ fontSize: 10, color: T.text.muted, fontWeight: 600 }}>· {tmArchetype.slice(0, 22)}</span>
+      )}
+    </button>
+  ) : null;
 
   const remaining = Math.max(0, FREE_LIMIT - used);
   const meterPct = isPro ? 100 : Math.round((remaining / FREE_LIMIT) * 100);
@@ -328,6 +355,10 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
           {paywall ? paywallBlock : composer(true)}
         </div>
 
+        {!paywall && starredQuestion && (
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 16 }}>{starredQuestion}</div>
+        )}
+
         {!paywall && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 16 }}>
             {STARTERS.map(s => (
@@ -466,6 +497,9 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
       <div style={{ paddingTop: 10 }}>
         <div style={{ maxWidth: 780, marginInline: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {errorBlock}
+          {!paywall && !busy && starredQuestion && (
+            <div style={{ display: 'flex', justifyContent: 'center' }}>{starredQuestion}</div>
+          )}
           {paywall ? paywallBlock : composer(false)}
           <div style={{ ...mono, color: T.text.muted, textAlign: 'center' }}>
             {isRTL ? 'Enter לשליחה · Shift+Enter לשורה חדשה' : 'Enter to send · Shift+Enter for a new line'}
