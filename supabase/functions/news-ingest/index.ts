@@ -25,11 +25,34 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const IMPACTS = new Set(['high', 'medium', 'low']);
 
+function stripHtml(v: string): string {
+  return v
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0?39;|&apos;/gi, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function clean(v: unknown, max: number): string | null {
   if (typeof v !== 'string') return null;
-  const s = v.trim();
+  const s = stripHtml(v);
   if (!s) return null;
   return s.slice(0, max);
+}
+
+/** RSS feeds often send `source` as an object ({ name, url }) — extract text or drop. */
+function cleanSource(v: unknown): string | null {
+  if (typeof v === 'string') return clean(v, 80);
+  if (v && typeof v === 'object') {
+    const name = (v as Record<string, unknown>).name ?? (v as Record<string, unknown>).title;
+    if (typeof name === 'string') return clean(name, 80);
+  }
+  return null;
 }
 
 Deno.serve(async (req) => {
