@@ -587,7 +587,13 @@ export function applyThemeToDOM(id: ThemeId) {
   const v = theme.cssVars || {};
   const r = document.documentElement;
 
-  const set = (name: string, val?: string) => { if (val) r.style.setProperty(name, val); };
+  // Remove optional overrides when the next theme does not define them.
+  // Otherwise solid light-theme borders remain inline on <html> after moving
+  // back to a dark palette and override the dark defaults indefinitely.
+  const set = (name: string, val?: string) => {
+    if (val) r.style.setProperty(name, val);
+    else r.style.removeProperty(name);
+  };
 
   set('--background', v.background);
   set('--foreground', v.foreground);
