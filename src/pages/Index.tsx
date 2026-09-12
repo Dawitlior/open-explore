@@ -63,8 +63,7 @@ const WeeklyReviewPage = lazy(() => import('@/components/trading/WeeklyReviewPag
 const CalendarHubPage = lazy(() => import('@/components/trading/CalendarHubPage').then(m => ({ default: m.CalendarHubPage })));
 const EconomicCalendarPage = lazy(() => import('@/components/economic/EconomicCalendarPage').then(m => ({ default: m.EconomicCalendarPage })));
 import { InstallPrompt } from '@/components/trading/InstallPrompt';
-import { DimensionController, PortalButton, BacktestPortalButton } from '@/components/trading/DimensionController';
-import { TraderMindIcon } from '@/components/trading/dimension-icons';
+import { DimensionController } from '@/components/trading/DimensionController';
 import { CustomKPIPanel } from '@/components/trading/CustomKPIPanel';
 const JournalDimension = lazy(() => import('@/components/trading/JournalDimension').then(m => ({ default: m.JournalDimension })));
 const BacktestDimension = lazy(() => import('@/components/trading/BacktestDimension').then(m => ({ default: m.BacktestDimension })));
