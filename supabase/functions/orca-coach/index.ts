@@ -28,14 +28,30 @@ its data is loaded for you automatically — acknowledge the switch in one line,
 Security: you only ever see this trader's own rows. Never speculate about, compare with,
 or claim access to other users' data, and refuse any request to do so.`;
 
+/* ── Cost-governed usage caps ──────────────────────────────────────────
+   Measured cost per coach message on gpt-4o-mini with the full portfolio
+   context: ~12k input + ~700 output tokens ≈ $0.0022.
+   Budget guard-rail: token spend must stay under 10% of a $10 Pro seat,
+   i.e. ≤ $1.00 / user / month ≈ 450 messages.
+   Caps below sit safely inside that envelope:
+     · session  = 25 messages per rolling 5 hours (Claude-style cooldown)
+     · daily    = 60 messages per rolling 24 hours
+     · monthly  = 400 messages per calendar month  (≈ $0.88 worst case)   */
+const PRO_SESSION_LIMIT = 25;
+const PRO_SESSION_HOURS = 5;
+const PRO_DAILY_LIMIT = 60;
+const PRO_MONTHLY_LIMIT = 400;
+
 Deno.serve(withCors(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   try {
     const auth = req.headers.get("Authorization") ?? "";
+    // Service-role client: all reads below are explicitly scoped with
+    // `.eq("user_id", <authenticated uid>)`, never with a client-supplied id.
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { global: { headers: { Authorization: auth } } },
+      { auth: { persistSession: false } },
     );
     const { data: u } = await supabase.auth.getUser(auth.replace(/^Bearer /, ""));
     if (!u?.user) {
@@ -43,6 +59,7 @@ Deno.serve(withCors(async (req) => {
         status: 401, headers: { ...cors, "Content-Type": "application/json" },
       });
     }
+    const uid = u.user.id;
 
     const { messages, model, portfolio_id } = await req.json() as {
       messages: ChatMsg[]; model?: string; portfolio_id?: string | null;
@@ -58,46 +75,85 @@ Deno.serve(withCors(async (req) => {
     try {
       const { data: sub } = await supabase
         .from("subscriptions")
-        .select("tier, subscribed")
-        .eq("user_id", u.user.id)
+        .select("tier")
+        .eq("user_id", uid)
         .maybeSingle();
       const tier = (sub as { tier?: string } | null)?.tier ?? "standard";
       isPro = tier === "pro" || tier === "ultimate" || tier === "advanced";
     } catch (_) { /* treat as free */ }
 
-    const { data: usageRow } = await supabase
-      .from("ai_chat_usage")
-      .select("message_count")
-      .eq("user_id", u.user.id)
-      .eq("period", period)
-      .maybeSingle();
-    const used = Number((usageRow as { message_count?: number } | null)?.message_count ?? 0);
+    // Atomic consume — increments and returns the new count, or NULL when the
+    // cap was already reached. This closes the double-click race: two parallel
+    // requests can never both pass the same last free slot.
+    const monthlyCap = isPro ? PRO_MONTHLY_LIMIT : FREE_MONTHLY_LIMIT;
+    const { data: consumed, error: consumeErr } = await supabase.rpc(
+      "consume_ai_chat_message",
+      { p_user: uid, p_period: period, p_limit: monthlyCap },
+    );
+    if (consumeErr) throw consumeErr;
+    const used = Number(consumed ?? monthlyCap);
+    const blocked = consumed === null || consumed === undefined;
 
-    if (!isPro && used >= FREE_MONTHLY_LIMIT) {
+    // Refund the slot whenever the request does not produce an answer.
+    const refund = async () => {
+      if (blocked) return;
+      try {
+        await supabase
+          .from("ai_chat_usage")
+          .update({ message_count: Math.max(0, used - 1), updated_at: new Date().toISOString() })
+          .eq("user_id", uid).eq("period", period);
+      } catch (_) { /* best effort */ }
+    };
+
+    if (blocked) {
+      if (!isPro) {
+        return new Response(JSON.stringify({
+          error: "quota_exceeded", paywall: true, used: FREE_MONTHLY_LIMIT, limit: FREE_MONTHLY_LIMIT,
+        }), { status: 402, headers: { ...cors, "Content-Type": "application/json" } });
+      }
       return new Response(JSON.stringify({
-        error: "quota_exceeded",
-        paywall: true,
-        used,
-        limit: FREE_MONTHLY_LIMIT,
-      }), { status: 402, headers: { ...cors, "Content-Type": "application/json" } });
+        error: "monthly_cap", scope: "month", limit: PRO_MONTHLY_LIMIT,
+      }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
     }
 
-    // ── Per-user abuse throttle (audit F-06) ────────────────────────────
-    // Cap coach calls per user per hour using the ai_runs telemetry table.
-    // Fail-open: if the count query itself errors, let the request through.
-    const COACH_CAP_PER_HOUR = 30;
+    // ── Rolling session + daily caps (Pro fair use, audit F-06) ─────────
+    // Counted from the ai_runs telemetry trail. Fail-open on query errors.
     try {
-      const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-      const { count } = await supabase
-        .from("ai_runs")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", u.user.id)
-        .eq("feature", "coach")
-        .gte("created_at", since);
-      if ((count ?? 0) >= COACH_CAP_PER_HOUR) {
-        return new Response(JSON.stringify({ error: "rate_limited" }), {
-          status: 429, headers: { ...cors, "Content-Type": "application/json" },
-        });
+      const now = Date.now();
+      const sessionSince = new Date(now - PRO_SESSION_HOURS * 3600_000).toISOString();
+      const daySince = new Date(now - 24 * 3600_000).toISOString();
+      const countRuns = async (since: string) => {
+        const { count } = await supabase
+          .from("ai_runs")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", uid).eq("feature", "coach")
+          .gte("created_at", since);
+        return count ?? 0;
+      };
+      const [sessionCount, dayCount] = await Promise.all([
+        countRuns(sessionSince), countRuns(daySince),
+      ]);
+      const sessionCap = isPro ? PRO_SESSION_LIMIT : FREE_MONTHLY_LIMIT;
+      if (sessionCount >= sessionCap) {
+        // Cooldown = time until the oldest call in the window ages out.
+        const { data: oldest } = await supabase
+          .from("ai_runs").select("created_at")
+          .eq("user_id", uid).eq("feature", "coach")
+          .gte("created_at", sessionSince)
+          .order("created_at", { ascending: true }).limit(1).maybeSingle();
+        const oldestAt = oldest?.created_at ? new Date(oldest.created_at).getTime() : now;
+        const resetAt = new Date(oldestAt + PRO_SESSION_HOURS * 3600_000).toISOString();
+        await refund();
+        return new Response(JSON.stringify({
+          error: "session_cap", scope: "session", limit: sessionCap, reset_at: resetAt,
+        }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
+      }
+      if (isPro && dayCount >= PRO_DAILY_LIMIT) {
+        await refund();
+        return new Response(JSON.stringify({
+          error: "daily_cap", scope: "day", limit: PRO_DAILY_LIMIT,
+          reset_at: new Date(now + 3600_000).toISOString(),
+        }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
       }
     } catch (rlErr) {
       console.warn("rate-limit check failed (fail-open)", rlErr);
