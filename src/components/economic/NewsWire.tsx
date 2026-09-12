@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Radio, ExternalLink, Inbox } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Radio, Inbox, X } from 'lucide-react';
 import { useNewsWire, type NewsWireItem } from '@/hooks/use-news-wire';
 
 /* ─────────────────────────────────────────────────────────────
@@ -53,6 +53,7 @@ export default function NewsWire({ T, lang = 'en' }: { T?: any; lang?: 'he' | 'e
   const isRTL = lang === 'he';
   const t = COPY[lang];
   const { items, loading } = useNewsWire(30);
+  const [active, setActive] = useState<NewsWireItem | null>(null);
 
   const PANEL = T?.bg?.card ?? '#0a0a0a';
   const BG = T?.bg?.primary ?? '#020202';
@@ -136,7 +137,11 @@ export default function NewsWire({ T, lang = 'en' }: { T?: any; lang?: 'he' | 'e
           return (
             <article
               key={item.id}
-              className="group relative px-4 py-3.5 transition-colors"
+              role="button"
+              tabIndex={0}
+              onClick={() => setActive(item)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActive(item); } }}
+              className="group relative px-4 py-3.5 transition-colors cursor-pointer"
               style={{ borderBottom: `1px solid ${BORDER_SOFT}` }}
               onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.025)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
@@ -171,9 +176,9 @@ export default function NewsWire({ T, lang = 'en' }: { T?: any; lang?: 'he' | 'e
                 </p>
               )}
 
-              {(item.symbols?.length > 0 || item.url) && (
+              {item.symbols?.length > 0 && (
                 <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                  {item.symbols?.slice(0, 4).map((s) => (
+                  {item.symbols.slice(0, 4).map((s) => (
                     <span
                       key={s}
                       className="text-[9.5px] font-medium px-1.5 py-0.5 rounded"
@@ -182,24 +187,83 @@ export default function NewsWire({ T, lang = 'en' }: { T?: any; lang?: 'he' | 'e
                       {s}
                     </span>
                   ))}
-                  {item.url && (
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-[10px] ms-auto opacity-0 group-hover:opacity-100 transition-opacity"
-                      style={{ color: ACCENT }}
-                    >
-                      {t.read}
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  )}
                 </div>
               )}
             </article>
           );
         })}
       </div>
+
+      {/* Full report modal */}
+      {active && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }}
+          onClick={() => setActive(null)}
+          dir={isRTL ? 'rtl' : 'ltr'}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={active.headline}
+            className="w-full max-w-[560px] max-h-[80vh] flex flex-col rounded-2xl overflow-hidden shadow-2xl"
+            style={{ background: PANEL, border: `1px solid ${BORDER}` }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 px-5 py-4 border-b shrink-0" style={{ borderColor: BORDER }}>
+              <span
+                className="text-[9.5px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded"
+                style={{
+                  color: impactColor[active.impact] ?? TEXT_DIM,
+                  background: `${impactColor[active.impact] ?? TEXT_DIM}1a`,
+                }}
+              >
+                {active.category}
+              </span>
+              <span className="text-[10.5px] tabular-nums" style={{ color: TEXT_DIM }}>
+                {new Date(active.published_at).toLocaleString(isRTL ? 'he-IL' : 'en-GB', {
+                  day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+                })}
+              </span>
+              {active.source && (
+                <span className="text-[10.5px] truncate" style={{ color: TEXT_DIM }}>· {active.source}</span>
+              )}
+              <button
+                onClick={() => setActive(null)}
+                aria-label="Close"
+                className="ms-auto p-1.5 rounded-lg transition-opacity hover:opacity-70"
+                style={{ color: TEXT_MUTED, background: 'rgba(255,255,255,0.05)' }}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 orca-wire-scroll">
+              <h2 className="text-[17px] font-semibold leading-snug" style={{ color: TEXT }}>
+                {active.headline}
+              </h2>
+              {active.summary && (
+                <p className="text-[13px] leading-relaxed mt-3 whitespace-pre-line" style={{ color: TEXT_MUTED }}>
+                  {active.summary}
+                </p>
+              )}
+              {active.symbols?.length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap mt-4">
+                  {active.symbols.map((s) => (
+                    <span
+                      key={s}
+                      className="text-[10.5px] font-medium px-2 py-1 rounded"
+                      style={{ color: ACCENT, background: 'rgba(0,242,255,0.08)', border: `1px solid ${BORDER_SOFT}` }}
+                    >
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .orca-wire-scroll::-webkit-scrollbar { width: 5px; }
