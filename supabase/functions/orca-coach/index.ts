@@ -28,14 +28,30 @@ its data is loaded for you automatically — acknowledge the switch in one line,
 Security: you only ever see this trader's own rows. Never speculate about, compare with,
 or claim access to other users' data, and refuse any request to do so.`;
 
+/* ── Cost-governed usage caps ──────────────────────────────────────────
+   Measured cost per coach message on gpt-4o-mini with the full portfolio
+   context: ~12k input + ~700 output tokens ≈ $0.0022.
+   Budget guard-rail: token spend must stay under 10% of a $10 Pro seat,
+   i.e. ≤ $1.00 / user / month ≈ 450 messages.
+   Caps below sit safely inside that envelope:
+     · session  = 25 messages per rolling 5 hours (Claude-style cooldown)
+     · daily    = 60 messages per rolling 24 hours
+     · monthly  = 400 messages per calendar month  (≈ $0.88 worst case)   */
+const PRO_SESSION_LIMIT = 25;
+const PRO_SESSION_HOURS = 5;
+const PRO_DAILY_LIMIT = 60;
+const PRO_MONTHLY_LIMIT = 400;
+
 Deno.serve(withCors(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   try {
     const auth = req.headers.get("Authorization") ?? "";
+    // Service-role client: all reads below are explicitly scoped with
+    // `.eq("user_id", <authenticated uid>)`, never with a client-supplied id.
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { global: { headers: { Authorization: auth } } },
+      { auth: { persistSession: false } },
     );
     const { data: u } = await supabase.auth.getUser(auth.replace(/^Bearer /, ""));
     if (!u?.user) {
@@ -43,6 +59,7 @@ Deno.serve(withCors(async (req) => {
         status: 401, headers: { ...cors, "Content-Type": "application/json" },
       });
     }
+    const uid = u.user.id;
 
     const { messages, model, portfolio_id } = await req.json() as {
       messages: ChatMsg[]; model?: string; portfolio_id?: string | null;
@@ -58,46 +75,85 @@ Deno.serve(withCors(async (req) => {
     try {
       const { data: sub } = await supabase
         .from("subscriptions")
-        .select("tier, subscribed")
-        .eq("user_id", u.user.id)
+        .select("tier")
+        .eq("user_id", uid)
         .maybeSingle();
       const tier = (sub as { tier?: string } | null)?.tier ?? "standard";
       isPro = tier === "pro" || tier === "ultimate" || tier === "advanced";
     } catch (_) { /* treat as free */ }
 
-    const { data: usageRow } = await supabase
-      .from("ai_chat_usage")
-      .select("message_count")
-      .eq("user_id", u.user.id)
-      .eq("period", period)
-      .maybeSingle();
-    const used = Number((usageRow as { message_count?: number } | null)?.message_count ?? 0);
+    // Atomic consume — increments and returns the new count, or NULL when the
+    // cap was already reached. This closes the double-click race: two parallel
+    // requests can never both pass the same last free slot.
+    const monthlyCap = isPro ? PRO_MONTHLY_LIMIT : FREE_MONTHLY_LIMIT;
+    const { data: consumed, error: consumeErr } = await supabase.rpc(
+      "consume_ai_chat_message",
+      { p_user: uid, p_period: period, p_limit: monthlyCap },
+    );
+    if (consumeErr) throw consumeErr;
+    const used = Number(consumed ?? monthlyCap);
+    const blocked = consumed === null || consumed === undefined;
 
-    if (!isPro && used >= FREE_MONTHLY_LIMIT) {
+    // Refund the slot whenever the request does not produce an answer.
+    const refund = async () => {
+      if (blocked) return;
+      try {
+        await supabase
+          .from("ai_chat_usage")
+          .update({ message_count: Math.max(0, used - 1), updated_at: new Date().toISOString() })
+          .eq("user_id", uid).eq("period", period);
+      } catch (_) { /* best effort */ }
+    };
+
+    if (blocked) {
+      if (!isPro) {
+        return new Response(JSON.stringify({
+          error: "quota_exceeded", paywall: true, used: FREE_MONTHLY_LIMIT, limit: FREE_MONTHLY_LIMIT,
+        }), { status: 402, headers: { ...cors, "Content-Type": "application/json" } });
+      }
       return new Response(JSON.stringify({
-        error: "quota_exceeded",
-        paywall: true,
-        used,
-        limit: FREE_MONTHLY_LIMIT,
-      }), { status: 402, headers: { ...cors, "Content-Type": "application/json" } });
+        error: "monthly_cap", scope: "month", limit: PRO_MONTHLY_LIMIT,
+      }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
     }
 
-    // ── Per-user abuse throttle (audit F-06) ────────────────────────────
-    // Cap coach calls per user per hour using the ai_runs telemetry table.
-    // Fail-open: if the count query itself errors, let the request through.
-    const COACH_CAP_PER_HOUR = 30;
+    // ── Rolling session + daily caps (Pro fair use, audit F-06) ─────────
+    // Counted from the ai_runs telemetry trail. Fail-open on query errors.
     try {
-      const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-      const { count } = await supabase
-        .from("ai_runs")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", u.user.id)
-        .eq("feature", "coach")
-        .gte("created_at", since);
-      if ((count ?? 0) >= COACH_CAP_PER_HOUR) {
-        return new Response(JSON.stringify({ error: "rate_limited" }), {
-          status: 429, headers: { ...cors, "Content-Type": "application/json" },
-        });
+      const now = Date.now();
+      const sessionSince = new Date(now - PRO_SESSION_HOURS * 3600_000).toISOString();
+      const daySince = new Date(now - 24 * 3600_000).toISOString();
+      const countRuns = async (since: string) => {
+        const { count } = await supabase
+          .from("ai_runs")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", uid).eq("feature", "coach")
+          .gte("created_at", since);
+        return count ?? 0;
+      };
+      const [sessionCount, dayCount] = await Promise.all([
+        countRuns(sessionSince), countRuns(daySince),
+      ]);
+      const sessionCap = isPro ? PRO_SESSION_LIMIT : FREE_MONTHLY_LIMIT;
+      if (sessionCount >= sessionCap) {
+        // Cooldown = time until the oldest call in the window ages out.
+        const { data: oldest } = await supabase
+          .from("ai_runs").select("created_at")
+          .eq("user_id", uid).eq("feature", "coach")
+          .gte("created_at", sessionSince)
+          .order("created_at", { ascending: true }).limit(1).maybeSingle();
+        const oldestAt = oldest?.created_at ? new Date(oldest.created_at).getTime() : now;
+        const resetAt = new Date(oldestAt + PRO_SESSION_HOURS * 3600_000).toISOString();
+        await refund();
+        return new Response(JSON.stringify({
+          error: "session_cap", scope: "session", limit: sessionCap, reset_at: resetAt,
+        }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
+      }
+      if (isPro && dayCount >= PRO_DAILY_LIMIT) {
+        await refund();
+        return new Response(JSON.stringify({
+          error: "daily_cap", scope: "day", limit: PRO_DAILY_LIMIT,
+          reset_at: new Date(now + 3600_000).toISOString(),
+        }), { status: 429, headers: { ...cors, "Content-Type": "application/json" } });
       }
     } catch (rlErr) {
       console.warn("rate-limit check failed (fail-open)", rlErr);
@@ -142,6 +198,17 @@ Deno.serve(withCors(async (req) => {
       const n = (p.name ?? "").trim().toLowerCase();
       return n.length >= 2 && lastUserLc.includes(n);
     });
+
+    // Hard ownership gate: a client-supplied portfolio_id is only honoured when
+    // it appears in this trader's own roster. A foreign id is rejected outright
+    // rather than silently ignored, so cross-account probing is impossible.
+    if (portfolio_id && !roster.some((p) => p.id === portfolio_id)) {
+      await refund();
+      return new Response(JSON.stringify({ error: "forbidden_portfolio" }), {
+        status: 403, headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
+
     // Single-portfolio traders never need to be asked.
     const activeId = named?.id ?? portfolio_id ?? (roster.length === 1 ? roster[0].id : null);
     const activeName = roster.find((p) => p.id === activeId)?.name ?? null;
@@ -311,9 +378,15 @@ whenever more than two rows are involved.`;
       }
     }
 
+    // Conversation memory: keep the thread coherent for follow-up questions
+    // ("and that trade you mentioned?") without letting the prompt balloon.
+    // Six turns is the sweet spot between continuity and token spend; each
+    // request also carries the full pre-aggregated portfolio context anyway.
+    const HISTORY_TURNS = 6;
+    const history = messages.filter((m) => m.role !== "system").slice(-HISTORY_TURNS);
     const finalMessages: ChatMsg[] = [
       { role: "system", content: BASE_PROMPT + rosterLine + mindLine + portfolioLine },
-      ...messages.filter((m) => m.role !== "system"),
+      ...history,
     ];
 
     // ── Model routing ───────────────────────────────────────────────────
@@ -332,47 +405,70 @@ whenever more than two rows are involved.`;
       ? "https://api.openai.com/v1/chat/completions"
       : "https://ai.gateway.lovable.dev/v1/chat/completions";
 
-    const aiRes = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${useOpenAI ? openaiKey : gatewayKey}`,
-      },
-      body: JSON.stringify({
-        model: modelName,
-        messages: finalMessages,
-        ...(useOpenAI ? { temperature: 0.6, max_tokens: 1200 } : {}),
-      }),
-    });
+    // Upstream failures must never leave the client spinning: every branch
+    // below refunds the metered slot and returns a friendly, typed error.
+    let aiRes: Response;
+    try {
+      aiRes = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${useOpenAI ? openaiKey : gatewayKey}`,
+        },
+        body: JSON.stringify({
+          model: modelName,
+          messages: finalMessages,
+          ...(useOpenAI ? { temperature: 0.6, max_tokens: 1200 } : {}),
+        }),
+      });
+    } catch (netErr) {
+      console.error("AI transport failure", netErr);
+      await refund();
+      return new Response(JSON.stringify({ error: "ai_unavailable", retryable: true }), {
+        status: 503, headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
 
     if (aiRes.status === 429) {
-      return new Response(JSON.stringify({ error: "rate_limited" }), {
+      await refund();
+      return new Response(JSON.stringify({ error: "upstream_busy", scope: "provider", retryable: true }), {
         status: 429, headers: { ...cors, "Content-Type": "application/json" },
       });
     }
     if (aiRes.status === 402) {
+      await refund();
       return new Response(JSON.stringify({ error: "credits_exhausted" }), {
         status: 402, headers: { ...cors, "Content-Type": "application/json" },
       });
     }
     if (aiRes.status === 401 || aiRes.status === 403) {
       console.error("AI auth rejected", useOpenAI ? "openai" : "gateway", await aiRes.text());
+      await refund();
       return new Response(JSON.stringify({ error: "ai_auth_failed" }), {
-        status: 500, headers: { ...cors, "Content-Type": "application/json" },
+        status: 503, headers: { ...cors, "Content-Type": "application/json" },
       });
     }
     if (!aiRes.ok) {
-      const t = await aiRes.text();
-      throw new Error(`gateway ${aiRes.status}: ${t}`);
+      console.error("AI upstream error", aiRes.status, await aiRes.text());
+      await refund();
+      return new Response(JSON.stringify({ error: "ai_unavailable", retryable: true }), {
+        status: 503, headers: { ...cors, "Content-Type": "application/json" },
+      });
     }
+
     const aiJson = await aiRes.json();
     const reply: string = aiJson.choices?.[0]?.message?.content ?? "";
     const latencyMs = Date.now() - startedAt;
+    if (!reply.trim()) {
+      await refund();
+      return new Response(JSON.stringify({ error: "ai_unavailable", retryable: true }), {
+        status: 503, headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
 
     // ── Admin Console telemetry · ai_runs ──
     // Fire-and-forget: a failed insert must never break the chat response.
-    // Service-role client bypasses RLS, so the row lands with user_id = the
-    // authenticated trader. Costs are estimates (gateway doesn't return $).
+    // Costs are estimates and also drive the rolling session/daily caps.
     try {
       const usage = aiJson.usage ?? {};
       const promptTokens = Number(usage.prompt_tokens ?? 0) | 0;
@@ -384,7 +480,7 @@ whenever more than two rows are involved.`;
       const costUsd =
         (promptTokens * inRate + completionTokens * outRate) / 1_000_000;
       await supabase.from("ai_runs").insert({
-        user_id: u.user.id,
+        user_id: uid,
         feature: "coach",
         model: modelName,
         prompt_tokens: promptTokens,
@@ -396,32 +492,26 @@ whenever more than two rows are involved.`;
       console.warn("ai_runs insert failed", logErr);
     }
 
-    // ── Meter the successful message ────────────────────────────────────
-    let newUsed = used;
-    try {
-      newUsed = used + 1;
-      await supabase.from("ai_chat_usage").upsert({
-        user_id: u.user.id,
-        period,
-        message_count: newUsed,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id,period" });
-    } catch (mErr) {
-      console.warn("ai_chat_usage upsert failed", mErr);
-    }
-
     return new Response(JSON.stringify({
       reply,
       portfolio: activeId ? { id: activeId, name: activeName } : null,
       portfolios: roster,
       needs_portfolio: needsPortfolio,
-      usage: { used: newUsed, limit: isPro ? null : FREE_MONTHLY_LIMIT, pro: isPro },
+      usage: {
+        used,
+        limit: isPro ? PRO_MONTHLY_LIMIT : FREE_MONTHLY_LIMIT,
+        pro: isPro,
+        session_limit: isPro ? PRO_SESSION_LIMIT : FREE_MONTHLY_LIMIT,
+        daily_limit: isPro ? PRO_DAILY_LIMIT : FREE_MONTHLY_LIMIT,
+      },
     }), {
       headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String((e as Error).message ?? e) }), {
-      status: 500, headers: { ...cors, "Content-Type": "application/json" },
+    // Never leak internals to the client — log server-side, answer generically.
+    console.error("orca-coach failure", e);
+    return new Response(JSON.stringify({ error: "coach_unavailable", retryable: true }), {
+      status: 503, headers: { ...cors, "Content-Type": "application/json" },
     });
   }
 }));

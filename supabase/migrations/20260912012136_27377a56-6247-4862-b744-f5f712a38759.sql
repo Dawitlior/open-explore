@@ -1,0 +1,2 @@
+revoke execute on function public.consume_ai_chat_message(uuid, text, integer) from authenticated, anon, public;
+grant execute on function public.consume_ai_chat_message(uuid, text, integer) to service_role;

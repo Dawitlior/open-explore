@@ -1221,6 +1221,10 @@ export type Database = {
           id: string
         }[]
       }
+      consume_ai_chat_message: {
+        Args: { p_limit: number; p_period: string; p_user: string }
+        Returns: number
+      }
       create_bug_report: {
         Args: {
           p_bug_type?: string
