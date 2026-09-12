@@ -437,13 +437,24 @@ export function AssetImage({
   fallback: ReactNode
 }) {
   const [broken, setBroken] = useState(false)
+  const [loaded, setLoaded] = useState(false)
   if (broken) return <>{fallback}</>
+  // Blur-up: a soft canvas-deep placeholder fills the box, then the image
+  // de-blurs and fades in on load — so a slow asset never looks "stuck".
   return (
     <img
       src={src}
       alt={alt}
-      className={className}
+      loading="lazy"
+      decoding="async"
+      onLoad={() => setLoaded(true)}
       onError={() => setBroken(true)}
+      className={cn(
+        className,
+        'transition-[filter,opacity] duration-700 ease-out',
+        loaded ? 'opacity-100 blur-0' : 'opacity-60 blur-[10px]',
+      )}
+      style={loaded ? undefined : { background: 'var(--color-canvas-deep)' }}
     />
   )
 }
