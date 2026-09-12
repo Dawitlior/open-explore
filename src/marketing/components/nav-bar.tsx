@@ -6,8 +6,6 @@ import {
   ShieldCheck,
   Radar,
   ChevronDown,
-  Menu,
-  X,
   LayoutGrid,
   Sunrise,
   Moon,
@@ -195,13 +193,12 @@ function MegaMenu({ light = false }: { light?: boolean }) {
 
 export function NavBar({ darkNav = false }: { darkNav?: boolean }) {
   const [solid, setSolid] = useState(false)
-  const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
   const onHome = location.pathname === '/'
   const sec = (h: string) => (onHome ? h : `/${h}`)
   // On a dark/colored hero, the transparent (top, un-scrolled) nav needs light
   // text; once it turns solid (glass white) on scroll, revert to dark.
-  const light = darkNav && !solid && !mobileOpen
+  const light = darkNav && !solid
 
   useEffect(() => {
     let raf = 0
@@ -222,7 +219,7 @@ export function NavBar({ darkNav = false }: { darkNav?: boolean }) {
     <OnHomeContext.Provider value={onHome}>
     <header
       className={`fixed top-0 right-0 left-0 z-50 transition-all duration-500 ${
-        solid || mobileOpen ? 'glass border-b border-line' : 'border-b border-transparent'
+        solid ? 'glass border-b border-line' : 'border-b border-transparent'
       }`}
     >
       <nav className="mx-auto flex h-[68px] max-w-[1240px] items-center justify-between px-6 md:px-10">
@@ -264,48 +261,10 @@ export function NavBar({ darkNav = false }: { darkNav?: boolean }) {
             Get started
             <span className="transition-transform duration-300 group-hover:translate-x-0.5">→</span>
           </Link>
-          {/* Mobile toggle */}
-          <button
-            onClick={() => setMobileOpen((v) => !v)}
-            aria-label="Menu"
-            className={`flex h-10 w-10 items-center justify-center rounded-full lg:hidden ${light ? 'text-white' : 'text-ink'}`}
-          >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          {/* On phones, navigation lives in the thumb-zone bottom bar (<MobileNav/>),
+              so there is no top hamburger here. */}
         </div>
       </nav>
-
-      {/* Mobile sheet */}
-      {mobileOpen && (
-        <div className="max-h-[calc(100dvh-68px)] overflow-y-auto border-t border-line bg-surface px-6 pb-8 lg:hidden">
-          <span className="micro mt-6 block text-ink-faint">Features</span>
-          <div className="mt-2 flex flex-col">
-            {CATEGORIES[0].items.map((it) => (
-              <MenuRow key={it.title} item={it} onClick={() => setMobileOpen(false)} />
-            ))}
-          </div>
-          <div className="mt-6 flex flex-col gap-1 border-t border-line pt-4">
-            <Link to="/exchanges" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2.5 text-[15px] font-medium text-ink">Exchanges</Link>
-            <Link to="/pricing" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2.5 text-[15px] font-medium text-ink">Pricing</Link>
-          </div>
-          <div className="mt-4 flex flex-col gap-2.5">
-            <Link
-              to="/login"
-              onClick={() => setMobileOpen(false)}
-              className="flex min-h-[48px] items-center justify-center rounded-full border border-line bg-surface px-5 text-[15px] font-semibold text-ink"
-            >
-              Log in
-            </Link>
-            <Link
-              to="/signup"
-              onClick={() => setMobileOpen(false)}
-              className="flex min-h-[48px] items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-[#8b5cf6] to-[#6d28d9] px-5 text-[15px] font-semibold text-white"
-            >
-              Get started →
-            </Link>
-          </div>
-        </div>
-      )}
     </header>
     </OnHomeContext.Provider>
   )
