@@ -163,32 +163,10 @@ export const ControlRoomPage = ({
     return () => cancelAnimationFrame(id);
   }, [reservedHeight, tab]);
 
-  const switchTab = useCallback((next: ControlRoomTab) => {
-    if (next === tab) return;
-    measure();
-    setReservedHeight(heightsRef.current[next] ?? heightsRef.current[tab]);
-    setTab(next);
-  }, [tab, measure]);
-
-
-
-
-  const tabs: Array<{ id: ControlRoomTab; icon: string; label: string; sub: string; color: string }> = [
-    {
-      id: 'risk',
-      icon: '🛡️',
-      label: isRTL ? 'סיכון' : 'Risk',
-      sub: isRTL ? 'מגבלות · חשיפה · איכות תשואות' : 'Limits · Exposure · Return quality',
-      color: infoColor(T),
-    },
-    {
-      id: 'mind',
-      icon: '🧠',
-      label: isRTL ? 'תודעה' : 'Mind',
-      sub: isRTL ? 'משמעת · טילט · דפוסי התנהגות' : 'Discipline · Tilt · Behavior patterns',
-      color: neutralRamp(T, 3)[1],
-    },
-  ];
+  // The active surface is driven exclusively by the sidebar sub-channel.
+  useEffect(() => {
+    setTab(prev => (prev === initialTab ? prev : initialTab));
+  }, [initialTab]);
 
   return (
     <div>
