@@ -151,7 +151,7 @@ export default function NewsWire({ T, lang = 'en' }: { T?: any; lang?: 'he' | 'e
                 </span>
                 <span className="w-[3px] h-[3px] rounded-full" style={{ background: TEXT_DIM }} />
                 <span className="text-[10px] tabular-nums" style={{ color: TEXT_DIM }}>
-                  {relTime(item.published_at, t)}
+                  {dateLabel(item.published_at, t, isRTL)}
                 </span>
                 {item.source && (
                   <span className="text-[10px] truncate ms-auto" style={{ color: TEXT_DIM }}>
@@ -215,8 +215,8 @@ export default function NewsWire({ T, lang = 'en' }: { T?: any; lang?: 'he' | 'e
                 {active.category}
               </span>
               <span className="text-[10.5px] tabular-nums" style={{ color: TEXT_DIM }}>
-                {new Date(active.published_at).toLocaleString(isRTL ? 'he-IL' : 'en-GB', {
-                  day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+                {new Date(active.published_at).toLocaleDateString(isRTL ? 'he-IL' : 'en-GB', {
+                  day: 'numeric', month: 'short', year: 'numeric',
                 })}
               </span>
               {active.source && (
