@@ -6,7 +6,6 @@
  */
 import { useEffect, useState } from 'react';
 import { useCookieConsent, DEFAULT_CHOICES } from '@/hooks/use-cookie-consent';
-import '../../marketing/marketing.css';
 
 type CatKey = 'analytics' | 'functional' | 'marketing';
 const CATEGORIES: { key: CatKey; title: string; desc: string }[] = [
@@ -55,14 +54,13 @@ export function CookiePreferencesModal({ open, onClose }: { open: boolean; onClo
 
   return (
     <div
-      className="orca-marketing"
       role="dialog"
       aria-modal="true"
       aria-label="Cookie preferences"
       style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
     >
       <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(15,17,22,0.45)', backdropFilter: 'blur(4px)' }} />
-      <div className="relative flex w-full max-w-[520px] flex-col overflow-hidden rounded-2xl border border-line bg-surface elev-3" style={{ maxHeight: 'calc(100vh - 32px)' }}>
+      <div className="relative flex w-full max-w-[520px] flex-col overflow-hidden rounded-2xl border border-line bg-surface" style={{ maxHeight: 'calc(100vh - 32px)', boxShadow: '0 4px 10px rgb(17 19 24 / 0.06), 0 30px 64px -26px rgb(17 19 24 / 0.3)' }}>
         <div className="flex items-start justify-between gap-4 border-b border-line p-6">
           <div>
             <h2 className="font-display text-[20px] font-bold text-ink">Cookie preferences</h2>
@@ -79,7 +77,7 @@ export function CookiePreferencesModal({ open, onClose }: { open: boolean; onClo
             <div>
               <span className="flex items-center gap-2 text-[14.5px] font-semibold text-ink">
                 Essential
-                <span className="micro rounded-full bg-indigo-soft px-2 py-0.5 text-indigo">Always on</span>
+                <span className="rounded-full bg-indigo-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-indigo">Always on</span>
               </span>
               <p className="mt-1 text-[12.5px] leading-relaxed text-ink-mute">Required for sign-in, security, and core features.</p>
             </div>
