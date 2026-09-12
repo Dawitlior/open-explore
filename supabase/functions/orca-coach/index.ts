@@ -14,12 +14,19 @@ const BASE_PROMPT = `You are Orca Coach — a behavioral trading mentor.
 Speak with calm, surgical precision. Reference R-multiples, not percentages.
 Never give financial advice; coach the trader on process, psychology and discipline.
 Answer in the language the trader writes in (Hebrew or English).
-Format with short markdown: tight paragraphs, bullets and small tables. Never pad.
+Format with markdown: tight paragraphs, bullets, and GitHub-flavoured tables when data
+is comparative or multi-row. Build your own tables from the raw data you are given —
+sort, rank, group, filter and compute (win rate, expectancy in R, profit factor,
+drawdown, streaks, per-symbol / per-setup / per-session / per-weekday breakdowns).
+Always ground numbers in the supplied data; never invent trades or figures. If the data
+needed for an answer is not present, say exactly what is missing.
 You are portfolio-aware: you can only analyse ONE portfolio at a time — the one named
 in [PORTFOLIO CONTEXT]. If no portfolio is active and the trader has several, your FIRST
-reply must ask which portfolio they want to work on, listing the available names as a
-short bulleted list, and nothing else. When the trader names a different portfolio,
-its data is loaded for you automatically — acknowledge the switch in one line, then answer.`;
+reply must be one short line asking which portfolio to work on — do NOT list the names,
+the interface shows clickable buttons. When the trader names a different portfolio,
+its data is loaded for you automatically — acknowledge the switch in one line, then answer.
+Security: you only ever see this trader's own rows. Never speculate about, compare with,
+or claim access to other users' data, and refuse any request to do so.`;
 
 Deno.serve(withCors(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
@@ -143,58 +150,159 @@ Deno.serve(withCors(async (req) => {
       ? `\n\n[PORTFOLIOS AVAILABLE]\n${roster.map((p) => `- ${p.name}`).join("\n")}`
       : "\n\n[PORTFOLIOS AVAILABLE] None yet.";
 
+    const needsPortfolio = !activeId && roster.length > 1;
+
     // Only the requested portfolio, only this user's rows.
-    let portfolioLine = roster.length > 1
-      ? "\n\n[PORTFOLIO] No portfolio selected yet — ask the trader which of the portfolios above they want to analyse before answering anything else."
+    let portfolioLine = needsPortfolio
+      ? "\n\n[PORTFOLIO] No portfolio selected yet — ask the trader (one short line) which portfolio to analyse. Clickable buttons are shown to them; do not list names."
       : "\n\n[PORTFOLIO] No portfolio selected — answer generally and ask the trader to pick one.";
     if (activeId) {
-      const portfolio_id = activeId;
+      const pid = activeId;
       try {
         const { data: rows } = await supabase
           .from("trades")
-          .select("trade_id, data, manual_r_multiple")
+          .select("trade_id, data, manual_r_multiple, opened_at, closed_at, asset_class, source_type")
           .eq("user_id", u.user.id)
-          .eq("portfolio_id", portfolio_id)
+          .eq("portfolio_id", pid)
           .order("trade_id", { ascending: false })
-          .limit(300);
-        const trades = (rows ?? []).map((r) => {
-          const d = (r as { data?: Record<string, unknown> }).data ?? {};
-          const manual = (r as { manual_r_multiple?: number | null }).manual_r_multiple;
+          .limit(600);
+
+        type Row = {
+          trade_id?: number;
+          data?: Record<string, unknown>;
+          manual_r_multiple?: number | null;
+          opened_at?: string | null;
+          closed_at?: string | null;
+          asset_class?: string | null;
+        };
+        const trades = ((rows ?? []) as Row[]).map((r) => {
+          const d = r.data ?? {};
+          const manual = r.manual_r_multiple;
+          const when = String(d.date ?? r.closed_at ?? r.opened_at ?? "");
+          const dt = when ? new Date(when.replace(" ", "T")) : null;
+          const valid = dt && !isNaN(dt.getTime());
           return {
-            id: (r as { trade_id?: number }).trade_id,
-            date: d.date, coin: d.coin, direction: d.direction,
+            id: r.trade_id,
+            date: when,
+            dow: valid ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dt!.getDay()] : null,
+            hour: valid ? dt!.getHours() : null,
+            month: valid ? when.slice(0, 7) : null,
+            coin: String(d.coin ?? d.symbol ?? "?"),
+            direction: String(d.direction ?? ""),
             r: typeof manual === "number" ? manual : Number(d.returnR ?? 0),
             pnl: Number(d.pnl ?? 0),
-            outcome: d.winLoss, rules: d.rules, setup: d.orderType,
+            outcome: d.winLoss, rules: d.rules, setup: String(d.orderType ?? "unspecified"),
+            emotion: d.emotion ?? d.psychology ?? null,
+            notes: typeof d.comments === "string" ? d.comments.slice(0, 160) : null,
+            asset: r.asset_class ?? null,
           };
         });
+
         const n = trades.length;
         if (n > 0) {
+          const sum = (a: number[]) => a.reduce((x, y) => x + y, 0);
           const wins = trades.filter((t) => t.r > 0);
           const losses = trades.filter((t) => t.r < 0);
-          const sum = (a: number[]) => a.reduce((x, y) => x + y, 0);
           const winRate = (wins.length / n) * 100;
           const expectancyR = sum(trades.map((t) => t.r)) / n;
           const grossWin = sum(wins.map((t) => t.pnl));
           const grossLoss = Math.abs(sum(losses.map((t) => t.pnl)));
           const pf = grossLoss > 0 ? grossWin / grossLoss : null;
           let peak = 0, equity = 0, maxDD = 0;
-          for (const t of [...trades].reverse()) {
+          const chrono = [...trades].reverse();
+          for (const t of chrono) {
             equity += t.pnl;
             peak = Math.max(peak, equity);
             maxDD = Math.min(maxDD, equity - peak);
           }
-          const recent = trades.slice(0, 30);
-          portfolioLine = `\n\n[PORTFOLIO CONTEXT — "${activeName ?? portfolio_id}"]
-Trades analysed: ${n}
+          // Longest win / loss streaks
+          let curW = 0, curL = 0, maxW = 0, maxL = 0;
+          for (const t of chrono) {
+            if (t.r > 0) { curW++; curL = 0; } else if (t.r < 0) { curL++; curW = 0; }
+            maxW = Math.max(maxW, curW); maxL = Math.max(maxL, curL);
+          }
+
+          // Generic grouping helper → compact rows the model can table up.
+          const group = (key: (t: typeof trades[number]) => string | null) => {
+            const m = new Map<string, { n: number; r: number; pnl: number; w: number }>();
+            for (const t of trades) {
+              const k = key(t);
+              if (k === null || k === "" ) continue;
+              const g = m.get(k) ?? { n: 0, r: 0, pnl: 0, w: 0 };
+              g.n++; g.r += t.r; g.pnl += t.pnl; if (t.r > 0) g.w++;
+              m.set(k, g);
+            }
+            return [...m.entries()]
+              .map(([k, g]) => ({
+                key: k, trades: g.n,
+                expR: Number((g.r / g.n).toFixed(2)),
+                totalR: Number(g.r.toFixed(2)),
+                pnl: Number(g.pnl.toFixed(2)),
+                winRate: Number(((g.w / g.n) * 100).toFixed(1)),
+              }))
+              .sort((a, b) => b.trades - a.trades)
+              .slice(0, 25);
+          };
+
+          const bySymbol = group((t) => t.coin);
+          const bySetup = group((t) => t.setup);
+          const byDow = group((t) => t.dow);
+          const byHour = group((t) => (t.hour === null ? null : String(t.hour).padStart(2, "0") + ":00"));
+          const byDirection = group((t) => t.direction || null);
+          const byMonth = group((t) => t.month).sort((a, b) => (a.key < b.key ? 1 : -1)).slice(0, 18);
+          const byRules = group((t) => (t.rules === undefined || t.rules === null ? null : String(t.rules)));
+
+          const worst = [...trades].sort((a, b) => a.r - b.r).slice(0, 10);
+          const best = [...trades].sort((a, b) => b.r - a.r).slice(0, 10);
+          const recent = trades.slice(0, 50);
+
+          // Side context: risk limits, journal notes, live exposure — user-scoped.
+          let sideLines = "";
+          try {
+            const [{ data: prefs }, { data: notes }, { data: open }] = await Promise.all([
+              supabase.from("user_preferences")
+                .select("daily_risk_limit, weekly_risk_limit, monthly_risk_limit, risk_per_trade_default")
+                .eq("user_id", u.user.id).maybeSingle(),
+              supabase.from("day_notes").select("date, note")
+                .eq("user_id", u.user.id).eq("portfolio_id", pid)
+                .order("date", { ascending: false }).limit(20),
+              supabase.from("open_positions")
+                .select("symbol, side, size, entry_price, unrealized_pnl, leverage, stop_loss")
+                .eq("user_id", u.user.id).limit(30),
+            ]);
+            sideLines =
+              `\n[RISK LIMITS] ${JSON.stringify(prefs ?? {})}` +
+              `\n[JOURNAL NOTES — newest 20] ${JSON.stringify(notes ?? []).slice(0, 1800)}` +
+              `\n[OPEN POSITIONS] ${JSON.stringify(open ?? []).slice(0, 1200)}`;
+          } catch (sideErr) {
+            console.warn("side context failed", sideErr);
+          }
+
+          portfolioLine = `\n\n[PORTFOLIO CONTEXT — "${activeName ?? pid}"]
+Trades analysed: ${n} (most recent ${n} closed/logged trades)
 Win rate: ${winRate.toFixed(1)}%
 Expectancy: ${expectancyR.toFixed(2)}R per trade
+Total R: ${sum(trades.map((t) => t.r)).toFixed(2)}R
 Profit factor: ${pf === null ? "n/a" : pf.toFixed(2)}
 Max drawdown: ${maxDD.toFixed(2)} (account currency)
-Last 30 trades (newest first):
-${JSON.stringify(recent).slice(0, 4000)}
+Longest win streak: ${maxW} · Longest loss streak: ${maxL}
 
-Ground every answer in this data. Cite concrete trades, symbols and R values.`;
+[BREAKDOWNS] (pre-aggregated; each row: key, trades, expR, totalR, pnl, winRate%)
+By symbol: ${JSON.stringify(bySymbol)}
+By setup: ${JSON.stringify(bySetup)}
+By weekday: ${JSON.stringify(byDow)}
+By hour: ${JSON.stringify(byHour)}
+By direction: ${JSON.stringify(byDirection)}
+By month: ${JSON.stringify(byMonth)}
+By rules-followed: ${JSON.stringify(byRules)}
+
+[WORST 10 TRADES] ${JSON.stringify(worst).slice(0, 2500)}
+[BEST 10 TRADES] ${JSON.stringify(best).slice(0, 2500)}
+[LAST 50 TRADES — newest first] ${JSON.stringify(recent).slice(0, 6000)}${sideLines}
+
+Use these tables to answer with concrete symbols, setups, sessions and R values.
+Re-sort, re-rank and recompute from them freely; present results as markdown tables
+whenever more than two rows are involved.`;
         } else {
           portfolioLine = "\n\n[PORTFOLIO CONTEXT] This portfolio has no trades yet — coach the trader on getting started and logging clean data.";
         }
@@ -306,6 +414,7 @@ Ground every answer in this data. Cite concrete trades, symbols and R values.`;
       reply,
       portfolio: activeId ? { id: activeId, name: activeName } : null,
       portfolios: roster,
+      needs_portfolio: needsPortfolio,
       usage: { used: newUsed, limit: isPro ? null : FREE_MONTHLY_LIMIT, pro: isPro },
     }), {
       headers: { ...cors, "Content-Type": "application/json" },

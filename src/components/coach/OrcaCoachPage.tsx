@@ -14,6 +14,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   ArrowUp, Activity, Search, Target, Clock3, Layers, Infinity as InfinityIcon,
   Square, RotateCcw, Lock, ChevronDown, Briefcase,
@@ -34,7 +35,7 @@ interface Msg { role: 'user' | 'assistant'; content: string }
 const FREE_LIMIT = 5;
 
 export default function OrcaCoachPage({ T, isRTL }: Props) {
-  const { activePortfolioId, activePortfolio, portfolios, setActivePortfolioId } = useActivePortfolio();
+  const { activePortfolioId, portfolios, setActivePortfolioId } = useActivePortfolio();
   const { tier } = useEntitlement();
   const isPro = tier === 'pro';
 
@@ -44,6 +45,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [used, setUsed] = useState(0);
   const [paywall, setPaywall] = useState(false);
+  const [needsPortfolio, setNeedsPortfolio] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
   const cancelled = useRef(false);
@@ -82,11 +84,12 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
     el.style.height = `${Math.min(el.scrollHeight, 168)}px`;
   }, []);
 
-  const send = useCallback(async (text: string) => {
+  const send = useCallback(async (text: string, overridePortfolioId?: string) => {
     const clean = text.trim();
     if (!clean || busy) return;
     if (!isPro && used >= FREE_LIMIT) { setPaywall(true); return; }
     setError(null);
+    setNeedsPortfolio(false);
     cancelled.current = false;
     const next: Msg[] = [...messages, { role: 'user', content: clean }];
     setMessages(next);
@@ -95,7 +98,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
     setBusy(true);
     try {
       const { data, error: fnErr } = await supabase.functions.invoke('orca-coach', {
-        body: { messages: next, portfolio_id: activePortfolioId },
+        body: { messages: next, portfolio_id: overridePortfolioId ?? activePortfolioId },
       });
       if (cancelled.current) return;
       if (fnErr) {
@@ -110,9 +113,11 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
         usage?: { used?: number };
         error?: string;
         paywall?: boolean;
+        needs_portfolio?: boolean;
       };
       if (payload?.paywall) { setPaywall(true); return; }
       if (payload?.error) throw new Error(payload.error);
+      setNeedsPortfolio(Boolean(payload?.needs_portfolio));
       // The coach may switch portfolio in-chat ("look at my swing book") —
       // mirror that choice in the app so the rest of the UI stays in sync.
       if (payload?.portfolio?.id && payload.portfolio.id !== activePortfolioId) {
@@ -348,13 +353,12 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
           background: `${accent}1C`, border: `1px solid ${accent}40`, color: accent, fontSize: 11,
         }}>◈</div>
         <span style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>Orca Coach</span>
-        {portfolioPicker}
         <div style={{ marginInlineStart: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ ...mono, color: isPro ? accent : T.text.muted }}>
             {isPro ? 'Pro · Unlimited' : `${remaining}/${FREE_LIMIT}`}
           </span>
           <button
-            onClick={() => { setMessages([]); setError(null); setInput(''); }}
+            onClick={() => { setMessages([]); setError(null); setInput(''); setNeedsPortfolio(false); }}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               background: 'transparent', border: `1px solid ${T.border.subtle}`, color: T.text.secondary,
@@ -383,11 +387,33 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
                   background: `${accent}16`, border: `1px solid ${accent}33`, color: accent, fontSize: 11,
                 }}>◈</div>
                 <div className="orca-coach-md" style={{ color: T.text.primary, fontSize: 13.5, lineHeight: 1.78, minWidth: 0, flex: 1 }}>
-                  <ReactMarkdown>{m.content}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
                 </div>
               </div>
             )
           ))}
+
+          {/* Click-to-choose portfolio chips — shown when the coach asks which book. */}
+          {needsPortfolio && !busy && portfolios.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginInlineStart: 36 }}>
+              {portfolios.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => {
+                    setActivePortfolioId(p.id);
+                    send(isRTL ? `בוא ננתח את התיק "${p.name}"` : `Let's analyse the "${p.name}" portfolio`, p.id);
+                  }}
+                  className="orca-coach-chip"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 7,
+                    background: `${accent}12`, border: `1px solid ${accent}3A`, color: T.text.primary,
+                    borderRadius: 999, padding: '8px 15px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                  }}
+                ><Briefcase size={12} style={{ color: accent }} />{p.name}</button>
+              ))}
+            </div>
+          )}
+
 
           {busy && (
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
