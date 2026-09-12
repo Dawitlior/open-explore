@@ -25,7 +25,7 @@ export function ProLockOverlay({ locked, children, note }: Props) {
     <div style={{ position: 'relative', minHeight: 320 }} dir={isHe ? 'rtl' : 'ltr'}>
       <div
         aria-hidden
-        inert={'' as unknown as boolean}
+        
         style={{
           filter: 'blur(11px) saturate(0.65)',
           WebkitFilter: 'blur(11px) saturate(0.65)',
