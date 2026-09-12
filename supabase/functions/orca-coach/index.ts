@@ -198,6 +198,17 @@ Deno.serve(withCors(async (req) => {
       const n = (p.name ?? "").trim().toLowerCase();
       return n.length >= 2 && lastUserLc.includes(n);
     });
+
+    // Hard ownership gate: a client-supplied portfolio_id is only honoured when
+    // it appears in this trader's own roster. A foreign id is rejected outright
+    // rather than silently ignored, so cross-account probing is impossible.
+    if (portfolio_id && !roster.some((p) => p.id === portfolio_id)) {
+      await refund();
+      return new Response(JSON.stringify({ error: "forbidden_portfolio" }), {
+        status: 403, headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
+
     // Single-portfolio traders never need to be asked.
     const activeId = named?.id ?? portfolio_id ?? (roster.length === 1 ? roster[0].id : null);
     const activeName = roster.find((p) => p.id === activeId)?.name ?? null;
