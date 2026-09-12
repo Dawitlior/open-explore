@@ -113,9 +113,11 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
         usage?: { used?: number };
         error?: string;
         paywall?: boolean;
+        needs_portfolio?: boolean;
       };
       if (payload?.paywall) { setPaywall(true); return; }
       if (payload?.error) throw new Error(payload.error);
+      setNeedsPortfolio(Boolean(payload?.needs_portfolio));
       // The coach may switch portfolio in-chat ("look at my swing book") —
       // mirror that choice in the app so the rest of the UI stays in sync.
       if (payload?.portfolio?.id && payload.portfolio.id !== activePortfolioId) {
