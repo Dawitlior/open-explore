@@ -388,7 +388,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
         <span style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>Orca Coach</span>
         <div style={{ marginInlineStart: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ ...mono, color: isPro ? accent : T.text.muted }}>
-            {isPro ? 'Pro · Unlimited' : `${remaining}/${FREE_LIMIT}`}
+            {isPro ? 'Pro · Fair use' : `${remaining}/${FREE_LIMIT}`}
           </span>
           <button
             onClick={() => { setMessages([]); setError(null); setInput(''); setNeedsPortfolio(false); }}
