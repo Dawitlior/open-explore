@@ -45,6 +45,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [used, setUsed] = useState(0);
   const [paywall, setPaywall] = useState(false);
+  const [needsPortfolio, setNeedsPortfolio] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
   const cancelled = useRef(false);
@@ -83,11 +84,12 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
     el.style.height = `${Math.min(el.scrollHeight, 168)}px`;
   }, []);
 
-  const send = useCallback(async (text: string) => {
+  const send = useCallback(async (text: string, overridePortfolioId?: string) => {
     const clean = text.trim();
     if (!clean || busy) return;
     if (!isPro && used >= FREE_LIMIT) { setPaywall(true); return; }
     setError(null);
+    setNeedsPortfolio(false);
     cancelled.current = false;
     const next: Msg[] = [...messages, { role: 'user', content: clean }];
     setMessages(next);
@@ -96,7 +98,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
     setBusy(true);
     try {
       const { data, error: fnErr } = await supabase.functions.invoke('orca-coach', {
-        body: { messages: next, portfolio_id: activePortfolioId },
+        body: { messages: next, portfolio_id: overridePortfolioId ?? activePortfolioId },
       });
       if (cancelled.current) return;
       if (fnErr) {
