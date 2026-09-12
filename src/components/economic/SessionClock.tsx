@@ -109,6 +109,7 @@ export default function SessionClock({ T, compact: compactProp = true }: Props) 
   const isRTL = lang === 'he';
   const [now, setNow] = useState(() => new Date());
   const [focus, setFocus] = useState<string | null>(null);
+  const [pinned, setPinned] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(!compactProp);
 
   useEffect(() => {
