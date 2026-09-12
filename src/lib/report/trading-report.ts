@@ -27,8 +27,8 @@ export interface ReportPosition {
 export interface ReportMeta {
   brand: string;
   accountName: string;
-  accountId: string;
-  ownerName: string;
+  /** Owner email — the only identity shown on the statement. */
+  ownerEmail: string;
   currency: string;
   initialDeposit: number;
   isRTL: boolean;
