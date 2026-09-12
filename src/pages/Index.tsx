@@ -2531,6 +2531,7 @@ const Index = () => {
           {page === 'weekly-review' && weeklyReviewAllowed && (
             <LazyShell><WeeklyReviewPage T={T} isRTL={isRTL} trades={trades} themeId={settings.theme} stats={stats} riskData={riskData} /></LazyShell>
           )}
+          </div>
         </div>
       </MainPullToRefresh>
 
