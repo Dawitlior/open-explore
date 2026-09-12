@@ -508,8 +508,10 @@ whenever more than two rows are involved.`;
       headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String((e as Error).message ?? e) }), {
-      status: 500, headers: { ...cors, "Content-Type": "application/json" },
+    // Never leak internals to the client — log server-side, answer generically.
+    console.error("orca-coach failure", e);
+    return new Response(JSON.stringify({ error: "coach_unavailable", retryable: true }), {
+      status: 503, headers: { ...cors, "Content-Type": "application/json" },
     });
   }
 }));
