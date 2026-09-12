@@ -114,10 +114,41 @@ Deno.serve(withCors(async (req) => {
       mindLine = `\n\n[TRADER MIND — ${tm.archetype ?? "Unlabeled"}]\nLatest behavioral diagnostic snapshot for this trader:\n${summary}\n\nUse this profile to calibrate tone and coaching focus. Reference it gently; never read it back verbatim.`;
     }
 
-    // ── Portfolio-scoped trading context ────────────────────────────────
+    // ── Portfolio roster + in-chat portfolio resolution ─────────────────
+    // The coach can be asked "switch to my swing book" mid-conversation, so the
+    // server resolves the target portfolio from the newest user message before
+    // building context, and reports the resolved id back to the client.
+    let roster: { id: string; name: string }[] = [];
+    try {
+      const { data: pf } = await supabase
+        .from("portfolios")
+        .select("id, name")
+        .eq("user_id", u.user.id);
+      roster = (pf ?? []) as { id: string; name: string }[];
+    } catch (pfErr) {
+      console.warn("portfolio roster failed", pfErr);
+    }
+
+    const lastUser = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+    const lastUserLc = lastUser.toLowerCase();
+    const named = roster.find((p) => {
+      const n = (p.name ?? "").trim().toLowerCase();
+      return n.length >= 2 && lastUserLc.includes(n);
+    });
+    // Single-portfolio traders never need to be asked.
+    const activeId = named?.id ?? portfolio_id ?? (roster.length === 1 ? roster[0].id : null);
+    const activeName = roster.find((p) => p.id === activeId)?.name ?? null;
+
+    const rosterLine = roster.length
+      ? `\n\n[PORTFOLIOS AVAILABLE]\n${roster.map((p) => `- ${p.name}`).join("\n")}`
+      : "\n\n[PORTFOLIOS AVAILABLE] None yet.";
+
     // Only the requested portfolio, only this user's rows.
-    let portfolioLine = "\n\n[PORTFOLIO] No portfolio selected — answer generally and ask the trader to pick one.";
-    if (portfolio_id) {
+    let portfolioLine = roster.length > 1
+      ? "\n\n[PORTFOLIO] No portfolio selected yet — ask the trader which of the portfolios above they want to analyse before answering anything else."
+      : "\n\n[PORTFOLIO] No portfolio selected — answer generally and ask the trader to pick one.";
+    if (activeId) {
+      const portfolio_id = activeId;
       try {
         const { data: rows } = await supabase
           .from("trades")
