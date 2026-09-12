@@ -1,6 +1,5 @@
 import { SURF } from '@/lib/neon-palette';
 import React, { useState, useMemo, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
-import { OnboardingWizard, shouldShowOnboarding } from '@/components/trading/OnboardingWizard';
 import { OrcaBootLoader } from '@/components/OrcaBootLoader';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, ComposedChart, ScatterChart, Scatter, ZAxis, ReferenceLine } from 'recharts';
 import type { Trade } from '@/data/trades';
@@ -33,7 +32,6 @@ import { MobilePortfolioPicker } from '@/components/trading/MobilePortfolioPicke
 import { useActivePortfolio } from '@/hooks/use-active-portfolio';
 import { DeploymentToast } from '@/components/DeploymentToast';
 
-import { RiskOnboardingWizard, shouldShowRiskOnboarding } from '@/components/trading/RiskOnboardingWizard';
 import ImportLoadingOverlay from '@/components/trading/ImportLoadingOverlay';
 import { FeatureHint } from '@/components/trading/FeatureHint';
 import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
@@ -149,7 +147,8 @@ const Index = () => {
     return Number.isFinite(tr.pnl) ? tr.pnl : 0;
   };
   const { limits: customRiskLimits } = useRiskLimits();
-  const [onboardingDone, setOnboardingDone] = useState(() => !shouldShowOnboarding());
+  // Onboarding is now handled globally by <FirstRunGate>; the product never gates it here.
+  const [onboardingDone, setOnboardingDone] = useState(true);
   const [activeDimension, setActiveDimension] = useState<'orca' | 'journal' | 'backtest'>('orca');
   // economic-radar is now a regular page (page === 'economic-radar'); no overlay state needed
   const baseTheme = getTheme(settings.theme);
@@ -290,9 +289,7 @@ const Index = () => {
   const [showRiskOnboarding, setShowRiskOnboarding] = useState(false);
   const [firstPaintReady, setFirstPaintReady] = useState(false);
 
-  useEffect(() => {
-    if (shouldShowRiskOnboarding(userPrefs, userPrefsLoaded)) setShowRiskOnboarding(true);
-  }, [userPrefs, userPrefsLoaded]);
+  // Risk onboarding is now part of <FirstRunGate>; no product-side trigger.
 
   // Hydrate per-user UI prefs from scoped storage once we know who is logged in.
   const { user: authUser } = useAuth();
@@ -2645,9 +2642,6 @@ const Index = () => {
       )}
       {/* Floating system update notification (bottom-right) */}
       <DeploymentToast isRTL={isRTL} />
-      {showRiskOnboarding && (
-        <RiskOnboardingWizard isRTL={isRTL} onDismiss={() => setShowRiskOnboarding(false)} />
-      )}
       {/* MOBILE BOTTOM NAVIGATION — thumb-reachable, persistent */}
       {isMobile && activeDimension === 'orca' && (
         <MobileBottomNav

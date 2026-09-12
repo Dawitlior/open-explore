@@ -17,16 +17,16 @@ import { StorageErrorListener } from "@/components/StorageErrorListener";
 // recharts + ~40 heavy modules, so keeping it lazy means visitors landing on
 // /welcome or /auth never download or parse any of it.
 
-const Auth = lazy(() => import("./pages/Auth"));
-const Landing = lazy(() => import("./pages/Landing"));
-const Terms = lazy(() => import("./pages/Terms"));
-const Privacy = lazy(() => import("./pages/Privacy"));
-const Accessibility = lazy(() => import("./pages/Accessibility"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+
+// ── Marketing site + first-run (grafted). Public marketing owns "/"; the product
+//    moves behind "/app". FirstRunGate replaces the old LegalGate/OnboardingWizard.
+import { MARKETING_ROUTES } from "@/marketing/marketing-routes";
+import { AuthPage } from "@/first-run/AuthPage";
+import { FirstRunGate } from "@/first-run/FirstRunGate";
 
 
 import DefaultSeo from "@/components/DefaultSeo";
-import { LegalGate } from "@/components/LegalGate";
 import { EconomicAlertBanner } from "@/components/economic/EconomicAlertBanner";
 import { UpgradeModal } from "@/components/billing/UpgradeModal";
 import { PlanCountdown } from "@/components/billing/PlanCountdown";
@@ -156,7 +156,7 @@ const App = () => (
             <LiquidSweep />
 
             <DefaultSeo />
-            <LegalGate />
+            <FirstRunGate />
             <EconomicAlertBanner />
             <UpgradeModal />
             <PlanCountdown />
@@ -168,14 +168,20 @@ const App = () => (
             <Suspense fallback={<OrcaBootLoader />}>
             <Routes>
 
-              <Route path="/welcome" element={<Landing />} />
-              <Route path="/auth" element={<Auth />} />
+              {/* ── PUBLIC marketing site (owns "/") ── */}
+              {MARKETING_ROUTES.map((r) => (
+                <Route key={r.path} path={r.path} element={r.element} />
+              ))}
+              {/* ── Auth (public) — first-run AuthScreen ── */}
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/login" element={<AuthPage />} />
+              <Route path="/signup" element={<AuthPage />} />
               <Route path="/reset-password" element={<Navigate to="/auth" replace />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/accessibility" element={<Accessibility />} />
+              {/* ── Legacy landing → marketing home ── */}
+              <Route path="/welcome" element={<Navigate to="/" replace />} />
+              {/* ── PRODUCT (auth-gated) — moved from "/" to "/app" ── */}
               <Route
-                path="/"
+                path="/app"
                 element={
                   <RequireAuth>
                     <RootEntry />
