@@ -17,7 +17,7 @@ export interface PlanDef {
 export const STRIPE_PLANS: Record<Exclude<AppTier, 'free'>, PlanDef> = {
   pro: {
     tier: 'pro',
-    priceId: 'price_1UEalkLHBUsnz0dmmg1huRmq',
+    priceId: 'price_1UEgDTLHBUsnz0dmzZCimfR3',
     productId: 'prod_VF4vz2I7n1QhqZ',
     amountUsd: 10,
   },
