@@ -12,7 +12,14 @@ interface ChatMsg { role: "system" | "user" | "assistant"; content: string }
 
 const BASE_PROMPT = `You are Orca Coach — a behavioral trading mentor.
 Speak with calm, surgical precision. Reference R-multiples, not percentages.
-Never give financial advice; coach the trader on process, psychology and discipline.`;
+Never give financial advice; coach the trader on process, psychology and discipline.
+Answer in the language the trader writes in (Hebrew or English).
+Format with short markdown: tight paragraphs, bullets and small tables. Never pad.
+You are portfolio-aware: you can only analyse ONE portfolio at a time — the one named
+in [PORTFOLIO CONTEXT]. If no portfolio is active and the trader has several, your FIRST
+reply must ask which portfolio they want to work on, listing the available names as a
+short bulleted list, and nothing else. When the trader names a different portfolio,
+its data is loaded for you automatically — acknowledge the switch in one line, then answer.`;
 
 Deno.serve(withCors(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
@@ -107,10 +114,41 @@ Deno.serve(withCors(async (req) => {
       mindLine = `\n\n[TRADER MIND — ${tm.archetype ?? "Unlabeled"}]\nLatest behavioral diagnostic snapshot for this trader:\n${summary}\n\nUse this profile to calibrate tone and coaching focus. Reference it gently; never read it back verbatim.`;
     }
 
-    // ── Portfolio-scoped trading context ────────────────────────────────
+    // ── Portfolio roster + in-chat portfolio resolution ─────────────────
+    // The coach can be asked "switch to my swing book" mid-conversation, so the
+    // server resolves the target portfolio from the newest user message before
+    // building context, and reports the resolved id back to the client.
+    let roster: { id: string; name: string }[] = [];
+    try {
+      const { data: pf } = await supabase
+        .from("portfolios")
+        .select("id, name")
+        .eq("user_id", u.user.id);
+      roster = (pf ?? []) as { id: string; name: string }[];
+    } catch (pfErr) {
+      console.warn("portfolio roster failed", pfErr);
+    }
+
+    const lastUser = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+    const lastUserLc = lastUser.toLowerCase();
+    const named = roster.find((p) => {
+      const n = (p.name ?? "").trim().toLowerCase();
+      return n.length >= 2 && lastUserLc.includes(n);
+    });
+    // Single-portfolio traders never need to be asked.
+    const activeId = named?.id ?? portfolio_id ?? (roster.length === 1 ? roster[0].id : null);
+    const activeName = roster.find((p) => p.id === activeId)?.name ?? null;
+
+    const rosterLine = roster.length
+      ? `\n\n[PORTFOLIOS AVAILABLE]\n${roster.map((p) => `- ${p.name}`).join("\n")}`
+      : "\n\n[PORTFOLIOS AVAILABLE] None yet.";
+
     // Only the requested portfolio, only this user's rows.
-    let portfolioLine = "\n\n[PORTFOLIO] No portfolio selected — answer generally and ask the trader to pick one.";
-    if (portfolio_id) {
+    let portfolioLine = roster.length > 1
+      ? "\n\n[PORTFOLIO] No portfolio selected yet — ask the trader which of the portfolios above they want to analyse before answering anything else."
+      : "\n\n[PORTFOLIO] No portfolio selected — answer generally and ask the trader to pick one.";
+    if (activeId) {
+      const portfolio_id = activeId;
       try {
         const { data: rows } = await supabase
           .from("trades")
@@ -147,7 +185,7 @@ Deno.serve(withCors(async (req) => {
             maxDD = Math.min(maxDD, equity - peak);
           }
           const recent = trades.slice(0, 30);
-          portfolioLine = `\n\n[PORTFOLIO CONTEXT — portfolio ${portfolio_id}]
+          portfolioLine = `\n\n[PORTFOLIO CONTEXT — "${activeName ?? portfolio_id}"]
 Trades analysed: ${n}
 Win rate: ${winRate.toFixed(1)}%
 Expectancy: ${expectancyR.toFixed(2)}R per trade
@@ -166,22 +204,36 @@ Ground every answer in this data. Cite concrete trades, symbols and R values.`;
     }
 
     const finalMessages: ChatMsg[] = [
-      { role: "system", content: BASE_PROMPT + mindLine + portfolioLine },
+      { role: "system", content: BASE_PROMPT + rosterLine + mindLine + portfolioLine },
       ...messages.filter((m) => m.role !== "system"),
     ];
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
+    // ── Model routing ───────────────────────────────────────────────────
+    // Primary: the trader's own OpenAI account (OPENAI_API_KEY).
+    // Fallback: the Lovable AI Gateway, so the coach keeps working if the
+    // OpenAI key is absent or its account is out of quota.
+    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    const gatewayKey = Deno.env.get("LOVABLE_API_KEY");
+    const useOpenAI = Boolean(openaiKey);
+    if (!openaiKey && !gatewayKey) throw new Error("no AI credentials configured");
 
-    const modelName = model ?? "google/gemini-3.8-flash";
+    const modelName = model ?? (useOpenAI ? "gpt-4o-mini" : "google/gemini-3.8-flash");
     const startedAt = Date.now();
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const endpoint = useOpenAI
+      ? "https://api.openai.com/v1/chat/completions"
+      : "https://ai.gateway.lovable.dev/v1/chat/completions";
+
+    const aiRes = await fetch(endpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${useOpenAI ? openaiKey : gatewayKey}`,
+      },
       body: JSON.stringify({
         model: modelName,
         messages: finalMessages,
+        ...(useOpenAI ? { temperature: 0.6, max_tokens: 1200 } : {}),
       }),
     });
 
@@ -193,6 +245,12 @@ Ground every answer in this data. Cite concrete trades, symbols and R values.`;
     if (aiRes.status === 402) {
       return new Response(JSON.stringify({ error: "credits_exhausted" }), {
         status: 402, headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
+    if (aiRes.status === 401 || aiRes.status === 403) {
+      console.error("AI auth rejected", useOpenAI ? "openai" : "gateway", await aiRes.text());
+      return new Response(JSON.stringify({ error: "ai_auth_failed" }), {
+        status: 500, headers: { ...cors, "Content-Type": "application/json" },
       });
     }
     if (!aiRes.ok) {
@@ -211,9 +269,12 @@ Ground every answer in this data. Cite concrete trades, symbols and R values.`;
       const usage = aiJson.usage ?? {};
       const promptTokens = Number(usage.prompt_tokens ?? 0) | 0;
       const completionTokens = Number(usage.completion_tokens ?? 0) | 0;
-      // Rough Gemini-Flash pricing: $0.075 / 1M input, $0.30 / 1M output.
+      // gpt-4o-mini: $0.15 / 1M input, $0.60 / 1M output.
+      // Gemini Flash fallback: $0.075 / 1M input, $0.30 / 1M output.
+      const inRate = useOpenAI ? 0.15 : 0.075;
+      const outRate = useOpenAI ? 0.60 : 0.30;
       const costUsd =
-        (promptTokens * 0.075 + completionTokens * 0.30) / 1_000_000;
+        (promptTokens * inRate + completionTokens * outRate) / 1_000_000;
       await supabase.from("ai_runs").insert({
         user_id: u.user.id,
         feature: "coach",
@@ -243,6 +304,8 @@ Ground every answer in this data. Cite concrete trades, symbols and R values.`;
 
     return new Response(JSON.stringify({
       reply,
+      portfolio: activeId ? { id: activeId, name: activeName } : null,
+      portfolios: roster,
       usage: { used: newUsed, limit: isPro ? null : FREE_MONTHLY_LIMIT, pro: isPro },
     }), {
       headers: { ...cors, "Content-Type": "application/json" },
