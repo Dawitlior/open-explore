@@ -190,11 +190,11 @@ export function EconomicCalendarPage({ onClose, T }: Props) {
 
 
   return (
+    <div dir={isRTL ? 'rtl' : 'ltr'} className="flex flex-col lg:flex-row gap-4 items-stretch">
     <div
       role="region"
       aria-label={t.title}
-      dir={isRTL ? 'rtl' : 'ltr'}
-      className="flex flex-col rounded-xl overflow-hidden"
+      className="flex flex-col rounded-xl overflow-hidden flex-1 min-w-0"
       style={{
         background: BG,
         border: `1px solid ${BORDER}`,
