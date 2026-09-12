@@ -706,8 +706,8 @@ const Index = () => {
       style={{
         fontSize: 10,
         lineHeight: 1,
-        color: T.accent?.gold ?? infoColor(T),
-        textShadow: `0 0 6px ${T.accent?.gold ?? infoColor(T)}, 0 0 14px ${T.accent?.gold ?? infoColor(T)}88`,
+        color: T.accent.orange,
+        textShadow: `0 0 6px ${T.accent.orange}, 0 0 14px ${T.accent.orange}88`,
         animation: 'proStarPulse 2.4s ease-in-out infinite',
       }}
     >★</span>
