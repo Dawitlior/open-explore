@@ -16,11 +16,8 @@ const COPY = {
     live: 'חי',
     empty: 'אין דיווחים כרגע',
     emptyHint: 'העדכונים יופיעו כאן ברגע שהזרם האוטומטי יתחיל לשדר.',
-    now: 'עכשיו',
-    min: 'ד׳',
-    hour: 'ש׳',
-    day: 'י׳',
-    read: 'למקור',
+    today: 'היום',
+    yesterday: 'אתמול',
   },
   en: {
     title: 'News Wire',
@@ -28,24 +25,21 @@ const COPY = {
     live: 'LIVE',
     empty: 'No reports yet',
     emptyHint: 'Updates will stream in here as soon as the automation starts publishing.',
-    now: 'now',
-    min: 'm',
-    hour: 'h',
-    day: 'd',
-    read: 'Source',
+    today: 'Today',
+    yesterday: 'Yesterday',
   },
 } as const;
 
 type WireCopy = (typeof COPY)['en'] | (typeof COPY)['he'];
 
-function relTime(iso: string, t: WireCopy): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60_000);
-  if (m < 1) return t.now;
-  if (m < 60) return `${m}${t.min}`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}${t.hour}`;
-  return `${Math.floor(h / 24)}${t.day}`;
+/** Date only — the wire never exposes a publish time. */
+function dateLabel(iso: string, t: WireCopy, isRTL: boolean): string {
+  const d = new Date(iso);
+  const day = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diffDays = Math.round((day(new Date()) - day(d)) / 86_400_000);
+  if (diffDays <= 0) return t.today;
+  if (diffDays === 1) return t.yesterday;
+  return new Intl.DateTimeFormat(isRTL ? 'he-IL' : 'en-GB', { day: 'numeric', month: 'short' }).format(d);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -157,7 +151,7 @@ export default function NewsWire({ T, lang = 'en' }: { T?: any; lang?: 'he' | 'e
                 </span>
                 <span className="w-[3px] h-[3px] rounded-full" style={{ background: TEXT_DIM }} />
                 <span className="text-[10px] tabular-nums" style={{ color: TEXT_DIM }}>
-                  {relTime(item.published_at, t)}
+                  {dateLabel(item.published_at, t, isRTL)}
                 </span>
                 {item.source && (
                   <span className="text-[10px] truncate ms-auto" style={{ color: TEXT_DIM }}>
@@ -221,8 +215,8 @@ export default function NewsWire({ T, lang = 'en' }: { T?: any; lang?: 'he' | 'e
                 {active.category}
               </span>
               <span className="text-[10.5px] tabular-nums" style={{ color: TEXT_DIM }}>
-                {new Date(active.published_at).toLocaleString(isRTL ? 'he-IL' : 'en-GB', {
-                  day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+                {new Date(active.published_at).toLocaleDateString(isRTL ? 'he-IL' : 'en-GB', {
+                  day: 'numeric', month: 'short', year: 'numeric',
                 })}
               </span>
               {active.source && (

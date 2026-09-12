@@ -109,6 +109,7 @@ export default function SessionClock({ T, compact: compactProp = true }: Props) 
   const isRTL = lang === 'he';
   const [now, setNow] = useState(() => new Date());
   const [focus, setFocus] = useState<string | null>(null);
+  const [pinned, setPinned] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(!compactProp);
 
   useEffect(() => {
@@ -125,6 +126,24 @@ export default function SessionClock({ T, compact: compactProp = true }: Props) 
   const TEXT_DIM = T?.text?.muted ?? '#64748b';
   const ACCENT = T?.accent?.cyan ?? '#00f2ff';
   const OPEN_C = T?.accent?.green ?? '#22c55e';
+
+  /* Palette-aware map surfaces — keeps the globe readable on light themes
+     instead of painting hard black bands down both sides. */
+  const isLightTheme = useMemo(() => {
+    const raw = String(T?.bg?.primary ?? T?.bg?.card ?? '#0a1420').trim();
+    const hex = raw.startsWith('#') ? raw.slice(1) : '';
+    if (hex.length !== 6 && hex.length !== 3) return false;
+    const full = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+    const r = parseInt(full.slice(0, 2), 16);
+    const g = parseInt(full.slice(2, 4), 16);
+    const b = parseInt(full.slice(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6;
+  }, [T]);
+
+  const OCEAN = isLightTheme ? 'rgba(148,163,184,0.10)' : 'rgba(6,19,38,0.55)';
+  const LAND = isLightTheme ? 'rgba(71,85,105,0.16)' : SURFACE;
+  const NIGHT_C = isLightTheme ? '#64748b' : '#00060f';
+  const NIGHT_O = isLightTheme ? 0.2 : 0.55;
 
   const markets = useMemo(
     () => MARKETS.map(m => computeMarket(m, now)),
@@ -162,6 +181,7 @@ export default function SessionClock({ T, compact: compactProp = true }: Props) 
   const openCount = markets.filter(m => m.isOpen).length;
   const nextUp = markets.filter(m => !m.isOpen).sort((a, b) => a.countdown - b.countdown)[0];
   const focused = markets.find(m => m.def.id === focus) ?? null;
+  const pinnedMarket = markets.find(m => m.def.id === pinned) ?? null;
 
   const ExpandIcon = expanded ? ChevronUp : ChevronDown;
 
@@ -274,28 +294,41 @@ export default function SessionClock({ T, compact: compactProp = true }: Props) 
               <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
                 <defs>
                   <linearGradient id="sc-night" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#00060f" stopOpacity="0" />
-                    <stop offset="28%" stopColor="#00060f" stopOpacity="0.62" />
-                    <stop offset="72%" stopColor="#00060f" stopOpacity="0.62" />
-                    <stop offset="100%" stopColor="#00060f" stopOpacity="0" />
+                    <stop offset="0%" stopColor={NIGHT_C} stopOpacity="0" />
+                    <stop offset="28%" stopColor={NIGHT_C} stopOpacity={NIGHT_O} />
+                    <stop offset="72%" stopColor={NIGHT_C} stopOpacity={NIGHT_O} />
+                    <stop offset="100%" stopColor={NIGHT_C} stopOpacity="0" />
                   </linearGradient>
+                  <clipPath id="sc-frame">
+                    <rect x={0} y={0} width={MAP_W} height={MAP_H} rx={14} />
+                  </clipPath>
                 </defs>
 
-                {/* Graticule */}
-                {[-60, -30, 0, 30, 60].map(lat => (
-                  <line key={`la${lat}`} x1={0} x2={MAP_W} y1={projY(lat)} y2={projY(lat)} stroke={BORDER_SOFT} strokeWidth={1} />
-                ))}
-                {[-120, -60, 0, 60, 120].map(lon => (
-                  <line key={`lo${lon}`} y1={0} y2={MAP_H} x1={projX(lon)} x2={projX(lon)} stroke={BORDER_SOFT} strokeWidth={1} />
-                ))}
+                <g clipPath="url(#sc-frame)">
+                  {/* Ocean */}
+                  <rect x={0} y={0} width={MAP_W} height={MAP_H} fill={OCEAN} />
 
-                {/* Land */}
-                <path d={WORLD_LAND_PATH} fill={SURFACE} stroke={BORDER} strokeWidth={0.8} />
+                  {/* Graticule */}
+                  {[-60, -30, 0, 30, 60].map(lat => (
+                    <line key={`la${lat}`} x1={0} x2={MAP_W} y1={projY(lat)} y2={projY(lat)} stroke={BORDER_SOFT} strokeWidth={1} />
+                  ))}
+                  {[-120, -60, 0, 60, 120].map(lon => (
+                    <line key={`lo${lon}`} y1={0} y2={MAP_H} x1={projX(lon)} x2={projX(lon)} stroke={BORDER_SOFT} strokeWidth={1} />
+                  ))}
 
-                {/* Night side */}
-                {nightBands.map((b, i) => (
-                  <rect key={i} x={b.x} y={0} width={b.w} height={MAP_H} fill="url(#sc-night)" pointerEvents="none" />
-                ))}
+                  {/* Land */}
+                  <path d={WORLD_LAND_PATH} fill={LAND} stroke={BORDER} strokeWidth={0.8} />
+
+                  {/* Night side */}
+                  {nightBands.map((b, i) => (
+                    <rect key={i} x={b.x} y={0} width={b.w} height={MAP_H} fill="url(#sc-night)" pointerEvents="none" />
+                  ))}
+                </g>
+
+                <rect
+                  x={0.5} y={0.5} width={MAP_W - 1} height={MAP_H - 1} rx={14}
+                  fill="none" stroke={BORDER_SOFT} strokeWidth={1} pointerEvents="none"
+                />
 
                 {/* Market pins */}
                 {markets.map(m => {
@@ -306,10 +339,19 @@ export default function SessionClock({ T, compact: compactProp = true }: Props) 
                   return (
                     <g
                       key={m.def.id}
-                      style={{ cursor: 'pointer', opacity: active ? 1 : 0.3, transition: 'opacity .2s' }}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={m.def[isRTL ? 'he' : 'en']}
+                      style={{ cursor: 'pointer', opacity: active ? 1 : 0.35, transition: 'opacity .2s' }}
                       onMouseEnter={() => setFocus(m.def.id)}
                       onMouseLeave={() => setFocus(null)}
-                      onClick={() => setFocus(f => (f === m.def.id ? null : m.def.id))}
+                      onClick={() => setPinned(p => (p === m.def.id ? null : m.def.id))}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setPinned(p => (p === m.def.id ? null : m.def.id));
+                        }
+                      }}
                     >
                       {m.isOpen && (
                         <circle cx={x} cy={y} r={22} fill={c} opacity={0.16}>
@@ -317,6 +359,7 @@ export default function SessionClock({ T, compact: compactProp = true }: Props) 
                           <animate attributeName="opacity" values="0.25;0;0.25" dur="3s" repeatCount="indefinite" />
                         </circle>
                       )}
+                      <circle cx={x} cy={y} r={14} fill="transparent" />
                       <circle cx={x} cy={y} r={9} fill={c} opacity={0.22} />
                       <circle cx={x} cy={y} r={4.5} fill={c} stroke={PANEL} strokeWidth={1.5} />
                       <text
@@ -331,6 +374,71 @@ export default function SessionClock({ T, compact: compactProp = true }: Props) 
                   );
                 })}
               </svg>
+
+              {/* Click-through detail card, anchored to the pin */}
+              {pinnedMarket && (
+                <div
+                  className="absolute z-20 rounded-xl shadow-2xl"
+                  style={{
+                    left: `${(projX(pinnedMarket.def.lon) / MAP_W) * 100}%`,
+                    top: `${(projY(pinnedMarket.def.lat) / MAP_H) * 100}%`,
+                    transform: 'translate(-50%, calc(-100% - 18px))',
+                    width: 188,
+                    background: PANEL,
+                    border: `1px solid ${pinnedMarket.isOpen ? `${OPEN_C}66` : BORDER}`,
+                    padding: '10px 12px',
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{
+                        background: pinnedMarket.isOpen ? OPEN_C : TEXT_DIM,
+                        boxShadow: pinnedMarket.isOpen ? `0 0 8px ${OPEN_C}` : 'none',
+                      }}
+                    />
+                    <span className="text-[12px] font-semibold" style={{ color: TEXT }}>
+                      {pinnedMarket.def.flag} {pinnedMarket.def[isRTL ? 'he' : 'en']}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPinned(null)}
+                      aria-label={isRTL ? 'סגור' : 'Close'}
+                      className="ms-auto text-[13px] leading-none px-1"
+                      style={{ color: TEXT_DIM }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div
+                    className="mt-1.5 text-[18px] font-bold tabular-nums leading-none"
+                    style={{ color: TEXT, fontFamily: "'IBM Plex Mono', monospace" }}
+                  >
+                    {pinnedMarket.localLabel}
+                  </div>
+                  <div className="mt-1 text-[10px]" style={{ color: pinnedMarket.isOpen ? OPEN_C : TEXT_DIM }}>
+                    {pinnedMarket.isOpen ? (isRTL ? 'פתוח' : 'Open') : (isRTL ? 'סגור' : 'Closed')}
+                    {' · '}
+                    {pinnedMarket.isOpen
+                      ? (isRTL ? `נסגר בעוד ${fmtCountdown(pinnedMarket.countdown, true)}` : `closes in ${fmtCountdown(pinnedMarket.countdown, false)}`)
+                      : (isRTL ? `נפתח בעוד ${fmtCountdown(pinnedMarket.countdown, true)}` : `opens in ${fmtCountdown(pinnedMarket.countdown, false)}`)}
+                  </div>
+                  <div className="mt-1.5 text-[10px]" style={{ color: TEXT_MUTED }}>
+                    {isRTL ? 'סשן' : 'Session'} {String(pinnedMarket.def.open).padStart(2, '0')}:00–
+                    {String(pinnedMarket.def.close).padStart(2, '0')}:00 · {pinnedMarket.def.tz}
+                  </div>
+                  <span
+                    className="absolute"
+                    style={{
+                      left: '50%', bottom: -6, width: 10, height: 10,
+                      transform: 'translateX(-50%) rotate(45deg)',
+                      background: PANEL,
+                      borderRight: `1px solid ${pinnedMarket.isOpen ? `${OPEN_C}66` : BORDER}`,
+                      borderBottom: `1px solid ${pinnedMarket.isOpen ? `${OPEN_C}66` : BORDER}`,
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Status line */}
