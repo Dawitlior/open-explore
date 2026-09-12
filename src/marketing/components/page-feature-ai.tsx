@@ -37,8 +37,9 @@ const BLUE = '#2f54eb'
 const NAVY = '#14123a'
 const PINK = '#ff2d6f'
 
-/* Hotlink-friendly Pexels CDN photo (unique per slot — no reused screenshots). */
-const px = (id: number, w = 1200) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=${w}`
+/* Local copy of the (free-license) Pexels photo, served from /public — no
+   external hotlink. Width arg kept for call-site compatibility. */
+const px = (id: number, _w = 1200) => `/marketing/px/${id}.jpeg`
 
 /* ── shared bits ─────────────────────────────────────────────────────────── */
 function Pill({ children, tone = 'blue' }: { children: ReactNode; tone?: 'blue' | 'navy' | 'soft' }) {

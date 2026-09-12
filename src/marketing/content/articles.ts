@@ -21,8 +21,9 @@ export type Article = {
   featured?: boolean
 }
 
-// Hotlink-friendly Pexels CDN photo, cropped to a consistent editorial ratio.
-const px = (id: number) => `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=1400&h=1050&fit=crop`
+// Local copy of the (free-license) Pexels photo, served from /public so the
+// site is self-contained — no external hotlink. See public/marketing/px/.
+const px = (id: number) => `/marketing/px/${id}.jpeg`
 
 const META: Article[] = [
   // ── Data & Analytics ──────────────────────────────────────────────────────
