@@ -1,12 +1,19 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 
 /* ============================================================================
-   EntryGate — cinematic entry. A single round Orca mark floats on a pure-black
-   void; its shadows melt the edge into the dark so it reads like the logo simply
-   *is* there. There is no visible button, so the eye goes to the center — tap the
-   mark and it spins up, throws sparks, then blooms open as a fast-expanding
-   circle that reveals the platform beneath. Same props/behaviour contract as the
-   previous gate (onEnter + sessionStorage 'orca-entered'); honours reduced motion.
+   EntryGate — "spherical aperture" cinematic entry.
+
+   Setup:      a dark orb with the Orca mark at its center floats on a black void,
+               turning slowly on its axis (subtle 3D depth + violet rim glow).
+   Momentum:   on tap the orb spins up, accelerating — a beat of tension.
+   Unfolding:  the shell splits into 8 curved segments that swing OUTWARD together
+               in an arc (a 3D camera-iris / a flower opening toward the viewer).
+   Transition: the camera flies into the center (zoom-in); logo + shell fade out
+               and the platform is revealed behind, in full focus.
+
+   Pure CSS 3D (perspective + preserve-3d) — no three.js. Ease-in on the spin-up,
+   ease-out on the unfold. Same contract as before (onEnter + sessionStorage
+   'orca-entered'); honours reduced motion.
    ========================================================================== */
 
 interface EntryGateProps {
@@ -17,9 +24,11 @@ interface EntryGateProps {
 
 type Phase = 'idle' | 'ignite' | 'open' | 'done';
 
-const IGNITE_MS = 1050;
-const OPEN_MS = 640;
+const SEGMENTS = 8;
+const IGNITE_MS = 900;
+const OPEN_MS = 950;
 const ICON_SRC = '/orca-logo.png';
+const VIOLET = '#7c3aed';
 
 export const EntryGate = ({ onEnter }: EntryGateProps) => {
   const [phase, setPhase] = useState<Phase>('idle');
@@ -46,29 +55,26 @@ export const EntryGate = ({ onEnter }: EntryGateProps) => {
     setPhase('ignite');
   }, [phase, reduced, finish]);
 
-  // Drive the phase timeline.
   useEffect(() => {
     if (phase === 'ignite') {
       const t = window.setTimeout(() => setPhase('open'), IGNITE_MS);
       return () => window.clearTimeout(t);
     }
     if (phase === 'open') {
-      // Reveal the platform partway through the bloom, then unmount the gate.
-      const t1 = window.setTimeout(finish, Math.round(OPEN_MS * 0.45));
-      const t2 = window.setTimeout(() => setPhase('done'), OPEN_MS + 40);
+      const t1 = window.setTimeout(finish, Math.round(OPEN_MS * 0.5));
+      const t2 = window.setTimeout(() => setPhase('done'), OPEN_MS + 60);
       return () => { window.clearTimeout(t1); window.clearTimeout(t2); };
     }
   }, [phase, finish]);
 
-  // Deterministic spark rays.
-  const sparks = useMemo(
+  // 8 shell segments — each a 45° wedge of the orb, opening outward on unfold.
+  const segments = useMemo(
     () =>
-      Array.from({ length: 16 }, (_, i) => {
-        const angle = (i / 16) * 360 + (i % 2 ? 11 : -7);
-        const dist = 150 + ((i * 37) % 90);
-        const delay = (i % 5) * 24;
-        const size = 3 + ((i * 13) % 4);
-        return { angle, dist, delay, size };
+      Array.from({ length: SEGMENTS }, (_, i) => {
+        const angle = (360 / SEGMENTS) * i;
+        // Slight per-segment stagger so the iris feels organic, not mechanical.
+        const delay = (i % 2 === 0 ? i : SEGMENTS - i) * 10;
+        return { angle, delay };
       }),
     [],
   );
@@ -78,9 +84,11 @@ export const EntryGate = ({ onEnter }: EntryGateProps) => {
   const igniting = phase === 'ignite';
   const opening = phase === 'open';
 
+  // Wedge clip-path: apex at the orb centre, base a chord across the top (45° sector).
+  const WEDGE_CLIP = 'polygon(50% 50%, 29.3% 0%, 70.7% 0%)';
+
   return (
     <div
-      aria-hidden={false}
       role="button"
       tabIndex={0}
       aria-label="Enter Orca"
@@ -92,109 +100,120 @@ export const EntryGate = ({ onEnter }: EntryGateProps) => {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         cursor: phase === 'idle' ? 'pointer' : 'default',
         opacity: opening ? 0 : 1,
-        transition: opening ? `opacity ${OPEN_MS}ms ease-in ${Math.round(OPEN_MS * 0.4)}ms` : undefined,
+        transition: opening ? `opacity ${OPEN_MS}ms ease-in ${Math.round(OPEN_MS * 0.35)}ms` : undefined,
         overflow: 'hidden',
         userSelect: 'none', WebkitTapHighlightColor: 'transparent',
+        perspective: '1100px',
       }}
     >
       <style>{`
-        @keyframes orcagate-breathe {
-          0%,100% { transform: scale(1); opacity: 0.9; }
-          50% { transform: scale(1.035); opacity: 1; }
-        }
-        @keyframes orcagate-halo {
-          0%,100% { opacity: 0.55; transform: scale(1); }
-          50% { opacity: 0.85; transform: scale(1.08); }
-        }
-        @keyframes orcagate-spin {
-          0% { transform: rotate(0deg) scale(1); }
-          55% { transform: rotate(430deg) scale(1.02); }
-          100% { transform: rotate(1120deg) scale(1.06); }
-        }
-        @keyframes orcagate-spark {
-          0% { opacity: 0; transform: translate(-50%,-50%) rotate(var(--a)) translateX(60px) scale(0.4); }
-          22% { opacity: 1; }
-          100% { opacity: 0; transform: translate(-50%,-50%) rotate(var(--a)) translateX(calc(60px + var(--d))) scale(1); }
-        }
-        @keyframes orcagate-bloom {
-          0% { transform: scale(1); opacity: 1; }
-          100% { transform: scale(26); opacity: 0.9; }
-        }
-        @keyframes orcagate-hint {
-          0%,100% { opacity: 0; }
-          50% { opacity: 0.55; }
-        }
+        @keyframes orcagate-idle-spin { to { transform: rotateZ(360deg); } }
+        @keyframes orcagate-ignite-spin { from { transform: rotateZ(0deg); } to { transform: rotateZ(760deg); } }
+        @keyframes orcagate-halo { 0%,100% { opacity: .5; transform: translate(-50%,-50%) scale(1); } 50% { opacity: .85; transform: translate(-50%,-50%) scale(1.12); } }
+        @keyframes orcagate-hint { 0%,100% { opacity: 0; } 50% { opacity: .5; } }
       `}</style>
 
-      {/* Icon + halo stack */}
-      <div style={{ position: 'relative', width: 'clamp(200px, 40vw, 340px)', height: 'clamp(200px, 40vw, 340px)' }}>
-        {/* Soft radial halo that melts the edge into the void */}
+      {/* Depth tilt wrapper */}
+      <div style={{ transformStyle: 'preserve-3d', transform: 'rotateX(12deg)' }}>
+        {/* Violet halo that melts the orb edge into the void */}
         <div
+          aria-hidden
           style={{
-            position: 'absolute', inset: '-55%',
+            position: 'absolute', top: '50%', left: '50%', width: 560, height: 560,
             borderRadius: '50%',
-            background:
-              'radial-gradient(circle at 50% 50%, rgba(124,58,237,0.30) 0%, rgba(80,50,160,0.14) 34%, rgba(0,0,0,0) 68%)',
-            filter: 'blur(6px)',
-            animation: igniting ? undefined : 'orcagate-halo 4.2s ease-in-out infinite',
+            background: `radial-gradient(circle at 50% 45%, ${VIOLET}55 0%, ${VIOLET}22 34%, transparent 66%)`,
+            filter: 'blur(8px)',
+            animation: igniting || opening ? undefined : 'orcagate-halo 4.4s ease-in-out infinite',
+            transform: 'translate(-50%,-50%)',
             pointerEvents: 'none',
           }}
         />
-        {/* Bloom disc — the expanding circle that reveals the platform */}
-        {opening && (
+
+        {/* The orb — spins as one, and holds the 3D segments + logo */}
+        <div
+          style={{
+            position: 'relative',
+            width: 'clamp(240px, 44vw, 400px)',
+            height: 'clamp(240px, 44vw, 400px)',
+            transformStyle: 'preserve-3d',
+            animation: igniting
+              ? `orcagate-ignite-spin ${IGNITE_MS}ms cubic-bezier(0.5,0,0.9,0.35) forwards`
+              : opening ? undefined
+              : 'orcagate-idle-spin 22s linear infinite',
+            transition: opening ? `transform ${OPEN_MS}ms cubic-bezier(0.4,0,0.2,1)` : undefined,
+            transform: opening ? 'scale(6)' : undefined, // camera flies into the centre
+          }}
+        >
+          {/* Solid orb base — so the CLOSED sphere reads smooth (no visible
+              triangle seams); it fades fast on unfold to let the iris open. */}
           <div
+            aria-hidden
             style={{
               position: 'absolute', inset: 0, borderRadius: '50%',
-              background:
-                'radial-gradient(circle at 50% 50%, #ffffff 0%, #cbb4ff 30%, #7c3aed 62%, #2a1560 100%)',
-              animation: `orcagate-bloom ${OPEN_MS}ms cubic-bezier(0.7,0,0.84,0) both`,
-              transformOrigin: 'center',
-              pointerEvents: 'none',
+              background: `radial-gradient(circle at 50% 42%, #22242c 0%, #131519 55%, #08090c 100%)`,
+              boxShadow: `inset 0 0 60px -10px ${VIOLET}66, 0 0 60px -20px ${VIOLET}55`,
+              opacity: opening ? 0 : 1,
+              transition: opening ? 'opacity 220ms ease-out' : undefined,
             }}
           />
-        )}
-        {/* Sparks */}
-        {igniting &&
-          sparks.map((s, i) => (
-            <span
+
+          {/* Shell segments */}
+          {segments.map(({ angle, delay }, i) => (
+            <div
               key={i}
               style={{
-                position: 'absolute', top: '50%', left: '50%',
-                width: s.size, height: s.size, borderRadius: '50%',
-                background: i % 3 === 0 ? '#ffffff' : '#c9b3ff',
-                boxShadow: '0 0 8px 1px rgba(200,170,255,0.9)',
-                // @ts-expect-error CSS custom props
-                '--a': `${s.angle}deg`, '--d': `${s.dist}px`,
-                animation: `orcagate-spark ${IGNITE_MS - 120}ms cubic-bezier(0.2,0.7,0.3,1) ${s.delay}ms both`,
-                pointerEvents: 'none',
+                position: 'absolute', inset: 0,
+                clipPath: WEDGE_CLIP,
+                transformOrigin: '50% 50%',
+                background: `radial-gradient(circle at 50% 42%, #22242c 0%, #131519 55%, #08090c 100%)`,
+                boxShadow: `inset 0 0 40px -8px ${VIOLET}66`,
+                border: '0',
+                transition: `transform ${OPEN_MS}ms cubic-bezier(0.34,0,0.2,1) ${delay}ms, opacity ${OPEN_MS - 150}ms ease-out ${delay}ms`,
+                transform: opening
+                  ? `rotate(${angle}deg) translateY(-70%) rotateX(-82deg) scale(1.18)`
+                  : `rotate(${angle}deg)`,
+                opacity: opening ? 0 : 1,
+                backfaceVisibility: 'hidden',
               }}
             />
           ))}
-        {/* The Orca mark */}
-        <img
-          src={ICON_SRC}
-          alt="Orca"
-          draggable={false}
-          style={{
-            position: 'absolute', inset: 0, width: '100%', height: '100%',
-            objectFit: 'contain', borderRadius: '50%',
-            filter: 'drop-shadow(0 0 40px rgba(124,58,237,0.35)) drop-shadow(0 0 90px rgba(0,0,0,0.9))',
-            animation: igniting
-              ? `orcagate-spin ${IGNITE_MS}ms cubic-bezier(0.45,0,0.9,0.35) both`
-              : opening ? undefined
-              : 'orcagate-breathe 3.4s ease-in-out infinite',
-            opacity: opening ? 0 : 1,
-            transition: opening ? 'opacity 180ms ease-out' : undefined,
-          }}
-        />
+
+          {/* Specular highlight — gives the flat wedges a spherical read */}
+          <div
+            aria-hidden
+            style={{
+              position: 'absolute', inset: 0, borderRadius: '50%',
+              background: 'radial-gradient(circle at 36% 30%, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.06) 22%, transparent 46%)',
+              opacity: opening ? 0 : 1,
+              transition: opening ? 'opacity 300ms ease-out' : undefined,
+              pointerEvents: 'none',
+            }}
+          />
+
+          {/* The Orca mark at the core */}
+          <img
+            src={ICON_SRC}
+            alt="Orca"
+            draggable={false}
+            style={{
+              position: 'absolute', top: '50%', left: '50%',
+              width: '54%', height: '54%', objectFit: 'contain',
+              transform: 'translate(-50%,-50%) translateZ(1px)',
+              filter: `drop-shadow(0 0 24px ${VIOLET}aa) drop-shadow(0 0 60px rgba(0,0,0,0.9))`,
+              opacity: opening ? 0 : 1,
+              transition: opening ? 'opacity 240ms ease-out' : undefined,
+              pointerEvents: 'none',
+            }}
+          />
+        </div>
       </div>
 
-      {/* Faint hint — appears only at rest, invites the tap without a button */}
+      {/* Faint hint — invites the tap without a visible button */}
       {phase === 'idle' && !reduced && (
         <div
           style={{
-            position: 'absolute', bottom: '14%', left: 0, right: 0, textAlign: 'center',
-            color: '#b9a6ee', fontSize: 12, letterSpacing: '0.28em', textTransform: 'uppercase',
+            position: 'absolute', bottom: '13%', left: 0, right: 0, textAlign: 'center',
+            color: '#b9a6ee', fontSize: 12, letterSpacing: '0.3em', textTransform: 'uppercase',
             fontFamily: "'Inter', system-ui, sans-serif",
             animation: 'orcagate-hint 3.6s ease-in-out infinite 1.4s',
             pointerEvents: 'none',
