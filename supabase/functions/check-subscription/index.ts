@@ -32,9 +32,14 @@ Deno.serve(withCors(async (req) => {
       { auth: { persistSession: false } },
     );
     const authHeader = req.headers.get("Authorization") ?? "";
-    const { data: userData } = await supabase.auth.getUser(authHeader.replace(/^Bearer /, ""));
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    if (!token) return json({ error: "unauthorized", reason: "missing_token" }, 401);
+    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
     const user = userData?.user;
-    if (!user?.email) return json({ error: "unauthorized" }, 401);
+    if (!user?.email) {
+      console.error("check-subscription auth failed:", userErr?.message ?? "no user on token");
+      return json({ error: "unauthorized" }, 401);
+    }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
