@@ -1,27 +1,32 @@
+import { lazy } from 'react'
 import { useParams } from 'react-router-dom'
 import type { ReactElement } from 'react'
+// Home is eager so the landing paints immediately; every other marketing page is
+// code-split so it never weighs down the first load. They render inside App's
+// existing <Suspense> boot-loader fallback.
 import { HomePage } from './components/page-home'
-import { PricingPage } from './components/page-pricing'
-import { ExchangesPage } from './components/page-exchanges'
-import { FeaturePage } from './components/page-feature'
-import { DashboardFeaturePage } from './components/page-feature-dashboard'
-import { MorningAnalysisPage } from './components/page-feature-morning'
-import { EodReviewPage } from './components/page-feature-eod'
-import { AnalyticsFeaturePage } from './components/page-feature-analytics'
-import { JournalFeaturePage } from './components/page-feature-journal'
-import { SecurityPage } from './components/page-security'
-import { ResourcesPage } from './components/page-resources'
-import { EconomicCalendarPage } from './components/page-feature-economic-calendar'
-import { TermsPage } from './components/page-terms'
-import { PrivacyPage } from './components/page-privacy'
-import { AccessibilityPage } from './components/page-accessibility'
-import { ContactPage } from './components/page-contact'
-import { ArticlePage } from './components/page-article'
-import { OurGoalsPage } from './components/page-our-goals'
-import { RiskEngineFeaturePage } from './components/page-feature-risk'
-import { TraderMindFeaturePage } from './components/page-feature-trader-mind'
-import { UniversalImportFeaturePage } from './components/page-feature-universal-import'
-import { AiInsightsFeaturePage } from './components/page-feature-ai'
+
+const PricingPage = lazy(() => import('./components/page-pricing').then((m) => ({ default: m.PricingPage })))
+const ExchangesPage = lazy(() => import('./components/page-exchanges').then((m) => ({ default: m.ExchangesPage })))
+const DashboardFeaturePage = lazy(() => import('./components/page-feature-dashboard').then((m) => ({ default: m.DashboardFeaturePage })))
+const MorningAnalysisPage = lazy(() => import('./components/page-feature-morning').then((m) => ({ default: m.MorningAnalysisPage })))
+const EodReviewPage = lazy(() => import('./components/page-feature-eod').then((m) => ({ default: m.EodReviewPage })))
+const AnalyticsFeaturePage = lazy(() => import('./components/page-feature-analytics').then((m) => ({ default: m.AnalyticsFeaturePage })))
+const JournalFeaturePage = lazy(() => import('./components/page-feature-journal').then((m) => ({ default: m.JournalFeaturePage })))
+const EconomicCalendarPage = lazy(() => import('./components/page-feature-economic-calendar').then((m) => ({ default: m.EconomicCalendarPage })))
+const RiskEngineFeaturePage = lazy(() => import('./components/page-feature-risk').then((m) => ({ default: m.RiskEngineFeaturePage })))
+const TraderMindFeaturePage = lazy(() => import('./components/page-feature-trader-mind').then((m) => ({ default: m.TraderMindFeaturePage })))
+const UniversalImportFeaturePage = lazy(() => import('./components/page-feature-universal-import').then((m) => ({ default: m.UniversalImportFeaturePage })))
+const AiInsightsFeaturePage = lazy(() => import('./components/page-feature-ai').then((m) => ({ default: m.AiInsightsFeaturePage })))
+const SecurityPage = lazy(() => import('./components/page-security').then((m) => ({ default: m.SecurityPage })))
+const ResourcesPage = lazy(() => import('./components/page-resources').then((m) => ({ default: m.ResourcesPage })))
+const ArticlePage = lazy(() => import('./components/page-article').then((m) => ({ default: m.ArticlePage })))
+const TermsPage = lazy(() => import('./components/page-terms').then((m) => ({ default: m.TermsPage })))
+const PrivacyPage = lazy(() => import('./components/page-privacy').then((m) => ({ default: m.PrivacyPage })))
+const AccessibilityPage = lazy(() => import('./components/page-accessibility').then((m) => ({ default: m.AccessibilityPage })))
+const ContactPage = lazy(() => import('./components/page-contact').then((m) => ({ default: m.ContactPage })))
+const OurGoalsPage = lazy(() => import('./components/page-our-goals').then((m) => ({ default: m.OurGoalsPage })))
+const FeaturePage = lazy(() => import('./components/page-feature').then((m) => ({ default: m.FeaturePage })))
 
 /** Remount the shared feature page per slug so scroll + title motion re-init. */
 function KeyedFeaturePage() {
