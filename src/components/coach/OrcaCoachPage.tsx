@@ -102,9 +102,42 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
       });
       if (cancelled.current) return;
       if (fnErr) {
-        const status = (fnErr as unknown as { context?: { status?: number } }).context?.status;
+        const ctx = (fnErr as unknown as { context?: { status?: number; body?: unknown } }).context;
+        const status = ctx?.status;
+        let code = '';
+        let resetAt: string | null = null;
+        try {
+          const parsed = typeof ctx?.body === 'string' ? JSON.parse(ctx.body) : (ctx?.body as Record<string, unknown> | undefined);
+          code = String(parsed?.error ?? '');
+          resetAt = (parsed?.reset_at as string | undefined) ?? null;
+        } catch { /* body may not be JSON */ }
+
         if (status === 402) { setPaywall(true); return; }
-        if (status === 429) { setError(isRTL ? 'יותר מדי בקשות — נסה שוב בעוד רגע.' : 'Too many requests — try again in a moment.'); return; }
+        if (status === 403) {
+          setError(isRTL ? 'התיק הזה אינו זמין בחשבון שלך.' : 'That portfolio is not available on your account.');
+          return;
+        }
+        if (status === 429) {
+          const until = resetAt
+            ? new Date(resetAt).toLocaleTimeString(isRTL ? 'he-IL' : 'en-GB', { hour: '2-digit', minute: '2-digit' })
+            : null;
+          if (code === 'session_cap') {
+            setError(isRTL
+              ? `הגעת למכסת ההודעות של הסשן הזה. אפשר להמשיך${until ? ` בסביבות ${until}` : ' בעוד כמה שעות'}.`
+              : `You have reached this session's message allowance. You can continue${until ? ` around ${until}` : ' in a few hours'}.`);
+          } else if (code === 'daily_cap') {
+            setError(isRTL ? 'הגעת למכסת ההודעות היומית. נתראה מחר.' : 'You have reached today’s message allowance. Back tomorrow.');
+          } else if (code === 'monthly_cap') {
+            setError(isRTL ? 'הגעת למכסה החודשית של השימוש ההוגן.' : 'You have reached the monthly fair-use allowance.');
+          } else {
+            setError(isRTL ? 'המאמן עמוס כרגע — נסה שוב בעוד רגע.' : 'The coach is busy right now — try again in a moment.');
+          }
+          return;
+        }
+        if (status === 503) {
+          setError(isRTL ? 'המאמן עמוס כרגע — נסה שוב בעוד רגע.' : 'The coach is busy right now — try again in a moment.');
+          return;
+        }
         throw fnErr;
       }
       const payload = data as {
