@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Radio, ExternalLink, Inbox } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Radio, Inbox, X } from 'lucide-react';
 import { useNewsWire, type NewsWireItem } from '@/hooks/use-news-wire';
 
 /* ─────────────────────────────────────────────────────────────
