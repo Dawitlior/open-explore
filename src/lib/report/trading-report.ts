@@ -305,6 +305,84 @@ export function buildTradingReportHtml(trades: Trade[], meta: ReportMeta): strin
   const m = (v: number) => money(v, cur);
   const sign = (v: number) => (v > 0 ? 'pos' : v < 0 ? 'neg' : undefined);
 
+  const firstDate = String(list[0]?.date || '').slice(0, 10);
+  const lastDate = String(list[list.length - 1]?.date || '').slice(0, 10);
+  const periodLabel = firstDate && lastDate ? `${firstDate} → ${lastDate}` : '—';
+
+  /* ── Grouped analytics used by the extended pages ───────────────────── */
+  type Bucket = { trades: number; wins: number; pnl: number; r: number };
+  const groupBy = (keyOf: (t: Trade) => string) => {
+    const map = new Map<string, Bucket>();
+    for (const t of list) {
+      const k = keyOf(t) || '—';
+      const e = map.get(k) || { trades: 0, wins: 0, pnl: 0, r: 0 };
+      e.trades++; e.pnl += n(t.pnl); e.r += getEffectiveR(t);
+      if (t.winLoss === 'Win') e.wins++;
+      map.set(k, e);
+    }
+    return map;
+  };
+  const bucketRows = (map: Map<string, Bucket>, sortKey = false) => {
+    const entries = [...map.entries()];
+    entries.sort(sortKey ? (a, b) => a[0].localeCompare(b[0]) : (a, b) => b[1].pnl - a[1].pnl);
+    return entries.map(([k, v]) => `
+      <tr><td>${esc(k)}</td><td>${v.trades}</td>
+        <td>${num((v.wins / Math.max(1, v.trades)) * 100, 1)}%</td>
+        <td class="${sign(v.r) ?? ''}">${num(v.r, 2)}R</td>
+        <td class="${sign(v.pnl) ?? ''}">${m(v.pnl)}</td>
+        <td class="${sign(v.pnl / Math.max(1, v.trades)) ?? ''}">${m(v.pnl / Math.max(1, v.trades))}</td>
+      </tr>`).join('') || `<tr><td colspan="6" class="empty-cell">No deals</td></tr>`;
+  };
+
+  const DOW = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dirRows = bucketRows(groupBy(t => String(t.direction || '—')));
+  const dowRows = bucketRows(groupBy(t => {
+    const d = new Date(String(t.date || ''));
+    return isNaN(d.getTime()) ? '—' : DOW[d.getDay()];
+  }));
+  const monthRows = bucketRows(groupBy(t => String(t.date || '').slice(0, 7)), true);
+  const setupRows = bucketRows(groupBy(t => String((t as unknown as { setup?: string }).setup || t.orderType || '—')));
+
+  const ranked = [...list].sort((a, b) => n(b.pnl) - n(a.pnl));
+  const extremeRow = (t: Trade) => `
+    <tr><td>${esc(String(t.date || '').slice(0, 16).replace('T', ' '))}</td>
+      <td>${esc(t.coin)}</td>
+      <td class="${t.direction === 'Long' ? 'pos' : 'neg'}">${esc(t.direction)}</td>
+      <td class="${sign(getEffectiveR(t)) ?? ''}">${num(getEffectiveR(t), 2)}R</td>
+      <td class="${sign(n(t.pnl)) ?? ''}">${m(n(t.pnl))}</td>
+      <td>${t.rules ? '✔' : '✘'}</td></tr>`;
+  const bestRows = ranked.slice(0, 5).map(extremeRow).join('') || `<tr><td colspan="6" class="empty-cell">—</td></tr>`;
+  const worstRows = ranked.slice(-5).reverse().map(extremeRow).join('') || `<tr><td colspan="6" class="empty-cell">—</td></tr>`;
+
+  const withRules = list.filter(t => t.rules);
+  const brokeRules = list.filter(t => !t.rules);
+  const avgOf = (arr: Trade[]) => (arr.length ? arr.reduce((x, t) => x + n(t.pnl), 0) / arr.length : 0);
+  const rSum = (arr: Trade[]) => arr.reduce((x, t) => x + getEffectiveR(t), 0);
+  const winPct = (arr: Trade[]) => (arr.length ? (arr.filter(t => t.winLoss === 'Win').length / arr.length) * 100 : 0);
+
+  /* R-multiple distribution buckets. */
+  const R_BUCKETS: Array<[string, (r: number) => boolean]> = [
+    ['≤ -2R', r => r <= -2],
+    ['-2R…-1R', r => r > -2 && r <= -1],
+    ['-1R…0R', r => r > -1 && r < 0],
+    ['0R…1R', r => r >= 0 && r < 1],
+    ['1R…2R', r => r >= 1 && r < 2],
+    ['2R…3R', r => r >= 2 && r < 3],
+    ['≥ 3R', r => r >= 3],
+  ];
+  const rDist = R_BUCKETS.map(([label, test]) => {
+    const hits = list.filter(t => test(getEffectiveR(t)));
+    return { label, count: hits.length, pnl: hits.reduce((x, t) => x + n(t.pnl), 0) };
+  });
+  const rMax = Math.max(1, ...rDist.map(b => b.count));
+  const rDistRows = rDist.map(b => `
+    <tr><td>${esc(b.label)}</td><td>${b.count}</td>
+      <td>${num((b.count / Math.max(1, list.length)) * 100, 1)}%</td>
+      <td><span style="display:inline-block;height:8px;border-radius:4px;width:${((b.count / rMax) * 100).toFixed(1)}%;
+        background:${b.label.startsWith('≤') || b.label.startsWith('-') ? '#ef5350' : '#26a69a'}"></span></td>
+      <td class="${sign(b.pnl) ?? ''}">${m(b.pnl)}</td></tr>`).join('');
+
+
   const dealsRows = list.map((t, i) => `
     <tr>
       <td>${i + 1}</td>
