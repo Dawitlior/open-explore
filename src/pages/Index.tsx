@@ -715,10 +715,11 @@ const Index = () => {
     <span
       aria-hidden
       style={{
-        fontSize: 10,
+        fontSize: 13,
         lineHeight: 1,
         color: T.accent.orange,
-        textShadow: `0 0 6px ${T.accent.orange}, 0 0 14px ${T.accent.orange}88`,
+        filter: `drop-shadow(0 0 3px ${T.accent.orange})`,
+        textShadow: `0 0 7px ${T.accent.orange}, 0 0 18px ${T.accent.orange}`,
         animation: 'proStarPulse 2.4s ease-in-out infinite',
       }}
     >★</span>
@@ -2061,12 +2062,12 @@ const Index = () => {
         </div>
       )}
       {/* DESKTOP SIDEBAR — fixed overlay; in-flow spacer keeps main content stable */}
-      {!isMobile && <div aria-hidden style={{ width: sbOpen ? 216 : 62, flexShrink: 0, transition: 'width 0.18s cubic-bezier(0.3,0.9,0.3,1)', willChange: 'width' }} />}
+      {!isMobile && <div aria-hidden style={{ width: sbOpen ? 224 : 62, flexShrink: 0, transition: 'width 0.18s cubic-bezier(0.3,0.9,0.3,1)', willChange: 'width' }} />}
       {/* No scrim on desktop — the dashboard stays fully interactive while the sidebar is open */}
       {!isMobile && (
       <aside data-app-sidebar style={{
         position: 'fixed', top: 0, bottom: 0, insetInlineStart: 0,
-        width: sbOpen ? 216 : 62,
+         width: sbOpen ? 224 : 62,
         background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
         borderInlineEnd: `1px solid ${T.border.subtle}`,
         display: 'flex', flexDirection: 'column',
@@ -2096,7 +2097,7 @@ const Index = () => {
             return (
             <React.Fragment key={item.id}>
             {groupChanged && sbOpen && (
-              <div style={{ padding: '10px 12px 4px', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: T.text.muted, fontWeight: 600 }}>
+              <div style={{ padding: '11px 12px 5px', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: T.text.muted, fontWeight: 700 }}>
                 {NAV_GROUP_LABEL[item.group!]}
               </div>
             )}
@@ -2116,7 +2117,7 @@ const Index = () => {
                 e.currentTarget.style.boxShadow = 'none';
                 e.currentTarget.style.color = isWeekly ? '#FFD700' : T.text.secondary;
               }}
-              style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: page === item.id ? `linear-gradient(110deg, transparent 0%, ${activeColor}22 50%, transparent 100%)` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : (isWeekly ? 600 : 400), transition: 'background 0.15s ease, box-shadow 0.15s ease, color 0.12s ease', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent', boxShadow: page === item.id ? `inset 0 0 0 1px ${activeColor}25, 0 0 18px -8px ${activeColor}66` : 'none' }}>
+              style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '10px 10px' : '10px 0', minHeight: 40, justifyContent: sbOpen ? 'flex-start' : 'center', background: page === item.id ? `linear-gradient(110deg, transparent 0%, ${activeColor}22 50%, transparent 100%)` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 14, fontWeight: page === item.id ? 600 : (isWeekly ? 600 : 400), transition: 'background 0.15s ease, box-shadow 0.15s ease, color 0.12s ease', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent', boxShadow: page === item.id ? `inset 0 0 0 1px ${activeColor}25, 0 0 18px -8px ${activeColor}66` : 'none' }}>
               <span style={{ position: 'relative', display: 'inline-flex' }}>
                 {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}
                 {showBadge && <ReminderBadge />}
@@ -2129,7 +2130,7 @@ const Index = () => {
                   aria-label={isRTL ? 'הצג ערוצי דשבורד' : 'Toggle dashboard channels'}
                   onClick={e => { e.stopPropagation(); setDashSubOpen(o => !o); }}
                   onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); setDashSubOpen(o => !o); } }}
-                  style={{ display: 'inline-flex', fontSize: 10, opacity: 0.75, transform: `rotate(${dashSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', padding: '0 2px' }}
+                   style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, fontSize: 16, opacity: 0.9, transform: `rotate(${dashSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', borderRadius: T.radius.sm }}
                 >▸</span>
                )}
               {isPerf && sbOpen && (
@@ -2139,7 +2140,7 @@ const Index = () => {
                   aria-label={isRTL ? 'הצג ערוצי ביצועים' : 'Toggle performance channels'}
                   onClick={e => { e.stopPropagation(); setPerfSubOpen(o => !o); }}
                   onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); setPerfSubOpen(o => !o); } }}
-                  style={{ display: 'inline-flex', fontSize: 10, opacity: 0.75, transform: `rotate(${perfSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', padding: '0 2px' }}
+                   style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, fontSize: 16, opacity: 0.9, transform: `rotate(${perfSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', borderRadius: T.radius.sm }}
                 >▸</span>
               )}
               {isCr && sbOpen && (
@@ -2149,7 +2150,7 @@ const Index = () => {
                   aria-label={isRTL ? 'הצג ערוצי חדר בקרה' : 'Toggle control room channels'}
                   onClick={e => { e.stopPropagation(); setCrSubOpen(o => !o); }}
                   onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); setCrSubOpen(o => !o); } }}
-                  style={{ display: 'inline-flex', fontSize: 10, opacity: 0.75, transform: `rotate(${crSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', padding: '0 2px' }}
+                   style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, fontSize: 16, opacity: 0.9, transform: `rotate(${crSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', borderRadius: T.radius.sm }}
                 >▸</span>
               )}
               {isAi && sbOpen && (
@@ -2159,7 +2160,7 @@ const Index = () => {
                   aria-label={isRTL ? 'הצג ערוצי בינה מלאכותית' : 'Toggle AI channels'}
                   onClick={e => { e.stopPropagation(); setAiSubOpen(o => !o); }}
                   onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); setAiSubOpen(o => !o); } }}
-                  style={{ display: 'inline-flex', fontSize: 10, opacity: 0.75, transform: `rotate(${aiSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', padding: '0 2px' }}
+                   style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, fontSize: 16, opacity: 0.9, transform: `rotate(${aiSubOpen ? 90 : 0}deg)`, transition: 'transform 0.18s ease', borderRadius: T.radius.sm }}
                 >▸</span>
               )}
              </button>
@@ -2174,9 +2175,9 @@ const Index = () => {
                       onClick={() => { setPage('control-room'); setCrChannel(ch.id); }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 7, width: '100%',
-                        padding: '4px 8px', border: 'none', borderRadius: T.radius.sm, background: 'transparent',
+                         padding: '6px 8px', minHeight: 32, border: 'none', borderRadius: T.radius.sm, background: 'transparent',
                         color: chActive ? infoColor(T) : T.text.secondary,
-                        fontSize: 11, lineHeight: 1.4, fontWeight: chActive ? 600 : 400, cursor: 'pointer',
+                         fontSize: 12, lineHeight: 1.4, fontWeight: chActive ? 600 : 400, cursor: 'pointer',
                         textAlign: isRTL ? 'right' : 'left', transition: 'color 0.2s',
                         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                       }}
@@ -2200,16 +2201,17 @@ const Index = () => {
                       onClick={() => { setPage('ai'); setAiChannel(ch.id); }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 7, width: '100%',
-                        padding: '4px 8px', border: 'none', borderRadius: T.radius.sm, background: 'transparent',
+                         padding: '6px 8px', minHeight: 34, border: `1px solid ${ch.id === 'coach' ? `${T.accent.orange}38` : 'transparent'}`, borderRadius: T.radius.sm,
+                         background: ch.id === 'coach' ? `linear-gradient(110deg, ${T.accent.orange}12, transparent 78%)` : 'transparent',
                         color: chActive ? infoColor(T) : T.text.secondary,
-                        fontSize: 11, lineHeight: 1.4, fontWeight: chActive ? 600 : 400, cursor: 'pointer',
+                         fontSize: 12, lineHeight: 1.4, fontWeight: ch.id === 'coach' || chActive ? 650 : 400, cursor: 'pointer',
                         textAlign: isRTL ? 'right' : 'left', transition: 'color 0.2s',
                         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                       }}
                     >
                       <span aria-hidden style={{ width: 4, height: 4, borderRadius: '50%', flexShrink: 0, background: chActive ? infoColor(T) : T.text.muted, opacity: chActive ? 1 : 0.5 }} />
                       <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{isRTL ? ch.he : ch.en}</span>
-                      {chLocked && <ProStar />}
+                       {(chLocked || ch.id === 'coach') && <ProStar />}
                     </button>
                   );
                 })}
@@ -2227,10 +2229,10 @@ const Index = () => {
                       onClick={() => { setPage('analytics'); setPerfChannel(ch.id); }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 7, width: '100%',
-                        padding: '4px 8px', border: 'none', borderRadius: T.radius.sm,
+                         padding: '6px 8px', minHeight: 32, border: 'none', borderRadius: T.radius.sm,
                         background: 'transparent',
                         color: chActive ? infoColor(T) : T.text.secondary,
-                        fontSize: 11, lineHeight: 1.4, fontWeight: chActive ? 600 : 400, cursor: 'pointer',
+                         fontSize: 12, lineHeight: 1.4, fontWeight: chActive ? 600 : 400, cursor: 'pointer',
                         textAlign: isRTL ? 'right' : 'left', transition: 'color 0.2s',
                         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                       }}
@@ -2256,10 +2258,10 @@ const Index = () => {
                       title={locked ? (isRTL ? 'זמין בתוכנית פרו' : 'Available on Orca Pro') : undefined}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 7, width: '100%',
-                        padding: '4px 8px', border: 'none', borderRadius: T.radius.sm,
+                         padding: '6px 8px', minHeight: 32, border: 'none', borderRadius: T.radius.sm,
                         background: 'transparent',
                         color: chActive ? infoColor(T) : (locked ? T.text.muted : T.text.secondary),
-                        fontSize: 11, lineHeight: 1.4, fontWeight: chActive ? 600 : 400, cursor: 'pointer',
+                         fontSize: 12, lineHeight: 1.4, fontWeight: chActive ? 600 : 400, cursor: 'pointer',
                         textAlign: isRTL ? 'right' : 'left', transition: 'color 0.2s',
                         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                       }}
