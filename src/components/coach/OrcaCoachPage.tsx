@@ -17,7 +17,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
   ArrowUp, Activity, Search, Target, Clock3, Layers, Infinity as InfinityIcon,
-  Square, RotateCcw, Lock, ChevronDown, Briefcase,
+  Square, RotateCcw, Lock, ChevronDown, Briefcase, Cog,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useActivePortfolio } from '@/hooks/use-active-portfolio';
@@ -48,6 +48,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
   const [used, setUsed] = useState(0);
   const [paywall, setPaywall] = useState(false);
   const [needsPortfolio, setNeedsPortfolio] = useState(false);
+  const [thinkingIndex, setThinkingIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
   const cancelled = useRef(false);
@@ -79,6 +80,18 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
 
   useEffect(() => { if (!busy && !paywall) taRef.current?.focus(); }, [busy, paywall, started]);
 
+  const thinkingPhrases = useMemo(() => (isRTL
+    ? ['קורא את העסקאות שלך…', 'מזהה דפוסים בתיק…', 'משווה ביצועים וסיכון…', 'בונה תשובה מבוססת נתונים…']
+    : ['Reading your trades…', 'Detecting portfolio patterns…', 'Comparing performance and risk…', 'Building an evidence-based answer…']), [isRTL]);
+
+  useEffect(() => {
+    if (!busy) { setThinkingIndex(0); return; }
+    const interval = window.setInterval(() => {
+      setThinkingIndex(index => (index + 1) % thinkingPhrases.length);
+    }, 1800);
+    return () => window.clearInterval(interval);
+  }, [busy, thinkingPhrases.length]);
+
   const autoGrow = useCallback(() => {
     const el = taRef.current;
     if (!el) return;
@@ -99,9 +112,13 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
     requestAnimationFrame(autoGrow);
     setBusy(true);
     try {
-      const { data, error: fnErr } = await supabase.functions.invoke('orca-coach', {
-        body: { messages: next, portfolio_id: overridePortfolioId ?? activePortfolioId },
-      });
+      const minimumThinkingTime = 5000 + Math.floor(Math.random() * 7001);
+      const [{ data, error: fnErr }] = await Promise.all([
+        supabase.functions.invoke('orca-coach', {
+          body: { messages: next, portfolio_id: overridePortfolioId ?? activePortfolioId },
+        }),
+        new Promise(resolve => window.setTimeout(resolve, minimumThinkingTime)),
+      ]);
       if (cancelled.current) return;
       if (fnErr) {
         const ctx = (fnErr as unknown as { context?: { status?: number; body?: unknown } }).context;
@@ -267,7 +284,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
           onChange={e => { setInput(e.target.value); autoGrow(); }}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input); } }}
           rows={1}
-          placeholder={isRTL ? 'שאלו את Orca Coach…' : 'Message Orca Coach…'}
+          placeholder={busy ? thinkingPhrases[thinkingIndex] : (isRTL ? 'שאלו את Orca Coach…' : 'Message Orca Coach…')}
           style={{
             flex: 1, resize: 'none', background: 'transparent', color: T.text.primary,
             border: 'none', outline: 'none', padding: big ? '8px 4px' : '6px 6px',
@@ -480,13 +497,16 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
 
 
           {busy && (
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <div role="status" aria-live="polite" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <div style={{
-                width: 24, height: 24, borderRadius: 7, display: 'grid', placeItems: 'center',
+                width: 28, height: 28, borderRadius: 7, display: 'grid', placeItems: 'center', position: 'relative',
                 background: `${accent}16`, border: `1px solid ${accent}33`, color: accent, fontSize: 11,
-              }}>◈</div>
+              }}>
+                <Cog size={15} className="orca-coach-gear-main" />
+                <Cog size={9} className="orca-coach-gear-small" style={{ position: 'absolute', insetInlineEnd: 1, bottom: 1 }} />
+              </div>
               <span className="orca-coach-shimmer" style={{ fontSize: 12.5, color: T.text.secondary }}>
-                {isRTL ? 'הקואצ׳ מנתח את הנתונים…' : 'Coach is analyzing your data…'}
+                {thinkingPhrases[thinkingIndex]}
               </span>
             </div>
           )}

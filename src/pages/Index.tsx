@@ -1944,13 +1944,7 @@ const Index = () => {
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 18px 14px', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 12, background: `linear-gradient(135deg, ${infoColor(T)}22, ${infoColor(T) || infoColor(T)}10)`, border: `1px solid ${infoColor(T)}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 16px -4px ${infoColor(T)}55` }}>
-                  {Ico.orca}
-                </div>
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: infoColor(T), fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>ORCA</div>
-                  <div style={{ fontSize: 9, color: T.text.muted, letterSpacing: '0.2em', textTransform: 'uppercase', marginTop: 3 }}>Investment</div>
-                </div>
+                <img src="/orcaIcon.ico" alt="Orca Investment" width={76} height={54} style={{ display: 'block', width: 76, height: 54, objectFit: 'contain' }} />
               </div>
               <button
                 onClick={() => setSbOpen(false)}
@@ -2175,9 +2169,8 @@ const Index = () => {
         willChange: 'width',
       }}>
         <div style={{ padding: '18px 14px 6px', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }} onClick={() => setShowFeatureModal(true)}>
-            {Ico.orca}
-            {sbOpen && <div><div style={{ fontSize: 16, fontWeight: 700, color: infoColor(T), fontFamily: "'JetBrains Mono', monospace" }}>ORCA</div><div style={{ fontSize: 8, color: T.text.muted, letterSpacing: '0.15em', textTransform: 'uppercase' }}>Investment</div></div>}
+          <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: sbOpen ? 112 : 34, height: sbOpen ? 58 : 34, flexShrink: 0, transition: 'width 0.18s ease, height 0.18s ease' }} onClick={() => setShowFeatureModal(true)}>
+            <img src="/orcaIcon.ico" alt="Orca Investment" width={sbOpen ? 112 : 34} height={sbOpen ? 58 : 34} style={{ display: 'block', width: sbOpen ? 112 : 34, height: sbOpen ? 58 : 34, objectFit: 'contain' }} />
           </div>
           {sbOpen && <button onClick={() => setSbOpen(false)} style={{ marginInlineStart: 'auto', background: 'none', border: 'none', color: T.text.muted, cursor: 'pointer', fontSize: 14, padding: 4, lineHeight: 1, transition: 'color 0.2s' }}>‹</button>}
         </div>

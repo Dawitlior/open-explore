@@ -1629,6 +1629,13 @@ html[data-scheme="light"] { color-scheme: light; }
   from { background-position: 200% 0; }
   to { background-position: -20% 0; }
 }
+.orca-coach-gear-main { animation: orca-coach-gear 1.5s linear infinite; }
+.orca-coach-gear-small { animation: orca-coach-gear-reverse 1.05s linear infinite; }
+@keyframes orca-coach-gear { to { transform: rotate(360deg); } }
+@keyframes orca-coach-gear-reverse { to { transform: rotate(-360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .orca-coach-gear-main, .orca-coach-gear-small { animation-duration: 4s; }
+}
 
 .orca-coach-md > :first-child { margin-top: 0; }
 .orca-coach-md > :last-child { margin-bottom: 0; }

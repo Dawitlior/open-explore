@@ -10,7 +10,7 @@
  *   standard            → free
  *   advanced | ultimate → pro   (paying users never lose access)
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { ENFORCE_TIER_GATES } from '@/lib/billing-flags';
@@ -72,23 +72,29 @@ export function useEntitlement(): EntitlementState {
     };
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
+  const refreshEntitlement = useCallback(async () => {
     if (!user?.id) {
       setEntitlementTier('free');
       setLoading(false);
       return;
     }
     setLoading(true);
-    supabase
-      .rpc('current_entitlement', { p_user: user.id })
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (!error && data) setEntitlementTier(normalizeEntitlement(data as string));
-        setLoading(false);
-      });
-    return () => { cancelled = true; };
+    const { data, error } = await supabase.rpc('current_entitlement', { p_user: user.id });
+    if (!error && data) setEntitlementTier(normalizeEntitlement(data as string));
+    setLoading(false);
   }, [user?.id]);
+
+  useEffect(() => { void refreshEntitlement(); }, [refreshEntitlement]);
+
+  useEffect(() => {
+    const refresh = () => { void refreshEntitlement(); };
+    window.addEventListener('orca:entitlement-changed', refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.removeEventListener('orca:entitlement-changed', refresh);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [refreshEntitlement]);
 
   const usingPreview = !ENFORCE_TIER_GATES && previewTier !== null;
   const tier = usingPreview ? (previewTier as AppTier) : entitlementTier;
