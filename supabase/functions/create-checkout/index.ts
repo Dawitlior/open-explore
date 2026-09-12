@@ -9,7 +9,7 @@ const cors = {
 };
 
 // Single paid plan — Orca Pro. Legacy keys kept so older clients keep working.
-const PRO_PRICE = "price_1UEalkLHBUsnz0dmmg1huRmq";
+const PRO_PRICE = "price_1UEgDTLHBUsnz0dmzZCimfR3";
 const PRICES: Record<string, string> = {
   pro: PRO_PRICE,
   ultimate: PRO_PRICE,
@@ -53,6 +53,9 @@ Deno.serve(withCors(async (req) => {
       line_items: [{ price, quantity: 1 }],
       mode: "subscription",
       client_reference_id: user.id,
+      billing_address_collection: "required",
+      automatic_tax: { enabled: true },
+      customer_update: customerId ? { address: "auto", name: "auto" } : undefined,
       success_url: `${origin}/?billing=success`,
       cancel_url: `${origin}/?billing=cancelled`,
     });

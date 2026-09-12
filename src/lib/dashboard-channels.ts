@@ -96,9 +96,9 @@ export const PERF_CHANNELS: PerfChannelDef[] = [
 
 export type CrChannelId = 'risk' | 'mind';
 
-export const CR_CHANNELS: Array<{ id: CrChannelId; he: string; en: string; icon: string }> = [
+export const CR_CHANNELS: Array<{ id: CrChannelId; he: string; en: string; icon: string; pro?: boolean }> = [
   { id: 'risk', he: 'סיכון', en: 'Risk', icon: '🛡' },
-  { id: 'mind', he: 'תודעה', en: 'Mind', icon: '🧠' },
+  { id: 'mind', he: 'תודעה', en: 'Mind', icon: '🧠', pro: true },
 ];
 
 /* ─────────────── Intelligence / AI sub-channels ─────────────── */

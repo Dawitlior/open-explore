@@ -2184,6 +2184,7 @@ const Index = () => {
                     >
                       <span aria-hidden style={{ width: 4, height: 4, borderRadius: '50%', flexShrink: 0, background: chActive ? infoColor(T) : T.text.muted, opacity: chActive ? 1 : 0.5 }} />
                       <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{isRTL ? ch.he : ch.en}</span>
+                      {Boolean(ch.pro) && !isUltimateTier && <ProStar />}
                     </button>
                   );
                 })}
@@ -2431,6 +2432,7 @@ const Index = () => {
           {page === 'analytics' && renderAnalytics()}
           {(page === 'control-room' || page === 'risk' || page === 'psychology') && (
 
+            <ProLockOverlay locked={!isUltimateTier && (page === 'psychology' || (page === 'control-room' && crChannel === 'mind'))}>
             <LazyShell>
               <ControlRoomPage
                 T={T}
@@ -2445,6 +2447,7 @@ const Index = () => {
                 renderMind={renderPsychology}
               />
             </LazyShell>
+            </ProLockOverlay>
           )}
 
           {page === 'ai' && (
