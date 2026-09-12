@@ -55,11 +55,90 @@ function readPreviewTier(): AppTier | null {
   return null;
 }
 
+/* ──────────────────────────────────────────────────────────────
+ * Shared entitlement store.
+ *
+ * Every component used to hold its own copy of the plan, starting at
+ * 'free' + loading and re-querying on mount. Switching channels therefore
+ * remounted gated pages and flashed the Free deck for a few frames before
+ * the Pro answer arrived. The plan is now resolved ONCE per session, cached
+ * in memory + sessionStorage, and broadcast to all subscribers — so a
+ * remount reads the already-known plan synchronously.
+ * ────────────────────────────────────────────────────────────── */
+const CACHE_KEY = 'orca:entitlement-cache';
+
+interface Snapshot {
+  userId: string | null;
+  tier: AppTier;
+  resolved: boolean;
+}
+
+function readCache(): Snapshot {
+  if (typeof window === 'undefined') return { userId: null, tier: 'free', resolved: false };
+  try {
+    const raw = window.sessionStorage.getItem(CACHE_KEY);
+    if (!raw) return { userId: null, tier: 'free', resolved: false };
+    const parsed = JSON.parse(raw) as { userId?: string; tier?: string };
+    return {
+      userId: parsed.userId ?? null,
+      tier: normalizeEntitlement(parsed.tier),
+      resolved: Boolean(parsed.userId),
+    };
+  } catch {
+    return { userId: null, tier: 'free', resolved: false };
+  }
+}
+
+let snapshot: Snapshot = readCache();
+let inFlight: Promise<void> | null = null;
+const listeners = new Set<() => void>();
+
+function emit() {
+  listeners.forEach((l) => l());
+}
+
+function setSnapshot(next: Snapshot) {
+  if (snapshot.userId === next.userId && snapshot.tier === next.tier && snapshot.resolved === next.resolved) return;
+  snapshot = next;
+  if (typeof window !== 'undefined' && next.userId) {
+    try {
+      window.sessionStorage.setItem(CACHE_KEY, JSON.stringify({ userId: next.userId, tier: next.tier }));
+    } catch { /* storage may be unavailable */ }
+  }
+  emit();
+}
+
+async function fetchEntitlement(userId: string, force: boolean) {
+  if (!force && snapshot.resolved && snapshot.userId === userId) return;
+  if (inFlight) return inFlight;
+  inFlight = (async () => {
+    const { data, error } = await supabase.rpc('current_entitlement', { p_user: userId });
+    if (!error && data) {
+      setSnapshot({ userId, tier: normalizeEntitlement(data as string), resolved: true });
+    } else {
+      setSnapshot({ ...snapshot, userId, resolved: true });
+    }
+  })();
+  try { await inFlight; } finally { inFlight = null; }
+}
+
 export function useEntitlement(): EntitlementState {
   const { user } = useAuth();
-  const [entitlementTier, setEntitlementTier] = useState<AppTier>('free');
+  const [snap, setSnap] = useState<Snapshot>(snapshot);
   const [previewTier, setPreviewTier] = useState<AppTier | null>(() => readPreviewTier());
-  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const listener = () => setSnap(snapshot);
+    listeners.add(listener);
+    listener();
+    return () => { listeners.delete(listener); };
+  }, []);
+
+  const matchesUser = Boolean(user?.id) && snap.userId === user?.id;
+  const entitlementTier = matchesUser ? snap.tier : 'free';
+  // Only "loading" when we have no cached answer for this exact user yet.
+  const loading = Boolean(user?.id) && !(matchesUser && snap.resolved);
+
 
   useEffect(() => {
     if (ENFORCE_TIER_GATES || typeof window === 'undefined') return;
