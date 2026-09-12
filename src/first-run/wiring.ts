@@ -10,6 +10,7 @@
 import { supabase } from '@/integrations/supabase/client'
 import { lovable } from '@/integrations/lovable/index'
 import { scopedStorage } from '@/lib/scoped-storage'
+import { getSetting, setSetting } from '@/lib/storage'
 import type { Answers } from './first-run.types'
 
 const isLovableHost = () =>
@@ -101,6 +102,23 @@ const TRADER_MIND_PENDING_KEY = 'orca-trader-mind-prompt-pending'
 
 export function isOnboardingDone(): boolean {
   return scopedStorage.getSync(ONBOARDING_DONE_KEY) === '1'
+}
+
+/** Cache only the "done" flag locally (used when the cloud says a returning
+   user on a new device already onboarded — no need to re-run the flow). */
+export function markOnboardingDoneLocal(): void {
+  void scopedStorage.setItem(ONBOARDING_DONE_KEY, '1')
+}
+
+/** Cross-device onboarding flag — stored in the cloud settings store (same one
+   that syncs theme/lang), so a returning user on a new device is NOT re-onboarded.
+   Degrades to false on any error (falls back to the local flag). */
+export async function isOnboardingDoneCloud(): Promise<boolean> {
+  try { return (await getSetting<string>('onboarding_completed')) === '1' } catch { return false }
+}
+
+export async function markOnboardingCompleteCloud(): Promise<void> {
+  try { await setSetting('onboarding_completed', '1') } catch { /* non-blocking */ }
 }
 
 /** Persist the local onboarding facts (name, experience, done flag) exactly as

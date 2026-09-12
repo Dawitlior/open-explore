@@ -7,7 +7,7 @@ import { LegalStep } from './components/LegalStep'
 import { OnboardingFlow } from './components/OnboardingFlow'
 import { ORCA_LEGAL } from './first-run.legal'
 import type { Answers, Lang, UiStatus } from './first-run.types'
-import { readLegalStatus, acceptLegal, isOnboardingDone, persistOnboardingLocal } from './wiring'
+import { readLegalStatus, acceptLegal, isOnboardingDone, isOnboardingDoneCloud, markOnboardingCompleteCloud, markOnboardingDoneLocal, persistOnboardingLocal } from './wiring'
 import '../marketing/marketing.css'
 
 /* ============================================================================
@@ -39,10 +39,15 @@ export function FirstRunGate() {
     ;(async () => {
       const legal = await readLegalStatus(user.id)
       if (!alive) return
-      if (!legal.terms) setStage('terms')
-      else if (!legal.privacy) setStage('privacy')
-      else if (!isOnboardingDone()) setStage('onboarding')
-      else setStage('done')
+      if (!legal.terms) { setStage('terms'); return }
+      if (!legal.privacy) { setStage('privacy'); return }
+      // Onboarding: local flag first (instant), then the cloud flag so a
+      // returning user on a new device is not re-onboarded.
+      let done = isOnboardingDone()
+      if (!done) done = await isOnboardingDoneCloud()
+      if (!alive) return
+      if (done) { markOnboardingDoneLocal(); setStage('done') }
+      else setStage('onboarding')
     })()
     return () => { alive = false }
   }, [user?.id, loading])
@@ -73,6 +78,7 @@ export function FirstRunGate() {
         ...(answers.risk.monthly != null ? { monthly_risk_limit: answers.risk.monthly } : {}),
       })
       persistOnboardingLocal(answers)
+      await markOnboardingCompleteCloud() // cross-device: not re-onboarded on other devices
       try { void scopedStorage.setItem('orca-risk-onboarding-done', '1') } catch { /* noop */ }
       setStatus('idle')
       setStage('done')
