@@ -119,7 +119,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await supabase.auth.signOut();
       await new Promise(r => setTimeout(r, 600));
     } finally {
-      window.location.href = '/welcome';
+      window.location.href = '/';
     }
   }, []);
 

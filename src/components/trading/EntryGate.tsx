@@ -1,8 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
-import { SURF } from '@/lib/neon-palette';
-import { OrcaBootLoader } from '@/components/OrcaBootLoader';
-import orcaLowPoly from '@/assets/orca-lowpoly.png';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 
+/* ============================================================================
+   EntryGate — cinematic entry. A single round Orca mark floats on a pure-black
+   void; its shadows melt the edge into the dark so it reads like the logo simply
+   *is* there. There is no visible button, so the eye goes to the center — tap the
+   mark and it spins up, throws sparks, then blooms open as a fast-expanding
+   circle that reveals the platform beneath. Same props/behaviour contract as the
+   previous gate (onEnter + sessionStorage 'orca-entered'); honours reduced motion.
+   ========================================================================== */
 
 interface EntryGateProps {
   onEnter: () => void;
@@ -10,296 +15,196 @@ interface EntryGateProps {
   ready?: boolean;
 }
 
-/**
- * EntryGate — premium horizontal-seam curtain split.
- *
- * Two absolute 50vh panels meet exactly at the horizontal seam. Each
- * panel clips the exact canonical OrcaBootLoader (untouched), with the
- * OI orbit aligned to the seam so the icon is physically sliced in half.
- *
- * On reveal the top panel translates -100% and the bottom +100%
- * simultaneously, carrying their halves of the icon off-screen.
- */
-type Phase = 'idle' | 'loading' | 'split' | 'done';
-const MIN_LOADER_MS = 900;
-const SPLIT_MS = 620;
-const panelBg = () => SURF.bg1;
-const gateBg = () => SURF.panelGradient;
-const SPLIT_EASING = 'cubic-bezier(0.65, 0, 0.35, 1)';
+type Phase = 'idle' | 'ignite' | 'open' | 'done';
 
-export const EntryGate = ({ onEnter, lang = 'he', ready = true }: EntryGateProps) => {
-  const isRTL = lang === 'he';
+const IGNITE_MS = 1050;
+const OPEN_MS = 640;
+const ICON_SRC = '/orca-logo.png';
+
+export const EntryGate = ({ onEnter }: EntryGateProps) => {
   const [phase, setPhase] = useState<Phase>('idle');
-  const [requested, setRequested] = useState(false);
-  const [armed, setArmed] = useState(false);
-  const handleAccess = useCallback(() => {
-    setRequested(true);
-    setPhase('loading');
-  }, []);
+  const enteredRef = useRef(false);
 
+  const reduced = useMemo(
+    () =>
+      typeof window !== 'undefined' &&
+      (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ||
+        document.body?.getAttribute('data-reduce-motion') === '1'),
+    [],
+  );
+
+  const finish = useCallback(() => {
+    if (enteredRef.current) return;
+    enteredRef.current = true;
+    try { sessionStorage.setItem('orca-entered', '1'); } catch { /* noop */ }
+    onEnter();
+  }, [onEnter]);
+
+  const start = useCallback(() => {
+    if (phase !== 'idle') return;
+    if (reduced) { setPhase('done'); finish(); return; }
+    setPhase('ignite');
+  }, [phase, reduced, finish]);
+
+  // Drive the phase timeline.
   useEffect(() => {
-    if (phase === 'loading') {
-      // Keep the canonical Orca loader on screen for a beat (and until the
-      // dashboard signals readiness) before the curtain splits open.
-      let t = 0;
-      const start = performance.now();
-      const tryGo = () => {
-        const wait = Math.max(0, MIN_LOADER_MS - (performance.now() - start));
-        t = window.setTimeout(() => setPhase('split'), wait);
-      };
-      if (ready) tryGo(); else t = window.setTimeout(() => setPhase('split'), 4000);
+    if (phase === 'ignite') {
+      const t = window.setTimeout(() => setPhase('open'), IGNITE_MS);
       return () => window.clearTimeout(t);
     }
-    if (phase === 'split') {
-      // Mount the curtain at its start position first, then arm the transform on
-      // the next frame so the browser actually interpolates the reveal.
-      const raf1 = requestAnimationFrame(() => requestAnimationFrame(() => setArmed(true)));
-      const t = setTimeout(() => {
-        setPhase('done');
-        sessionStorage.setItem('orca-entered', '1');
-        onEnter();
-      }, SPLIT_MS + 60);
-      return () => { clearTimeout(t); cancelAnimationFrame(raf1); };
+    if (phase === 'open') {
+      // Reveal the platform partway through the bloom, then unmount the gate.
+      const t1 = window.setTimeout(finish, Math.round(OPEN_MS * 0.45));
+      const t2 = window.setTimeout(() => setPhase('done'), OPEN_MS + 40);
+      return () => { window.clearTimeout(t1); window.clearTimeout(t2); };
     }
-  }, [phase, onEnter, ready]);
+  }, [phase, finish]);
 
-  if (phase === 'idle') {
-    const reduced = typeof window !== 'undefined'
-      && (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-        || document.body?.getAttribute('data-reduce-motion') === '1');
-    const anim = (name: string, delay: number, dur = 900) =>
-      reduced ? undefined : `${name} ${dur}ms cubic-bezier(0.22,1,0.36,1) ${delay}ms both`;
-
-    /* Bright deep-navy terminal with mint topography */
-    const MINT = '#3FE0BE';
-    const TEXT = '#EAF4FF';
-    const MUTED = '#9FB4CC';
-    const LINE = 'rgba(120,190,215,0.20)';
-
-    // Flowing topographic contours (deterministic layered sine bands).
-    const CW = 1200, CH = 800;
-    const contours = Array.from({ length: 22 }, (_, k) => {
-      const base = 60 + k * 34;
-      const pts = Array.from({ length: 41 }, (_, i) => {
-        const x = (i / 40) * CW;
-        const y =
-          base +
-          Math.sin(i * 0.34 + k * 0.42) * (26 + k * 1.4) +
-          Math.sin(i * 0.11 + k * 0.9) * 34 +
-          Math.cos(i * 0.63 + k * 0.2) * 8;
-        return `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`;
-      });
-      return pts.join(' ');
-    });
-
-    // Faint background candle tape.
-    const NC = 46;
-    const candles = (() => {
-      let px = 420;
-      return Array.from({ length: NC }, (_, i) => {
-        const o = px;
-        const c = px + Math.sin(i * 0.71) * 22 + Math.cos(i * 0.23) * 14;
-        px = c;
-        const amp = 8 + Math.abs(Math.sin(i * 1.7)) * 18;
-        return { o, c, h: Math.max(o, c) + amp, l: Math.min(o, c) - amp };
-      });
-    })();
-
-    return (
-      <div
-        dir={isRTL ? 'rtl' : 'ltr'}
-        style={{
-          position: 'fixed', inset: 0, zIndex: 2147483647,
-          width: '100vw', height: '100dvh',
-          background: 'linear-gradient(165deg, #16304A 0%, #12283E 28%, #0E2033 58%, #142C4A 100%)',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          fontFamily: isRTL
-            ? "'Heebo', 'Assistant', 'Poppins', system-ui, sans-serif"
-            : "'Poppins', 'Heebo', system-ui, sans-serif",
-          overflow: 'hidden',
-        }}
-      >
-        <style>{`
-          @keyframes orca-hud-rise { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform:none; } }
-          @keyframes orca-hud-fade { from { opacity:0; } to { opacity:1; } }
-          @keyframes orca-hud-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-          @keyframes orca-hud-draw { from { stroke-dashoffset: 3000; } to { stroke-dashoffset: 0; } }
-          @keyframes orca-hud-glow { 0%,100% { box-shadow: 0 0 22px rgba(63,224,190,0.22), inset 0 0 18px rgba(63,224,190,0.06); } 50% { box-shadow: 0 0 40px rgba(63,224,190,0.38), inset 0 0 22px rgba(63,224,190,0.10); } }
-          .orca-hud-btn { transition: background .2s ease, border-color .2s ease, transform .12s ease, color .2s ease; }
-          .orca-hud-btn:hover:not(:disabled) { background: rgba(63,224,190,0.14); border-color: rgba(63,224,190,0.95); color: #FFFFFF; }
-          .orca-hud-btn:active:not(:disabled) { transform: translateY(1px); }
-        `}</style>
-
-        {/* Topographic contour field */}
-        <svg
-          aria-hidden
-          viewBox={`0 0 ${CW} ${CH}`}
-          preserveAspectRatio="xMidYMid slice"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.5 }}
-        >
-          {contours.map((d, i) => (
-            <path
-              key={i}
-              d={d}
-              fill="none"
-              stroke={LINE}
-              strokeWidth={1}
-              strokeDasharray={3000}
-              style={{ animation: reduced ? undefined : `orca-hud-draw 2600ms cubic-bezier(0.22,1,0.36,1) ${i * 45}ms both` }}
-            />
-          ))}
-        </svg>
-
-        {/* Faint candle tape */}
-        <svg
-          aria-hidden
-          viewBox={`0 0 ${CW} ${CH}`}
-          preserveAspectRatio="xMidYMid slice"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.14 }}
-        >
-          {candles.map((s, i) => {
-            const x = (i + 0.5) * (CW / NC);
-            const yT = Math.min(s.o, s.c), yB = Math.max(s.o, s.c);
-            return (
-              <g key={i} stroke="#CFE6F5" fill="none" strokeWidth={1}>
-                <line x1={x} x2={x} y1={s.l} y2={s.h} />
-                <rect x={x - 5} y={yT} width={10} height={Math.max(1.5, yB - yT)} />
-              </g>
-            );
-          })}
-        </svg>
-
-        {/* Soft grid */}
-        <div aria-hidden style={{
-          position: 'absolute', inset: 0, opacity: 0.35,
-          backgroundImage: `
-            linear-gradient(rgba(180,215,235,0.06) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(180,215,235,0.06) 1px, transparent 1px)`,
-          backgroundSize: '96px 96px, 96px 96px',
-        }} />
-
-        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: '0 24px' }}>
-          <img
-            src={orcaLowPoly}
-            alt=""
-            width={1024}
-            height={768}
-            style={{
-              display: 'block', width: 'min(240px, 52vw)', height: 'auto', margin: '0 auto 18px',
-              filter: 'drop-shadow(0 0 26px rgba(63,224,190,0.35))',
-              animation: reduced
-                ? undefined
-                : `orca-hud-rise 900ms cubic-bezier(0.22,1,0.36,1) both, orca-hud-float 9s ease-in-out 900ms infinite`,
-            }}
-          />
-
-          <h1 style={{
-            fontSize: 'clamp(26px, 5.2vw, 42px)', margin: 0, lineHeight: 1.1,
-            color: TEXT, fontWeight: 500, letterSpacing: '0.02em',
-            fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
-            animation: anim('orca-hud-rise', 160),
-          }}>
-            <span style={{ fontWeight: 700, color: MINT }}>Orca</span>
-            <span style={{ fontWeight: 300, marginInlineStart: 12, color: '#DCE8F5' }}>Investment</span>
-          </h1>
-
-          <div aria-hidden style={{
-            width: 'min(300px, 64vw)', height: 1, margin: '22px auto 0',
-            background: 'linear-gradient(90deg, transparent, rgba(190,220,240,0.35), transparent)',
-            animation: anim('orca-hud-fade', 320, 700),
-          }} />
-
-          <p style={{
-            fontSize: 11.5, color: '#C3D6E8', fontWeight: 500, letterSpacing: '0.34em', textTransform: 'uppercase',
-            marginTop: 18, marginBottom: 40,
-            fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
-            animation: anim('orca-hud-rise', 380),
-          }}>
-            {isRTL ? 'מסוף מודיעין מסחרי' : 'Trading Intelligence Terminal'}
-          </p>
-
-          <div style={{ animation: anim('orca-hud-rise', 520) }}>
-            <button
-              className="orca-hud-btn"
-              onClick={handleAccess}
-              disabled={requested && !ready}
-              style={{
-                padding: '16px 46px',
-                background: 'rgba(63,224,190,0.07)',
-                border: `1px solid rgba(63,224,190,0.65)`,
-                borderRadius: 999,
-                color: MINT,
-                fontSize: 14, fontWeight: 600,
-                fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
-                cursor: requested && !ready ? 'wait' : 'pointer',
-                letterSpacing: '0.12em',
-                backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-                animation: reduced ? undefined : 'orca-hud-glow 3.4s ease-in-out infinite',
-              }}
-            >
-              {requested && !ready ? (isRTL ? 'מכין את המסוף…' : 'Preparing terminal…') : (isRTL ? 'כניסה למערכת' : 'Access Platform')}
-            </button>
-          </div>
-
-          <p style={{
-            marginTop: 26, marginBottom: 0, fontSize: 11, color: MUTED, fontWeight: 500,
-            letterSpacing: '0.04em',
-            animation: anim('orca-hud-fade', 680, 700),
-          }}>
-            {isRTL ? 'לשימוש מקצועי בלבד' : 'Professional use only'}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-
-
+  // Deterministic spark rays.
+  const sparks = useMemo(
+    () =>
+      Array.from({ length: 16 }, (_, i) => {
+        const angle = (i / 16) * 360 + (i % 2 ? 11 : -7);
+        const dist = 150 + ((i * 37) % 90);
+        const delay = (i % 5) * 24;
+        const size = 3 + ((i * 13) % 4);
+        return { angle, dist, delay, size };
+      }),
+    [],
+  );
 
   if (phase === 'done') return null;
 
-  const isSplitting = phase === 'split' && armed;
+  const igniting = phase === 'ignite';
+  const opening = phase === 'open';
+
   return (
     <div
-      aria-hidden="true"
+      aria-hidden={false}
+      role="button"
+      tabIndex={0}
+      aria-label="Enter Orca"
+      onClick={start}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); start(); } }}
       style={{
-        position: 'fixed', inset: 0, zIndex: 2147483647,
-        width: '100vw', height: '100dvh',
+        position: 'fixed', inset: 0, zIndex: 99990,
+        background: '#000000',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: phase === 'idle' ? 'pointer' : 'default',
+        opacity: opening ? 0 : 1,
+        transition: opening ? `opacity ${OPEN_MS}ms ease-in ${Math.round(OPEN_MS * 0.4)}ms` : undefined,
         overflow: 'hidden',
-        pointerEvents: 'auto',
-        background: 'transparent',
-        contain: 'strict',
+        userSelect: 'none', WebkitTapHighlightColor: 'transparent',
       }}
     >
-      {/* Curtain halves, each clipping one half of the canonical Orca loader
-          so the mark is physically sliced at the seam and carried off-screen. */}
-      <div style={{
-        position: 'absolute', top: 0, left: 0, width: '100vw', height: '50dvh',
-        background: panelBg(),
-        overflow: 'hidden',
-        transform: isSplitting ? 'translateY(-100%)' : 'translateY(0)',
-        transition: `transform ${SPLIT_MS}ms ${SPLIT_EASING}`,
-        willChange: 'transform',
-      }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100vw', height: '100dvh' }}>
-          <OrcaBootLoader frame="absolute" />
-        </div>
+      <style>{`
+        @keyframes orcagate-breathe {
+          0%,100% { transform: scale(1); opacity: 0.9; }
+          50% { transform: scale(1.035); opacity: 1; }
+        }
+        @keyframes orcagate-halo {
+          0%,100% { opacity: 0.55; transform: scale(1); }
+          50% { opacity: 0.85; transform: scale(1.08); }
+        }
+        @keyframes orcagate-spin {
+          0% { transform: rotate(0deg) scale(1); }
+          55% { transform: rotate(430deg) scale(1.02); }
+          100% { transform: rotate(1120deg) scale(1.06); }
+        }
+        @keyframes orcagate-spark {
+          0% { opacity: 0; transform: translate(-50%,-50%) rotate(var(--a)) translateX(60px) scale(0.4); }
+          22% { opacity: 1; }
+          100% { opacity: 0; transform: translate(-50%,-50%) rotate(var(--a)) translateX(calc(60px + var(--d))) scale(1); }
+        }
+        @keyframes orcagate-bloom {
+          0% { transform: scale(1); opacity: 1; }
+          100% { transform: scale(26); opacity: 0.9; }
+        }
+        @keyframes orcagate-hint {
+          0%,100% { opacity: 0; }
+          50% { opacity: 0.55; }
+        }
+      `}</style>
+
+      {/* Icon + halo stack */}
+      <div style={{ position: 'relative', width: 'clamp(200px, 40vw, 340px)', height: 'clamp(200px, 40vw, 340px)' }}>
+        {/* Soft radial halo that melts the edge into the void */}
+        <div
+          style={{
+            position: 'absolute', inset: '-55%',
+            borderRadius: '50%',
+            background:
+              'radial-gradient(circle at 50% 50%, rgba(124,58,237,0.30) 0%, rgba(80,50,160,0.14) 34%, rgba(0,0,0,0) 68%)',
+            filter: 'blur(6px)',
+            animation: igniting ? undefined : 'orcagate-halo 4.2s ease-in-out infinite',
+            pointerEvents: 'none',
+          }}
+        />
+        {/* Bloom disc — the expanding circle that reveals the platform */}
+        {opening && (
+          <div
+            style={{
+              position: 'absolute', inset: 0, borderRadius: '50%',
+              background:
+                'radial-gradient(circle at 50% 50%, #ffffff 0%, #cbb4ff 30%, #7c3aed 62%, #2a1560 100%)',
+              animation: `orcagate-bloom ${OPEN_MS}ms cubic-bezier(0.7,0,0.84,0) both`,
+              transformOrigin: 'center',
+              pointerEvents: 'none',
+            }}
+          />
+        )}
+        {/* Sparks */}
+        {igniting &&
+          sparks.map((s, i) => (
+            <span
+              key={i}
+              style={{
+                position: 'absolute', top: '50%', left: '50%',
+                width: s.size, height: s.size, borderRadius: '50%',
+                background: i % 3 === 0 ? '#ffffff' : '#c9b3ff',
+                boxShadow: '0 0 8px 1px rgba(200,170,255,0.9)',
+                // @ts-expect-error CSS custom props
+                '--a': `${s.angle}deg`, '--d': `${s.dist}px`,
+                animation: `orcagate-spark ${IGNITE_MS - 120}ms cubic-bezier(0.2,0.7,0.3,1) ${s.delay}ms both`,
+                pointerEvents: 'none',
+              }}
+            />
+          ))}
+        {/* The Orca mark */}
+        <img
+          src={ICON_SRC}
+          alt="Orca"
+          draggable={false}
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            objectFit: 'contain', borderRadius: '50%',
+            filter: 'drop-shadow(0 0 40px rgba(124,58,237,0.35)) drop-shadow(0 0 90px rgba(0,0,0,0.9))',
+            animation: igniting
+              ? `orcagate-spin ${IGNITE_MS}ms cubic-bezier(0.45,0,0.9,0.35) both`
+              : opening ? undefined
+              : 'orcagate-breathe 3.4s ease-in-out infinite',
+            opacity: opening ? 0 : 1,
+            transition: opening ? 'opacity 180ms ease-out' : undefined,
+          }}
+        />
       </div>
 
-      {/* BOTTOM PANEL — animates DOWN, shows bottom half of loader */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, width: '100vw', height: '50dvh',
-        background: panelBg(),
-        overflow: 'hidden',
-        transform: isSplitting ? 'translateY(100%)' : 'translateY(0)',
-        transition: `transform ${SPLIT_MS}ms ${SPLIT_EASING}`,
-        willChange: 'transform',
-      }}>
-        <div style={{ position: 'absolute', top: '-50dvh', left: 0, width: '100vw', height: '100dvh' }}>
-          <OrcaBootLoader frame="absolute" />
+      {/* Faint hint — appears only at rest, invites the tap without a button */}
+      {phase === 'idle' && !reduced && (
+        <div
+          style={{
+            position: 'absolute', bottom: '14%', left: 0, right: 0, textAlign: 'center',
+            color: '#b9a6ee', fontSize: 12, letterSpacing: '0.28em', textTransform: 'uppercase',
+            fontFamily: "'Inter', system-ui, sans-serif",
+            animation: 'orcagate-hint 3.6s ease-in-out infinite 1.4s',
+            pointerEvents: 'none',
+          }}
+        >
+          Tap to enter
         </div>
-      </div>
-
+      )}
     </div>
   );
 };
+
+export default EntryGate;

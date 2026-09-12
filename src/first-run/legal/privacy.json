@@ -1,0 +1,90 @@
+{
+  "kind": "privacy",
+  "title": "Privacy Policy",
+  "versionLabel": "1.0",
+  "sections": [
+    {
+      "heading": "Overview",
+      "paragraphs": [
+        "This Privacy Policy explains what information Orca Investment (\"we\", \"the Service\") collects, how we use it, and the choices you have. The Service is a private trading journal and analytics terminal; your trading data belongs to you and is visible only to you."
+      ]
+    },
+    {
+      "heading": "Information we collect",
+      "bullets": [
+        "Account information: email address and authentication identifiers (including Google sign-in, if you use it).",
+        "Trading data: trades you enter manually, import from files, or sync from connected exchanges — including symbols, prices, sizes, times, notes, and screenshots you attach.",
+        "Integration credentials: if you connect an exchange or broker, API credentials are stored encrypted and used only to sync your data.",
+        "Usage and device data: basic technical logs (browser type, errors, feature usage) used to keep the Service reliable and secure.",
+        "Support and feedback: bug reports and messages you send us."
+      ]
+    },
+    {
+      "heading": "How we use your information",
+      "bullets": [
+        "To operate the Service: store your journal, compute analytics, enforce risk limits, and display your dashboards.",
+        "To provide AI features: relevant portions of your trading data are sent to our AI provider to generate insights and coaching responses for you.",
+        "To process payments and manage subscriptions through our payment provider.",
+        "To secure the Service: abuse prevention, rate limiting, and fraud detection.",
+        "To communicate with you about your account, billing, and important service changes."
+      ],
+      "paragraphs": ["We do not sell your personal data, and we do not share your trading data with other users or advertisers."]
+    },
+    {
+      "heading": "AI processing",
+      "paragraphs": [
+        "AI-powered features (such as Orca Coach and AI Insights) process your trading statistics and recent trade history through a third-party AI model to generate responses. Data sent for AI processing is limited to what the feature needs, is tied only to your own account, and is never mixed with other users' data."
+      ]
+    },
+    {
+      "heading": "Cookies and local storage",
+      "paragraphs": [
+        "We use essential cookies and local storage for authentication, preferences (language, theme), and session continuity. Optional, non-essential cookies are used only with your consent, which you can change at any time via the cookie preferences panel."
+      ]
+    },
+    {
+      "heading": "Data retention and deletion",
+      "bullets": [
+        "Your data is kept while your account is active.",
+        "News-wire items are automatically deleted after 3 days.",
+        "You may delete individual trades, portfolios, or your entire account at any time from the Settings area.",
+        "When you delete your account, your personal data and trading records are permanently removed from active systems within 30 days; encrypted backups expire on their normal rotation."
+      ]
+    },
+    {
+      "heading": "Security",
+      "paragraphs": [
+        "We apply industry-standard measures including encryption in transit, encrypted storage of integration credentials, row-level access isolation so each account can only read its own data, and rate limiting on sensitive endpoints. No method of transmission or storage is 100% secure; if we become aware of a breach affecting your data, we will notify you."
+      ]
+    },
+    {
+      "heading": "Your rights",
+      "paragraphs": ["Depending on your jurisdiction, you may have the right to:"],
+      "bullets": [
+        "Access and export your data (JSON/XLSX export is built into the Service).",
+        "Correct inaccurate information.",
+        "Delete your account and data.",
+        "Object to or restrict certain processing.",
+        "Withdraw consent for optional cookies."
+      ]
+    },
+    {
+      "heading": "Children",
+      "paragraphs": [
+        "The Service is not directed at anyone under 18, and we do not knowingly collect data from minors."
+      ]
+    },
+    {
+      "heading": "Changes to this policy",
+      "paragraphs": [
+        "We may update this policy from time to time. The version label and effective date are shown above; material changes will be announced in the app before they take effect."
+      ]
+    },
+    {
+      "heading": "Contact",
+      "paragraphs": [
+        "Privacy questions or requests can be sent through the Report Bug channel in the app or via the contact details listed on our website."
+      ]
+    }
+  ]
+}
