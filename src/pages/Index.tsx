@@ -2447,6 +2447,7 @@ const Index = () => {
                 renderMind={renderPsychology}
               />
             </LazyShell>
+            </ProLockOverlay>
           )}
 
           {page === 'ai' && (
