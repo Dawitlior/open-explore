@@ -53,7 +53,7 @@ const TIERS: TierDef[] = [
     icon: Crown,
     name: { he: 'פרו', en: 'Pro' },
     tagline: { he: 'מנוע כמותי מלא', en: 'Full quant engine' },
-    price: { he: '₪129/חודש', en: '$39/mo' },
+    price: { he: '10$ לחודש', en: '$10/mo' },
     accent: '#d4af37',
     glow: 'rgba(212,175,55,0.55)',
     features: [

@@ -163,32 +163,10 @@ export const ControlRoomPage = ({
     return () => cancelAnimationFrame(id);
   }, [reservedHeight, tab]);
 
-  const switchTab = useCallback((next: ControlRoomTab) => {
-    if (next === tab) return;
-    measure();
-    setReservedHeight(heightsRef.current[next] ?? heightsRef.current[tab]);
-    setTab(next);
-  }, [tab, measure]);
-
-
-
-
-  const tabs: Array<{ id: ControlRoomTab; icon: string; label: string; sub: string; color: string }> = [
-    {
-      id: 'risk',
-      icon: '🛡️',
-      label: isRTL ? 'סיכון' : 'Risk',
-      sub: isRTL ? 'מגבלות · חשיפה · איכות תשואות' : 'Limits · Exposure · Return quality',
-      color: infoColor(T),
-    },
-    {
-      id: 'mind',
-      icon: '🧠',
-      label: isRTL ? 'תודעה' : 'Mind',
-      sub: isRTL ? 'משמעת · טילט · דפוסי התנהגות' : 'Discipline · Tilt · Behavior patterns',
-      color: neutralRamp(T, 3)[1],
-    },
-  ];
+  // The active surface is driven exclusively by the sidebar sub-channel.
+  useEffect(() => {
+    setTab(prev => (prev === initialTab ? prev : initialTab));
+  }, [initialTab]);
 
   return (
     <div>
@@ -208,57 +186,7 @@ export const ControlRoomPage = ({
       {/* ── Layer 0 — shared live state ───────────────────────── */}
       <LiveStateBar T={T} isRTL={isRTL} trades={trades} stats={stats} limits={limits} compact={isMobile} />
 
-      {/* ── Layer 1 — tabs ───────────────────────────────────── */}
-      <div
-        role="tablist"
-        aria-label={isRTL ? 'חדר בקרה' : 'Control Room'}
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 8,
-          marginBottom: 14,
-          position: 'sticky',
-          top: 0,
-          zIndex: 6,
-          background: T.bg.primary,
-          paddingBottom: 6,
-        }}
-      >
-        {tabs.map(tb => {
-          const active = tb.id === tab;
-          return (
-            <button
-              key={tb.id}
-              role="tab"
-              aria-selected={active}
-              onClick={() => switchTab(tb.id)}
-              style={{
-                textAlign: isRTL ? 'right' : 'left',
-                padding: isMobile ? '10px 12px' : '12px 16px',
-                minHeight: isMobile ? 44 : 62,
-                borderRadius: 12,
-                cursor: 'pointer',
-                background: active ? `linear-gradient(${isRTL ? '270deg' : '90deg'}, ${tb.color}18, ${T.bg.card})` : T.bg.card,
-                border: `1px solid ${active ? `${tb.color}55` : T.border.subtle}`,
-                borderBottom: `2px solid ${active ? tb.color : 'transparent'}`,
-                transition: 'all .2s ease',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 15, lineHeight: 1 }}>{tb.icon}</span>
-                <span style={{ fontSize: isMobile ? 13 : 14, fontWeight: 700, color: active ? tb.color : T.text.primary, letterSpacing: '-0.01em' }}>
-                  {tb.label}
-                </span>
-              </div>
-              {!isMobile && (
-                <div style={{ fontSize: 10.5, lineHeight: 1.5, color: T.text.muted, marginTop: 4 }}>{tb.sub}</div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ── Active surface ───────────────────────────────────── */}
+      {/* ── Active surface (driven by the sidebar sub-channel) ── */}
       <div
         role="tabpanel"
         ref={panelRef}

@@ -30,6 +30,7 @@ import { getEffectiveR } from '@/lib/r-multiple';
 import { ShareStatsModal } from '@/components/trading/ShareStatsModal';
 import { Share2 } from 'lucide-react';
 import { CHANNELS, LOCKED_COPY, type ChannelId } from '@/lib/dashboard-channels';
+import { ProLockOverlay } from '@/components/billing/ProLockOverlay';
 
 // Thin wrapper so lazy children get a graceful fallback while their chunk loads.
 const LazyChart = ({ children }: { children: React.ReactNode }) => (
@@ -472,7 +473,7 @@ export const ReviewDashboard = ({
               </>
             )}
 
-            {channel === 'breakdown' && (isPro ? (
+            {channel === 'breakdown' && (
               <>
                 <div className="dash-charts-alpha">
                 <div className="dash-chart-card">
@@ -570,9 +571,10 @@ export const ReviewDashboard = ({
                 </div>
                 </div>
               </>
-            ) : <LockedChannel T={T} isRTL={isRTL} which="breakdown" />)}
+            )}
 
-            {channel === 'quant' && (isPro ? (
+            {channel === 'quant' && (
+              <ProLockOverlay locked={!isPro} note={LOCKED_COPY.quant[isRTL ? 'he' : 'en']}>
               <div className="dash-charts-alpha">
                 <div className="dash-chart-card">
                   <ChartWrapper T={T} onExplainClick={handleExplainClick} title={isRTL ? 'חלונות הזדמנות — יום ושעה' : 'Opportunity Windows — Day & Hour'} explanation={EXPLANATIONS.riskAllocation}>
@@ -600,7 +602,8 @@ export const ReviewDashboard = ({
                   </ChartWrapper>
                 </div>
               </div>
-            ) : <LockedChannel T={T} isRTL={isRTL} which="quant" />)}
+              </ProLockOverlay>
+            )}
           </div>
         )}
       </div>
