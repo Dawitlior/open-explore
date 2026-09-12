@@ -414,6 +414,7 @@ whenever more than two rows are involved.`;
       reply,
       portfolio: activeId ? { id: activeId, name: activeName } : null,
       portfolios: roster,
+      needs_portfolio: needsPortfolio,
       usage: { used: newUsed, limit: isPro ? null : FREE_MONTHLY_LIMIT, pro: isPro },
     }), {
       headers: { ...cors, "Content-Type": "application/json" },

@@ -358,7 +358,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
             {isPro ? 'Pro · Unlimited' : `${remaining}/${FREE_LIMIT}`}
           </span>
           <button
-            onClick={() => { setMessages([]); setError(null); setInput(''); }}
+            onClick={() => { setMessages([]); setError(null); setInput(''); setNeedsPortfolio(false); }}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               background: 'transparent', border: `1px solid ${T.border.subtle}`, color: T.text.secondary,
