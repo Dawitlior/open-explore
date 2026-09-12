@@ -9,6 +9,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { LEGAL_TITLE_HE, LEGAL_TITLE_EN, LEGAL_SECTIONS_HE, LEGAL_SECTIONS_EN, LEGAL_FOOTER_HE, LEGAL_FOOTER_EN, PRIVACY_TITLE_HE, PRIVACY_TITLE_EN, PRIVACY_SECTIONS_HE, PRIVACY_SECTIONS_EN, LEGAL_VERSION, LEGAL_VERSION_DATE } from '@/lib/legal-text';
 import { ExchangesPanel } from './ExchangesPanel';
+import { SecurityPanel } from '@/components/settings/SecurityPanel';
+import { ShieldCheck } from 'lucide-react';
 import { playMorningLock } from '@/lib/apex-sounds';
 import type { TradingTheme, CustomTheme, BaseMood } from '@/lib/trading-theme';
 import { deriveFullPalette, deriveFromCustomTheme, CUSTOM_THEME_DEFAULT } from '@/lib/trading-theme';
@@ -64,7 +66,7 @@ interface SettingsHubProps {
   trades: Trade[];
 }
 
-type TabId = 'account' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'quick-actions' | 'sounds' | 'trading' | 'exchanges' | 'data' | 'trader-mind' | 'install' | 'legal' | 'mobile-controls';
+type TabId = 'account' | 'security' | 'appearance' | 'theme-studio' | 'dashboard' | 'kpis' | 'risk' | 'interface' | 'quick-actions' | 'sounds' | 'trading' | 'exchanges' | 'data' | 'trader-mind' | 'install' | 'legal' | 'mobile-controls';
 
 const ACCENT_PRESETS = [
   '#00f2ff', '#06d6a0', '#3b82f6', '#8b5cf6',
@@ -239,6 +241,7 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
 
   const NAV: { id: TabId; icon: typeof User; label: { he: string; en: string }; group: { he: string; en: string }; desc: { he: string; en: string }; mobileOnly?: boolean }[] = [
     { id: 'account', icon: User, label: { he: 'חשבון ופרופיל', en: 'Account & Profile' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'ניהול פרטי החשבון והפרופיל', en: 'Manage account and profile details' } },
+    { id: 'security', icon: ShieldCheck, label: { he: 'אבטחה', en: 'Security' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'אימות דו-שלבי ומכשירים מחוברים', en: 'Two-factor authentication and connected devices' } },
     { id: 'mobile-controls', icon: SlidersHorizontal, label: { he: 'בקרות מובייל', en: 'Mobile Controls' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'תיק פעיל, תצוגת תוחלת ומצב מערכת — בגישה מהירה במובייל', en: 'Active portfolio, expectancy display and mode — quick access on mobile' }, mobileOnly: true },
     { id: 'appearance', icon: Palette, label: { he: 'מראה ושפה', en: 'Appearance' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'ערכת נושא, שפה ופרטיות', en: 'Theme, language and privacy' } },
     { id: 'theme-studio', icon: Brush, label: { he: 'אולפן צבע', en: 'Theme Studio' }, group: { he: 'אישי', en: 'Personal' }, desc: { he: 'בחר צבע מבטא משלך והתאם את כל אורקה אליו', en: 'Pick your own accent and re-tint all of Orca live' } },
@@ -851,6 +854,19 @@ export function SettingsHub({ T, isRTL, open, onClose, theme, setTheme, stats, l
                 </div>
               );
             })()}
+
+            {/* ============ SECURITY ============ */}
+            {tab === 'security' && (
+              <SecurityPanel
+                T={T}
+                isRTL={isRTL}
+                t={t}
+                card={card}
+                sectionTitle={sectionTitle}
+                sectionHint={sectionHint}
+                mono={mono}
+              />
+            )}
 
             {/* ============ APPEARANCE ============ */}
             {tab === 'appearance' && (

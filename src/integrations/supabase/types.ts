@@ -614,6 +614,30 @@ export type Database = {
         }
         Relationships: []
       }
+      mfa_backup_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          id: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       news_feed: {
         Row: {
           category: string
@@ -960,6 +984,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_devices: {
+        Row: {
+          browser: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          device_id: string
+          device_type: string | null
+          first_seen_at: string
+          id: string
+          ip: string | null
+          last_seen_at: string
+          os: string | null
+          revoked_at: string | null
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_id: string
+          device_type?: string | null
+          first_seen_at?: string
+          id?: string
+          ip?: string | null
+          last_seen_at?: string
+          os?: string | null
+          revoked_at?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_id?: string
+          device_type?: string | null
+          first_seen_at?: string
+          id?: string
+          ip?: string | null
+          last_seen_at?: string
+          os?: string | null
+          revoked_at?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_preferences: {
         Row: {
