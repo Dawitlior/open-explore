@@ -168,7 +168,13 @@ Deno.serve(withCors(async (req) => {
       .limit(1)
       .maybeSingle();
 
-    let mindLine = "\n\n[TRADER MIND] Diagnostic not yet completed — recommend running it when relevant.";
+    let mindLine =
+      "\n\n[TRADER MIND] The trader has NOT completed the Trader Mind diagnostic. " +
+      "You have zero behavioural-profile data. If asked what the test says about them, or about their " +
+      "archetype/psychological profile, you MUST say plainly that the diagnostic has not been taken yet " +
+      "and point them to the 'Test Yourself' channel in the sidebar. NEVER invent, guess, or infer an " +
+      "archetype, test result, or diagnostic wording. You may still discuss behaviour visible in actual trade data, " +
+      "clearly labelled as coming from trades, not from the test.";
     if (tm?.archetype || tm?.payload) {
       const summary = (() => {
         try { return JSON.stringify(tm.payload ?? {}).slice(0, 1200); }
