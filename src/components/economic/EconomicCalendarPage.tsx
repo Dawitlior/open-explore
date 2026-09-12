@@ -6,6 +6,7 @@ import { formatISTTime, computeSurprise, surpriseTone } from '@/lib/economic';
 import type { EconomicEvent, EconomicImpact } from '@/lib/economic';
 import { CURRENCY_FLAG, MACRO_TIER_COLOR } from './MacroEventStrip';
 import SessionClock from './SessionClock';
+import NewsWire from './NewsWire';
 
 /* ─────────────────────────────────────────────────────────────
  * Economic Calendar — Professional Table View
@@ -190,11 +191,11 @@ export function EconomicCalendarPage({ onClose, T }: Props) {
 
 
   return (
+    <div dir={isRTL ? 'rtl' : 'ltr'} className="flex flex-col lg:flex-row gap-4 items-stretch">
     <div
       role="region"
       aria-label={t.title}
-      dir={isRTL ? 'rtl' : 'ltr'}
-      className="flex flex-col rounded-xl overflow-hidden"
+      className="flex flex-col rounded-xl overflow-hidden flex-1 min-w-0"
       style={{
         background: BG,
         border: `1px solid ${BORDER}`,
@@ -395,6 +396,10 @@ export function EconomicCalendarPage({ onClose, T }: Props) {
             </table>
           )}
       </div>
+    </div>
+
+      {/* Live news wire — vertical rail beside the map + calendar */}
+      <NewsWire T={T} lang={lang} />
     </div>
   );
 }

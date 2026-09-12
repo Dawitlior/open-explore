@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.news_feed_prune() FROM PUBLIC, anon, authenticated;
