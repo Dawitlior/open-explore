@@ -247,6 +247,12 @@ Ground every answer in this data. Cite concrete trades, symbols and R values.`;
         status: 402, headers: { ...cors, "Content-Type": "application/json" },
       });
     }
+    if (aiRes.status === 401 || aiRes.status === 403) {
+      console.error("AI auth rejected", useOpenAI ? "openai" : "gateway", await aiRes.text());
+      return new Response(JSON.stringify({ error: "ai_auth_failed" }), {
+        status: 500, headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
     if (!aiRes.ok) {
       const t = await aiRes.text();
       throw new Error(`gateway ${aiRes.status}: ${t}`);
