@@ -214,6 +214,17 @@ const Index = () => {
   // Sidebar starts collapsed on every load (both mobile and desktop) — user
   // explicitly requested no auto-open on refresh.
   const [sbOpen, setSbOpen] = useState(false);
+  // Desktop: any click outside the sidebar collapses it instantly.
+  useEffect(() => {
+    if (!sbOpen || isMobile) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && el.closest('[data-app-sidebar]')) return;
+      setSbOpen(false);
+    };
+    window.addEventListener('pointerdown', onPointerDown, true);
+    return () => window.removeEventListener('pointerdown', onPointerDown, true);
+  }, [sbOpen, isMobile]);
   const [advancedOpen, setAdvancedOpen] = useState(true);
   // Advanced Analysis channel — now selected from the sidebar (Dashboard sub-items).
   const [dashChannel, setDashChannel] = useState<ChannelId>('home');
@@ -2050,7 +2061,7 @@ const Index = () => {
         </div>
       )}
       {/* DESKTOP SIDEBAR — fixed overlay; in-flow spacer keeps main content stable */}
-      {!isMobile && <div aria-hidden style={{ width: sbOpen ? 216 : 62, flexShrink: 0, transition: 'width 0.32s cubic-bezier(0.22,1,0.36,1)', willChange: 'width' }} />}
+      {!isMobile && <div aria-hidden style={{ width: sbOpen ? 216 : 62, flexShrink: 0, transition: 'width 0.18s cubic-bezier(0.3,0.9,0.3,1)', willChange: 'width' }} />}
       {/* No scrim on desktop — the dashboard stays fully interactive while the sidebar is open */}
       {!isMobile && (
       <aside data-app-sidebar style={{
@@ -2059,7 +2070,7 @@ const Index = () => {
         background: `linear-gradient(180deg, ${T.bg.secondary} 0%, ${T.bg.primary} 100%)`,
         borderInlineEnd: `1px solid ${T.border.subtle}`,
         display: 'flex', flexDirection: 'column',
-        transition: 'width 0.32s cubic-bezier(0.22,1,0.36,1)',
+        transition: 'width 0.18s cubic-bezier(0.3,0.9,0.3,1)',
         overflow: 'hidden', zIndex: 50,
         willChange: 'width',
       }}>
@@ -2105,7 +2116,7 @@ const Index = () => {
                 e.currentTarget.style.boxShadow = 'none';
                 e.currentTarget.style.color = isWeekly ? '#FFD700' : T.text.secondary;
               }}
-              style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: page === item.id ? `linear-gradient(110deg, transparent 0%, ${activeColor}22 50%, transparent 100%)` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : (isWeekly ? 600 : 400), transition: 'background 0.25s ease, box-shadow 0.25s ease, color 0.2s ease', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent', boxShadow: page === item.id ? `inset 0 0 0 1px ${activeColor}25, 0 0 18px -8px ${activeColor}66` : 'none' }}>
+              style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: sbOpen ? '9px 10px' : '9px 0', justifyContent: sbOpen ? 'flex-start' : 'center', background: page === item.id ? `linear-gradient(110deg, transparent 0%, ${activeColor}22 50%, transparent 100%)` : 'transparent', color: page === item.id ? activeColor : (isWeekly ? '#FFD700' : T.text.secondary), border: 'none', borderRadius: T.radius.md, cursor: 'pointer', fontSize: 13, fontWeight: page === item.id ? 600 : (isWeekly ? 600 : 400), transition: 'background 0.15s ease, box-shadow 0.15s ease, color 0.12s ease', width: '100%', textAlign: isRTL ? 'right' : 'left', borderInlineStart: page === item.id ? `2px solid ${activeColor}` : '2px solid transparent', boxShadow: page === item.id ? `inset 0 0 0 1px ${activeColor}25, 0 0 18px -8px ${activeColor}66` : 'none' }}>
               <span style={{ position: 'relative', display: 'inline-flex' }}>
                 {typeof item.icon === 'string' ? <span style={{ fontSize: 18 }}>{item.icon}</span> : item.icon}
                 {showBadge && <ReminderBadge />}
