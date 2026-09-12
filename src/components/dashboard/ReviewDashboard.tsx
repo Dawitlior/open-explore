@@ -30,6 +30,7 @@ import { getEffectiveR } from '@/lib/r-multiple';
 import { ShareStatsModal } from '@/components/trading/ShareStatsModal';
 import { Share2 } from 'lucide-react';
 import { CHANNELS, LOCKED_COPY, type ChannelId } from '@/lib/dashboard-channels';
+import { ProLockOverlay } from '@/components/billing/ProLockOverlay';
 
 // Thin wrapper so lazy children get a graceful fallback while their chunk loads.
 const LazyChart = ({ children }: { children: React.ReactNode }) => (
