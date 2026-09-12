@@ -53,6 +53,7 @@ export default function NewsWire({ T, lang = 'en' }: { T?: any; lang?: 'he' | 'e
   const isRTL = lang === 'he';
   const t = COPY[lang];
   const { items, loading } = useNewsWire(30);
+  const [active, setActive] = useState<NewsWireItem | null>(null);
 
   const PANEL = T?.bg?.card ?? '#0a0a0a';
   const BG = T?.bg?.primary ?? '#020202';
