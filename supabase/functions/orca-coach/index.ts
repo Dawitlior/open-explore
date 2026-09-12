@@ -204,22 +204,36 @@ Ground every answer in this data. Cite concrete trades, symbols and R values.`;
     }
 
     const finalMessages: ChatMsg[] = [
-      { role: "system", content: BASE_PROMPT + mindLine + portfolioLine },
+      { role: "system", content: BASE_PROMPT + rosterLine + mindLine + portfolioLine },
       ...messages.filter((m) => m.role !== "system"),
     ];
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
+    // ── Model routing ───────────────────────────────────────────────────
+    // Primary: the trader's own OpenAI account (OPENAI_API_KEY).
+    // Fallback: the Lovable AI Gateway, so the coach keeps working if the
+    // OpenAI key is absent or its account is out of quota.
+    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    const gatewayKey = Deno.env.get("LOVABLE_API_KEY");
+    const useOpenAI = Boolean(openaiKey);
+    if (!openaiKey && !gatewayKey) throw new Error("no AI credentials configured");
 
-    const modelName = model ?? "google/gemini-3.8-flash";
+    const modelName = model ?? (useOpenAI ? "gpt-4o-mini" : "google/gemini-3.8-flash");
     const startedAt = Date.now();
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const endpoint = useOpenAI
+      ? "https://api.openai.com/v1/chat/completions"
+      : "https://ai.gateway.lovable.dev/v1/chat/completions";
+
+    const aiRes = await fetch(endpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${useOpenAI ? openaiKey : gatewayKey}`,
+      },
       body: JSON.stringify({
         model: modelName,
         messages: finalMessages,
+        ...(useOpenAI ? { temperature: 0.6, max_tokens: 1200 } : {}),
       }),
     });
 
