@@ -507,57 +507,6 @@ whenever more than two rows are involved.`;
     }), {
       headers: { ...cors, "Content-Type": "application/json" },
     });
-
-    // ── Admin Console telemetry · ai_runs ──
-    // Fire-and-forget: a failed insert must never break the chat response.
-    // Service-role client bypasses RLS, so the row lands with user_id = the
-    // authenticated trader. Costs are estimates (gateway doesn't return $).
-    try {
-      const usage = aiJson.usage ?? {};
-      const promptTokens = Number(usage.prompt_tokens ?? 0) | 0;
-      const completionTokens = Number(usage.completion_tokens ?? 0) | 0;
-      // gpt-4o-mini: $0.15 / 1M input, $0.60 / 1M output.
-      // Gemini Flash fallback: $0.075 / 1M input, $0.30 / 1M output.
-      const inRate = useOpenAI ? 0.15 : 0.075;
-      const outRate = useOpenAI ? 0.60 : 0.30;
-      const costUsd =
-        (promptTokens * inRate + completionTokens * outRate) / 1_000_000;
-      await supabase.from("ai_runs").insert({
-        user_id: u.user.id,
-        feature: "coach",
-        model: modelName,
-        prompt_tokens: promptTokens,
-        completion_tokens: completionTokens,
-        cost_usd: Number(costUsd.toFixed(4)),
-        latency_ms: latencyMs,
-      });
-    } catch (logErr) {
-      console.warn("ai_runs insert failed", logErr);
-    }
-
-    // ── Meter the successful message ────────────────────────────────────
-    let newUsed = used;
-    try {
-      newUsed = used + 1;
-      await supabase.from("ai_chat_usage").upsert({
-        user_id: u.user.id,
-        period,
-        message_count: newUsed,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id,period" });
-    } catch (mErr) {
-      console.warn("ai_chat_usage upsert failed", mErr);
-    }
-
-    return new Response(JSON.stringify({
-      reply,
-      portfolio: activeId ? { id: activeId, name: activeName } : null,
-      portfolios: roster,
-      needs_portfolio: needsPortfolio,
-      usage: { used: newUsed, limit: isPro ? null : FREE_MONTHLY_LIMIT, pro: isPro },
-    }), {
-      headers: { ...cors, "Content-Type": "application/json" },
-    });
   } catch (e) {
     return new Response(JSON.stringify({ error: String((e as Error).message ?? e) }), {
       status: 500, headers: { ...cors, "Content-Type": "application/json" },
