@@ -699,6 +699,20 @@ const Index = () => {
   const dismissWeeklyReminder = useCallback(() => { /* no-op: badge persists until close-week */ }, []);
 
 
+  /** Glowing star — marks a premium sub-channel without naming the plan. */
+  const ProStar = () => (
+    <span
+      aria-hidden
+      style={{
+        fontSize: 10,
+        lineHeight: 1,
+        color: T.accent?.gold ?? infoColor(T),
+        textShadow: `0 0 6px ${T.accent?.gold ?? infoColor(T)}, 0 0 14px ${T.accent?.gold ?? infoColor(T)}88`,
+        animation: 'proStarPulse 2.4s ease-in-out infinite',
+      }}
+    >★</span>
+  );
+
   const WEEKLY_REVIEW_ALLOWED_EMAIL = 'dawitlior777@gmail.com';
   const weeklyReviewAllowed = false;
   const bugBoardAllowed = (authUser?.email || '').toLowerCase() === WEEKLY_REVIEW_ALLOWED_EMAIL;
