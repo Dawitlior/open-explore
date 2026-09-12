@@ -416,6 +416,11 @@ export function buildTradingReportHtml(trades: Trade[], meta: ReportMeta): strin
   .ai p { margin:0 0 10px; line-height:1.7; color:#cfe0f5; }
   .empty, .empty-cell { color:var(--dim); text-align:center; padding:18px; font-size:11px; }
   .scroll { max-height:520px; overflow:auto; }
+  .block { break-inside:avoid; page-break-inside:avoid; }
+  .page { break-before:page; page-break-before:always; }
+  .plabel { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.22em;
+    text-transform:uppercase; color:var(--dim); margin:0 0 10px; }
+  .note { font-size:10.5px; color:var(--dim); line-height:1.7; margin-top:10px; }
   @media print { body { background:#fff; color:#111; } .block { background:#fff; border-color:#ddd; }
     .kpi { background:#fafafa; } .scroll { max-height:none; } h2 { color:#8a6d12; }
     .kv { color:#555; } .kv b, .meta b { color:#111; } .meta, .axis, .footer { color:#666; } }
@@ -427,12 +432,13 @@ export function buildTradingReportHtml(trades: Trade[], meta: ReportMeta): strin
     </div>
     <div class="meta">
       Account: <b>${esc(meta.accountName)}</b><br/>
-      Account ID: <b>${esc(meta.accountId)}</b><br/>
-      Owner: <b>${esc(meta.ownerName)}</b><br/>
+      Email: <b>${esc(meta.ownerEmail)}</b><br/>
       Currency: <b>${esc(cur)}</b><br/>
+      Period: <b>${esc(periodLabel)}</b><br/>
       Generated: <b>${esc(generated)} UTC</b>
     </div>
   </header>
+
 
   <div class="kpis">
     <div class="kpi"><span>Total Net Profit</span><b class="${sign(s.netProfit) ?? ''}">${m(s.netProfit)}</b></div>
