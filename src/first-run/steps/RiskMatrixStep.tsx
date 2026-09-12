@@ -6,11 +6,13 @@ import { cx } from '../components/ui'
 /* Risk-matrix step — captures the four risk limits that feed the product's Risk
    Engine (mirrors user_preferences: risk_per_trade_default, daily/weekly/monthly
    _risk_limit). Presentation-only: the controller persists on save. */
+/* USD budgets — defaults mirror the product's DEFAULT_PREFS exactly, so a user
+   who accepts as-is lands on the same limits the old wizard produced. */
 const FIELDS: { key: keyof RiskMatrix; def: number }[] = [
-  { key: 'perTrade', def: 1 },
-  { key: 'daily', def: 3 },
-  { key: 'weekly', def: 6 },
-  { key: 'monthly', def: 10 },
+  { key: 'perTrade', def: 20 },
+  { key: 'daily', def: 100 },
+  { key: 'weekly', def: 400 },
+  { key: 'monthly', def: 1500 },
 ]
 
 export function RiskMatrixStep({ answers, update, onValidityChange }: StepProps) {
@@ -20,7 +22,7 @@ export function RiskMatrixStep({ answers, update, onValidityChange }: StepProps)
   // Prefill sensible defaults once, so the step is valid and easy to accept.
   useEffect(() => {
     if (FIELDS.every((f) => risk[f.key] === null)) {
-      update({ risk: { perTrade: 1, daily: 3, weekly: 6, monthly: 10 } })
+      update({ risk: { perTrade: 20, daily: 100, weekly: 400, monthly: 1500 } })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -46,19 +48,19 @@ export function RiskMatrixStep({ answers, update, onValidityChange }: StepProps)
             <label key={key} className="flex flex-col gap-1.5">
               <span className="text-[13.5px] font-semibold text-ink">{t[key]}</span>
               <span className="relative flex items-center">
+                <span className="pointer-events-none absolute left-4 text-[15px] font-semibold text-ink-faint">{t.unit}</span>
                 <input
                   type="number"
                   inputMode="decimal"
                   min="0"
-                  step="0.1"
+                  step="1"
                   value={v === null ? '' : String(v)}
                   onChange={(e) => setField(key, e.target.value)}
                   className={cx(
-                    'min-h-[48px] w-full rounded-lg border bg-surface pl-4 pr-9 text-[15px] text-ink outline-none transition-colors focus:ring-4 focus:ring-indigo/15',
+                    'min-h-[48px] w-full rounded-lg border bg-surface pl-8 pr-4 text-[15px] text-ink outline-none transition-colors focus:ring-4 focus:ring-indigo/15',
                     bad ? 'border-rose focus:border-rose' : 'border-line focus:border-indigo/60',
                   )}
                 />
-                <span className="pointer-events-none absolute right-4 text-[14px] font-semibold text-ink-faint">{t.unit}</span>
               </span>
               <span className="text-[12px] text-ink-mute">{t[`${key}Help` as keyof typeof t]}</span>
             </label>

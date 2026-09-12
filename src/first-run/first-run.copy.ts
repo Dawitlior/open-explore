@@ -66,13 +66,13 @@ export const COPY = {
       platinum: 'Light', platinumSub: 'Clean white · Indigo',
     },
     riskMatrix: {
-      hint: 'Percent of account. Orca blocks new risk once a limit is hit — you can adjust these anytime in Settings.',
+      hint: 'USD risk budgets — the Risk Engine uses these limits and blocks new risk once one is hit. You can adjust them anytime in Settings.',
       perTrade: 'Risk per trade', perTradeHelp: 'Max you’ll risk on a single trade.',
       daily: 'Daily limit', dailyHelp: 'Max risk in one day.',
       weekly: 'Weekly limit', weeklyHelp: 'Max risk in one week.',
       monthly: 'Monthly limit', monthlyHelp: 'Max risk in one month.',
-      unit: '%',
-      err: 'Enter a positive percentage for each limit.',
+      unit: '$',
+      err: 'Enter a positive amount for each limit.',
     },
     briefing: {
       beginner: { title: 'We’ll keep it simple to start', points: ['Connect read-only — Orca builds the journal for you', 'Plain-language insights, one lesson at a time', 'No jargon, no pressure — learn as you go'] },
