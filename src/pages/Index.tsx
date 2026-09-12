@@ -44,6 +44,7 @@ import { CHANNELS, type ChannelId, PERF_CHANNELS, type PerfChannelId, CR_CHANNEL
 import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
 import { JournalLayoutSwitch, type JournalLayout } from '@/components/trading/JournalLayoutSwitch';
 import { JournalDataMenu } from '@/components/trading/JournalDataMenu';
+import { TradingReportModal } from '@/components/trading/TradingReportModal';
 import { JournalGallery } from '@/components/trading/JournalGallery';
 import { RiskExplanationModal, type RiskExplanation } from '@/components/trading/RiskExplanationModal';
 import { toast } from 'sonner';
@@ -214,6 +215,7 @@ const Index = () => {
   // Sidebar starts collapsed on every load (both mobile and desktop) — user
   // explicitly requested no auto-open on refresh.
   const [sbOpen, setSbOpen] = useState(false);
+  const [showTradingReport, setShowTradingReport] = useState(false);
   // Desktop: any click outside the sidebar collapses it instantly.
   useEffect(() => {
     if (!sbOpen || isMobile) return;
@@ -1472,6 +1474,7 @@ const Index = () => {
                 onImport={handleImport}
                 onExportXlsx={handleExport}
                 onExportJson={handleExportJson}
+                onTradingReport={() => setShowTradingReport(true)}
               />
             )}
             <button onClick={() => { setEditingTrade(null); setShowTradeForm(true); }} style={{ padding: '7px 18px', background: `linear-gradient(135deg, ${infoColor(T)}, ${infoColor(T)})`, border: 'none', borderRadius: T.radius.md, color: T.bg.primary, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>+ {t.addTrade}</button>
@@ -2470,6 +2473,7 @@ const Index = () => {
       </MainPullToRefresh>
 
       {/* OVERLAYS */}
+      {showTradingReport && <TradingReportModal T={T} isRTL={isRTL} trades={trades} onClose={() => setShowTradingReport(false)} />}
       {showTradeForm && <TradeForm T={T} t={t} isRTL={isRTL} trade={editingTrade} currentBalance={currentBalance} trades={trades} onSave={handleSaveTrade} onClose={() => { setShowTradeForm(false); setEditingTrade(null); }} />}
       {showReset && <ResetModal T={T} t={t} isRTL={isRTL} onConfirm={handleReset} onClose={() => setShowReset(false)} />}
       {showSettings && <SettingsHub T={T} isRTL={isRTL} open={showSettings} onClose={() => setShowSettings(false)} theme={settings.theme} setTheme={settings.setTheme} stats={stats} lang={settings.lang} setLang={settings.setLang} privacyMode={settings.privacyMode} setPrivacyMode={settings.setPrivacyMode} trades={trades} />}
