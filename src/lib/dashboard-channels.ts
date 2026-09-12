@@ -39,7 +39,7 @@ export const CHANNELS: ChannelDef[] = [
     he: 'עונתיות וכיוון',
     en: 'Seasonality & Direction',
     short: { he: 'עונתיות', en: 'Seasonality' },
-    pro: true,
+    pro: false,
     icon: '◱',
   },
   {
@@ -75,6 +75,8 @@ export interface PerfChannelDef {
   he: string;
   en: string;
   icon: string;
+  /** Pro-only channel — visible but blurred behind an upgrade card. */
+  pro?: boolean;
 }
 
 /**
@@ -85,9 +87,9 @@ export interface PerfChannelDef {
 export const PERF_CHANNELS: PerfChannelDef[] = [
   { id: 'core', he: 'ליבה', en: 'Core', icon: '◎' },
   { id: 'risk', he: 'סיכון', en: 'Risk', icon: '⚠' },
-  { id: 'dynamics', he: 'דינמיקה', en: 'Dynamics', icon: '∿' },
-  { id: 'temporal', he: 'תזמון', en: 'Timing', icon: '◷' },
-  { id: 'lab', he: 'מעבדה', en: 'Lab', icon: '⌬' },
+  { id: 'dynamics', he: 'דינמיקה', en: 'Dynamics', icon: '∿', pro: true },
+  { id: 'temporal', he: 'תזמון', en: 'Timing', icon: '◷', pro: true },
+  { id: 'lab', he: 'מעבדה', en: 'Lab', icon: '⌬', pro: true },
 ];
 
 /* ─────────────── Control Room sub-channels ─────────────── */
@@ -103,7 +105,7 @@ export const CR_CHANNELS: Array<{ id: CrChannelId; he: string; en: string; icon:
 
 export type AiChannelId = 'insights' | 'coach';
 
-export const AI_CHANNELS: Array<{ id: AiChannelId; he: string; en: string; icon: string }> = [
-  { id: 'insights', he: 'תובנות AI', en: 'AI Insights', icon: '✦' },
-  { id: 'coach', he: 'Orca Coach', en: 'Orca Coach', icon: '◈' },
+export const AI_CHANNELS: Array<{ id: AiChannelId; he: string; en: string; icon: string; pro?: boolean }> = [
+  { id: 'insights', he: 'תובנות AI', en: 'AI Insights', icon: '✦', pro: true },
+  { id: 'coach', he: 'Orca Coach', en: 'Orca Coach', icon: '◈', pro: true },
 ];
