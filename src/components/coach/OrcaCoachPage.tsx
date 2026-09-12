@@ -14,6 +14,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   ArrowUp, Activity, Search, Target, Clock3, Layers, Infinity as InfinityIcon,
   Square, RotateCcw, Lock, ChevronDown, Briefcase,
@@ -348,7 +349,6 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
           background: `${accent}1C`, border: `1px solid ${accent}40`, color: accent, fontSize: 11,
         }}>◈</div>
         <span style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>Orca Coach</span>
-        {portfolioPicker}
         <div style={{ marginInlineStart: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ ...mono, color: isPro ? accent : T.text.muted }}>
             {isPro ? 'Pro · Unlimited' : `${remaining}/${FREE_LIMIT}`}
@@ -383,7 +383,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
                   background: `${accent}16`, border: `1px solid ${accent}33`, color: accent, fontSize: 11,
                 }}>◈</div>
                 <div className="orca-coach-md" style={{ color: T.text.primary, fontSize: 13.5, lineHeight: 1.78, minWidth: 0, flex: 1 }}>
-                  <ReactMarkdown>{m.content}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
                 </div>
               </div>
             )
