@@ -60,10 +60,11 @@ async function ensureProfile(user: User) {
   }
 
   // First-time signup — send the welcome email exactly once (fire-and-forget).
+  // Greeting name: the name the user entered in onboarding; their email if skipped.
   if (user.email) {
     void supabase.functions
       .invoke('send-welcome-email', {
-        body: { email: user.email, name: displayName },
+        body: { email: user.email, name: scopedStorage.getSync('orca-user-name') || user.email },
       })
       .then(({ error: mailErr }) => {
         if (mailErr) console.warn('Welcome email failed:', mailErr.message);
