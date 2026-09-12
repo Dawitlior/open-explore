@@ -405,42 +405,108 @@ whenever more than two rows are involved.`;
       ? "https://api.openai.com/v1/chat/completions"
       : "https://ai.gateway.lovable.dev/v1/chat/completions";
 
-    const aiRes = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${useOpenAI ? openaiKey : gatewayKey}`,
-      },
-      body: JSON.stringify({
-        model: modelName,
-        messages: finalMessages,
-        ...(useOpenAI ? { temperature: 0.6, max_tokens: 1200 } : {}),
-      }),
-    });
+    // Upstream failures must never leave the client spinning: every branch
+    // below refunds the metered slot and returns a friendly, typed error.
+    let aiRes: Response;
+    try {
+      aiRes = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${useOpenAI ? openaiKey : gatewayKey}`,
+        },
+        body: JSON.stringify({
+          model: modelName,
+          messages: finalMessages,
+          ...(useOpenAI ? { temperature: 0.6, max_tokens: 1200 } : {}),
+        }),
+      });
+    } catch (netErr) {
+      console.error("AI transport failure", netErr);
+      await refund();
+      return new Response(JSON.stringify({ error: "ai_unavailable", retryable: true }), {
+        status: 503, headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
 
     if (aiRes.status === 429) {
-      return new Response(JSON.stringify({ error: "rate_limited" }), {
+      await refund();
+      return new Response(JSON.stringify({ error: "upstream_busy", scope: "provider", retryable: true }), {
         status: 429, headers: { ...cors, "Content-Type": "application/json" },
       });
     }
     if (aiRes.status === 402) {
+      await refund();
       return new Response(JSON.stringify({ error: "credits_exhausted" }), {
         status: 402, headers: { ...cors, "Content-Type": "application/json" },
       });
     }
     if (aiRes.status === 401 || aiRes.status === 403) {
       console.error("AI auth rejected", useOpenAI ? "openai" : "gateway", await aiRes.text());
+      await refund();
       return new Response(JSON.stringify({ error: "ai_auth_failed" }), {
-        status: 500, headers: { ...cors, "Content-Type": "application/json" },
+        status: 503, headers: { ...cors, "Content-Type": "application/json" },
       });
     }
     if (!aiRes.ok) {
-      const t = await aiRes.text();
-      throw new Error(`gateway ${aiRes.status}: ${t}`);
+      console.error("AI upstream error", aiRes.status, await aiRes.text());
+      await refund();
+      return new Response(JSON.stringify({ error: "ai_unavailable", retryable: true }), {
+        status: 503, headers: { ...cors, "Content-Type": "application/json" },
+      });
     }
+
     const aiJson = await aiRes.json();
     const reply: string = aiJson.choices?.[0]?.message?.content ?? "";
     const latencyMs = Date.now() - startedAt;
+    if (!reply.trim()) {
+      await refund();
+      return new Response(JSON.stringify({ error: "ai_unavailable", retryable: true }), {
+        status: 503, headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── Admin Console telemetry · ai_runs ──
+    // Fire-and-forget: a failed insert must never break the chat response.
+    // Costs are estimates and also drive the rolling session/daily caps.
+    try {
+      const usage = aiJson.usage ?? {};
+      const promptTokens = Number(usage.prompt_tokens ?? 0) | 0;
+      const completionTokens = Number(usage.completion_tokens ?? 0) | 0;
+      // gpt-4o-mini: $0.15 / 1M input, $0.60 / 1M output.
+      // Gemini Flash fallback: $0.075 / 1M input, $0.30 / 1M output.
+      const inRate = useOpenAI ? 0.15 : 0.075;
+      const outRate = useOpenAI ? 0.60 : 0.30;
+      const costUsd =
+        (promptTokens * inRate + completionTokens * outRate) / 1_000_000;
+      await supabase.from("ai_runs").insert({
+        user_id: uid,
+        feature: "coach",
+        model: modelName,
+        prompt_tokens: promptTokens,
+        completion_tokens: completionTokens,
+        cost_usd: Number(costUsd.toFixed(4)),
+        latency_ms: latencyMs,
+      });
+    } catch (logErr) {
+      console.warn("ai_runs insert failed", logErr);
+    }
+
+    return new Response(JSON.stringify({
+      reply,
+      portfolio: activeId ? { id: activeId, name: activeName } : null,
+      portfolios: roster,
+      needs_portfolio: needsPortfolio,
+      usage: {
+        used,
+        limit: isPro ? PRO_MONTHLY_LIMIT : FREE_MONTHLY_LIMIT,
+        pro: isPro,
+        session_limit: isPro ? PRO_SESSION_LIMIT : FREE_MONTHLY_LIMIT,
+        daily_limit: isPro ? PRO_DAILY_LIMIT : FREE_MONTHLY_LIMIT,
+      },
+    }), {
+      headers: { ...cors, "Content-Type": "application/json" },
+    });
 
     // ── Admin Console telemetry · ai_runs ──
     // Fire-and-forget: a failed insert must never break the chat response.
