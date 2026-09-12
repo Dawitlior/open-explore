@@ -9,13 +9,14 @@ interface Props {
   onImport: (file?: File) => void;
   onExportXlsx: () => void;
   onExportJson: () => void;
+  onTradingReport?: () => void;
 }
 
 /**
  * Compact "Data" popover for the journal header — collapses Import / XLSX /
  * JSON into a single control so the toolbar stops eating horizontal space.
  */
-export function JournalDataMenu({ T, isRTL, onImport, onExportXlsx, onExportJson }: Props) {
+export function JournalDataMenu({ T, isRTL, onImport, onExportXlsx, onExportJson, onTradingReport }: Props) {
   const [open, setOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [preview, setPreview] = useState<File | null>(null);
@@ -49,6 +50,7 @@ export function JournalDataMenu({ T, isRTL, onImport, onExportXlsx, onExportJson
     { icon: '📥', label: isRTL ? 'ייבוא נתונים' : 'Import data', run: () => inputRef.current?.click() },
     { icon: '📊', label: isRTL ? 'ייצוא XLSX' : 'Export XLSX', run: onExportXlsx },
     { icon: '📤', label: isRTL ? 'ייצוא JSON' : 'Export JSON', run: onExportJson },
+    ...(onTradingReport ? [{ icon: '🧾', label: isRTL ? 'דוח מסחר' : 'Trading Report', run: onTradingReport }] : []),
   ];
 
   return (
