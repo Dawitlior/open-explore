@@ -269,9 +269,12 @@ Ground every answer in this data. Cite concrete trades, symbols and R values.`;
       const usage = aiJson.usage ?? {};
       const promptTokens = Number(usage.prompt_tokens ?? 0) | 0;
       const completionTokens = Number(usage.completion_tokens ?? 0) | 0;
-      // Rough Gemini-Flash pricing: $0.075 / 1M input, $0.30 / 1M output.
+      // gpt-4o-mini: $0.15 / 1M input, $0.60 / 1M output.
+      // Gemini Flash fallback: $0.075 / 1M input, $0.30 / 1M output.
+      const inRate = useOpenAI ? 0.15 : 0.075;
+      const outRate = useOpenAI ? 0.60 : 0.30;
       const costUsd =
-        (promptTokens * 0.075 + completionTokens * 0.30) / 1_000_000;
+        (promptTokens * inRate + completionTokens * outRate) / 1_000_000;
       await supabase.from("ai_runs").insert({
         user_id: u.user.id,
         feature: "coach",
