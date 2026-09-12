@@ -7,6 +7,8 @@ import { COPY } from '../first-run.copy'
 import { IdentityStep } from '../steps/IdentityStep'
 import { CommunityStep } from '../steps/CommunityStep'
 import { ExperienceStep } from '../steps/ExperienceStep'
+import { PaletteStep } from '../steps/PaletteStep'
+import { RiskMatrixStep } from '../steps/RiskMatrixStep'
 import { BriefingStep } from '../steps/BriefingStep'
 import { CommitmentStep } from '../steps/CommitmentStep'
 
@@ -32,6 +34,8 @@ export function OnboardingFlow({
       case 'identity': return <IdentityStep {...p} />
       case 'community': return <CommunityStep {...p} />
       case 'experience': return <ExperienceStep {...p} />
+      case 'palette': return <PaletteStep {...p} />
+      case 'riskMatrix': return <RiskMatrixStep {...p} />
       case 'briefing': return <BriefingStep {...p} />
       case 'commitment': return <CommitmentStep {...p} />
     }

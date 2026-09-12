@@ -36,11 +36,13 @@ export const COPY = {
   onboarding: {
     common: { back: 'Back', next: 'Continue', finish: 'Finish', saving: 'Saving…', saveErr: 'We couldn’t save that step. Please try again.' },
     stepOf: (i: number, n: number) => `Step ${i} of ${n}`,
-    labels: { identity: 'You', community: 'Community', experience: 'Experience', briefing: 'Briefing', commitment: 'Commitment' },
+    labels: { identity: 'You', community: 'Community', experience: 'Experience', palette: 'Theme', riskMatrix: 'Risk', briefing: 'Briefing', commitment: 'Commitment' },
     heads: {
       identity: { t: 'First, the basics', s: 'Tell us who’s behind the trades.' },
       community: { t: 'Are you one of us?', s: 'Members get a tailored start.' },
       experience: { t: 'Where are you today?', s: 'So Orca meets you at your level.' },
+      palette: { t: 'Make it yours', s: 'Pick a color theme — you can change it anytime.' },
+      riskMatrix: { t: 'Set your guardrails', s: 'Your risk limits power the Risk Engine from day one.' },
       briefing: { t: 'Here’s the plan', s: 'What Orca will do for you next.' },
       commitment: { t: 'One last thing', s: 'A promise to your future self.' },
     },
@@ -55,6 +57,22 @@ export const COPY = {
       beginner: 'Beginner', beginnerSub: 'New to trading, or under a year in.',
       intermediate: 'Intermediate', intermediateSub: 'A year or two, still finding my edge.',
       advanced: 'Advanced', advancedSub: 'Experienced, refining a proven process.',
+    },
+    palette: {
+      hint: 'This sets the look of your whole platform. You can change it later in Settings.',
+      midnight: 'Midnight', midnightSub: 'Classic black · Default',
+      blue: 'Blue', blueSub: 'Deep navy · Sky blue',
+      graphite: 'Graphite Formal', graphiteSub: 'Gray · Green · Red only',
+      platinum: 'Light', platinumSub: 'Clean white · Indigo',
+    },
+    riskMatrix: {
+      hint: 'Percent of account. Orca blocks new risk once a limit is hit — you can adjust these anytime in Settings.',
+      perTrade: 'Risk per trade', perTradeHelp: 'Max you’ll risk on a single trade.',
+      daily: 'Daily limit', dailyHelp: 'Max risk in one day.',
+      weekly: 'Weekly limit', weeklyHelp: 'Max risk in one week.',
+      monthly: 'Monthly limit', monthlyHelp: 'Max risk in one month.',
+      unit: '%',
+      err: 'Enter a positive percentage for each limit.',
     },
     briefing: {
       beginner: { title: 'We’ll keep it simple to start', points: ['Connect read-only — Orca builds the journal for you', 'Plain-language insights, one lesson at a time', 'No jargon, no pressure — learn as you go'] },

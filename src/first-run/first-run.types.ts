@@ -12,11 +12,24 @@ export type UiStatus = 'idle' | 'loading' | 'submitting' | 'success' | 'error'
 
 export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced'
 
-/** The onboarding answer shape. Community/experience are null until chosen. */
+/** Color palette ids — mirror the product's ThemeId (platinum = Light · Indigo). */
+export type ColorTheme = 'midnight' | 'blue' | 'graphite' | 'platinum'
+
+/** Risk matrix — mirrors the product's user_preferences risk fields (percent). */
+export type RiskMatrix = {
+  perTrade: number | null
+  daily: number | null
+  weekly: number | null
+  monthly: number | null
+}
+
+/** The onboarding answer shape. Nullable fields are unset until chosen. */
 export type Answers = {
   fullName: string
   communityMember: boolean | null
   experienceLevel: ExperienceLevel | null
+  colorTheme: ColorTheme | null
+  risk: RiskMatrix
   commitmentAccepted: boolean
 }
 
@@ -24,6 +37,8 @@ export const EMPTY_ANSWERS: Answers = {
   fullName: '',
   communityMember: null,
   experienceLevel: null,
+  colorTheme: null,
+  risk: { perTrade: null, daily: null, weekly: null, monthly: null },
   commitmentAccepted: false,
 }
 
@@ -66,6 +81,8 @@ export type OnboardingStepId =
   | 'identity'
   | 'community'
   | 'experience'
+  | 'palette'
+  | 'riskMatrix'
   | 'briefing'
   | 'commitment'
 

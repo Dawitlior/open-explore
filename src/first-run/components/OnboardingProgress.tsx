@@ -2,7 +2,7 @@ import type { Lang, OnboardingStepId } from '../first-run.types'
 import { COPY } from '../first-run.copy'
 import { cx } from './ui'
 
-const ORDER: OnboardingStepId[] = ['identity', 'community', 'experience', 'briefing', 'commitment']
+const ORDER: OnboardingStepId[] = ['identity', 'community', 'experience', 'palette', 'riskMatrix', 'briefing', 'commitment']
 
 export function OnboardingProgress({ current }: { lang: Lang; current: OnboardingStepId }) {
   const idx = ORDER.indexOf(current)
