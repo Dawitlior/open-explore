@@ -39,6 +39,7 @@ import { RiskLimitAlert } from '@/components/trading/RiskLimitAlert';
 import { MobileBottomNav } from '@/components/trading/MobileBottomNav';
 import { MainPullToRefresh } from '@/components/trading/MainPullToRefresh';
 const ReviewDashboard = lazy(() => import('@/components/dashboard/ReviewDashboard').then(m => ({ default: m.ReviewDashboard })));
+import { ProLockOverlay } from '@/components/billing/ProLockOverlay';
 import { CHANNELS, type ChannelId, PERF_CHANNELS, type PerfChannelId, CR_CHANNELS, type CrChannelId, AI_CHANNELS, type AiChannelId } from '@/lib/dashboard-channels';
 import { MobileTradeCard } from '@/components/trading/MobileTradeCard';
 import { JournalLayoutSwitch, type JournalLayout } from '@/components/trading/JournalLayoutSwitch';
@@ -699,7 +700,7 @@ const Index = () => {
 
 
   const WEEKLY_REVIEW_ALLOWED_EMAIL = 'dawitlior777@gmail.com';
-  const weeklyReviewAllowed = (authUser?.email || '').toLowerCase() === WEEKLY_REVIEW_ALLOWED_EMAIL;
+  const weeklyReviewAllowed = false;
   const bugBoardAllowed = (authUser?.email || '').toLowerCase() === WEEKLY_REVIEW_ALLOWED_EMAIL;
   const nav: Array<{ id: string; icon: any; label: string; color?: string; group?: string; action?: () => void }> = [
     { id: 'dashboard', icon: Ico.dash, label: isRTL ? 'דשבורד' : 'Dashboard', group: 'workspace' },
@@ -707,15 +708,12 @@ const Index = () => {
 
     { id: 'economic-radar', icon: '📡', label: isRTL ? 'חדשות' : 'News', group: 'markets' },
 
+    { id: 'ai', icon: Ico.star, label: isRTL ? 'בינה מלאכותית' : 'AI', group: 'aiGroup' },
+
     { id: 'journal', icon: Ico.book, label: t.journal, group: 'workspace2' },
     { id: 'analytics', icon: Ico.bar, label: isRTL ? 'ביצועים' : 'Performance', group: 'workspace2' },
 
     { id: 'control-room', icon: Ico.shield, label: isRTL ? 'חדר בקרה' : 'Control Room', group: 'intelligence' },
-    ...(weeklyReviewAllowed
-      ? [{ id: 'weekly-review', icon: '📋', label: isRTL ? 'סקירה שבועית' : 'Weekly Review', color: T.isLight ? '#B45309' : '#FFD700', group: 'intelligence' }]
-      : []),
-
-    { id: 'ai', icon: Ico.star, label: isRTL ? 'בינה מלאכותית' : 'AI', group: 'aiGroup' },
   ];
   const NAV_GROUP_LABEL: Record<string, string> = {
     workspace: isRTL ? 'סביבת עבודה' : 'Workspace',
@@ -1705,8 +1703,10 @@ const Index = () => {
   const renderAnalytics = () => {
     if (trades.length === 0) return null;
     if (opMode === 'beginner') return <BeginnerUpsell surface="analytics" />;
+    const perfLocked = !isUltimateTier && (perfChannel === 'dynamics' || perfChannel === 'temporal' || perfChannel === 'lab');
     return (
       <LazyShell>
+        <ProLockOverlay locked={perfLocked}>
         <AdvancedAnalyticsPage
           T={T}
           isRTL={isRTL}
@@ -1719,6 +1719,7 @@ const Index = () => {
           registryCharts={analyticsCharts}
           perfChannel={perfChannel ?? undefined}
         />
+        </ProLockOverlay>
       </LazyShell>
     );
   };
@@ -1969,7 +1970,7 @@ const Index = () => {
                             >
                               <span className="mm-icon" style={{ fontSize: 12 }}>{ch.icon}</span>
                               <span className="mm-label" style={{ fontSize: 13, color: locked && !chActive ? T.text.muted : undefined }}>{isRTL ? (ch.short?.he ?? ch.he) : (ch.short?.en ?? ch.en)}</span>
-                              {locked && <span aria-hidden style={{ fontSize: 11, marginInlineStart: 'auto' }}>🔒</span>}
+                              {locked && <span style={{ marginInlineStart: 'auto', display: 'inline-flex' }}><ProStar /></span>}
                             </button>
                           );
                         })}
@@ -2167,6 +2168,7 @@ const Index = () => {
               <div style={{ display: 'flex', flexDirection: 'column', margin: '1px 0 4px', paddingInlineStart: 12, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 20 }}>
                 {AI_CHANNELS.map(ch => {
                   const chActive = page === 'ai' && aiChannel === ch.id;
+                  const chLocked = Boolean(ch.pro) && !isUltimateTier;
                   return (
                     <button
                       key={ch.id}
@@ -2182,6 +2184,7 @@ const Index = () => {
                     >
                       <span aria-hidden style={{ width: 4, height: 4, borderRadius: '50%', flexShrink: 0, background: chActive ? infoColor(T) : T.text.muted, opacity: chActive ? 1 : 0.5 }} />
                       <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{isRTL ? ch.he : ch.en}</span>
+                      {chLocked && <ProStar />}
                     </button>
                   );
                 })}
@@ -2192,6 +2195,7 @@ const Index = () => {
               <div style={{ display: 'flex', flexDirection: 'column', margin: '1px 0 4px', paddingInlineStart: 12, borderInlineStart: `1px solid ${T.border.subtle}`, marginInlineStart: 20 }}>
                 {PERF_CHANNELS.map(ch => {
                   const chActive = page === 'analytics' && perfChannel === ch.id;
+                  const chLocked = Boolean(ch.pro) && !isUltimateTier;
                   return (
                     <button
                       key={ch.id}
@@ -2208,6 +2212,7 @@ const Index = () => {
                     >
                       <span aria-hidden style={{ width: 4, height: 4, borderRadius: '50%', flexShrink: 0, background: chActive ? infoColor(T) : T.text.muted, opacity: chActive ? 1 : 0.5 }} />
                       <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{isRTL ? ch.he : ch.en}</span>
+                      {chLocked && <ProStar />}
                     </button>
                   );
                 })}
@@ -2236,7 +2241,7 @@ const Index = () => {
                     >
                       <span aria-hidden style={{ width: 4, height: 4, borderRadius: '50%', flexShrink: 0, background: chActive ? infoColor(T) : T.text.muted, opacity: chActive ? 1 : 0.5 }} />
                       <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{isRTL ? (ch.short?.he ?? ch.he) : (ch.short?.en ?? ch.en)}</span>
-                      {locked && <span aria-hidden style={{ fontSize: 9, opacity: 0.7 }}>🔒</span>}
+                      {locked && <ProStar />}
                     </button>
                   );
                 })}
@@ -2415,9 +2420,13 @@ const Index = () => {
             </LazyShell>
           )}
 
-          {page === 'ai' && (aiChannel === 'coach'
-            ? <LazyShell><OrcaCoachPage T={T} isRTL={isRTL} /></LazyShell>
-            : renderAI())}
+          {page === 'ai' && (
+            <ProLockOverlay locked={!isUltimateTier}>
+              {aiChannel === 'coach'
+                ? <LazyShell><OrcaCoachPage T={T} isRTL={isRTL} /></LazyShell>
+                : renderAI()}
+            </ProLockOverlay>
+          )}
 
           {page === 'economic-radar' && (
             <Suspense fallback={null}>
