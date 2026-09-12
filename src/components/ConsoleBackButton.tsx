@@ -15,7 +15,7 @@ export const ConsoleBackButton = () => {
   }
   return (
     <button
-      onClick={() => navigate("/")}
+      onClick={() => navigate("/app")}
       title="Back to Orca"
       aria-label="Back to Orca"
       style={{
