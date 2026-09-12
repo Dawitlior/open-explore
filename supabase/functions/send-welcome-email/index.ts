@@ -22,7 +22,7 @@ function escapeHtml(s: string) {
 function buildHtml(name: string) {
   const n = escapeHtml(name);
   return `<!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="en" dir="ltr">
 <head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
 <body style="margin:0;padding:0;background-color:#f4f6fa;font-family:Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6fa;padding:40px 16px;">
@@ -32,7 +32,6 @@ function buildHtml(name: string) {
           <td align="center" style="background-color:#061326;padding:36px 24px;">
             <img src="${LOGO_URL}" alt="ORCA Investment" width="72" height="72" style="display:block;border-radius:18px;"/>
             <div style="color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:2px;margin-top:14px;">ORCA INVESTMENT</div>
-            <div style="color:#8fa3c4;font-size:12px;letter-spacing:3px;margin-top:4px;">TRADING INTELLIGENCE OS</div>
           </td>
         </tr>
         <tr>
