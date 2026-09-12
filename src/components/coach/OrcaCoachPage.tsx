@@ -497,9 +497,6 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
       <div style={{ paddingTop: 10 }}>
         <div style={{ maxWidth: 780, marginInline: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {errorBlock}
-          {!paywall && !busy && starredQuestion && (
-            <div style={{ display: 'flex', justifyContent: 'center' }}>{starredQuestion}</div>
-          )}
           {paywall ? paywallBlock : composer(false)}
           <div style={{ ...mono, color: T.text.muted, textAlign: 'center' }}>
             {isRTL ? 'Enter לשליחה · Shift+Enter לשורה חדשה' : 'Enter to send · Shift+Enter for a new line'}
