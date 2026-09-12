@@ -76,6 +76,23 @@ export default {
           red: "hsl(var(--trading-red))",
           green: "hsl(var(--trading-green))",
         },
+        /* ── ORCA MARKETING palette (cool editorial light). Names are unique
+           to the marketing layer; the five that shadow Tailwind default scales
+           (indigo/violet/teal/rose/amber) only add a DEFAULT + soft/deep and
+           deep-merge with the numbered scales, so the product's *-500 etc. are
+           untouched. Used exclusively by src/marketing + src/first-run. ── */
+        canvas: { DEFAULT: "#f6f6f8", deep: "#eef0f3" },
+        surface: "#ffffff",
+        plat: "#ffffff",
+        line: { DEFAULT: "#e7e8ec", soft: "#f0f1f4" },
+        ink: { DEFAULT: "#0f1116", "2": "#3a3d45", mute: "#6b7180", faint: "#9aa0ac" },
+        char: { DEFAULT: "#111318", "2": "#1a1d24" },
+        gold: "#e0a53a",
+        indigo: { DEFAULT: "#7c3aed", deep: "#6d28d9", soft: "#f1e9fe" },
+        violet: { DEFAULT: "#8b5cf6", soft: "#f2ecfe" },
+        teal: { DEFAULT: "#1a1d24", soft: "#edeef1" },
+        rose: { DEFAULT: "#e5484d", soft: "#fde8e8" },
+        amber: { DEFAULT: "#e0a53a", soft: "#fbf0d9" },
       },
       borderRadius: {
         lg: "var(--radius)",

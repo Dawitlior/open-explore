@@ -7,6 +7,7 @@ import { NavBar } from './nav-bar'
 import { SiteFooter } from './site-footer'
 import { BackToTop } from './back-to-top'
 import { MobileCtaBar } from './mobile-cta-bar'
+import '../marketing.css'
 
 /* ============================================================================
    PAGE SHELL — the shared chrome for every route: cool background, nav, footer,
@@ -25,7 +26,7 @@ export function PageShell({ children, darkNav = false }: { children: ReactNode; 
   usePremiumMotion(tier ?? 'none', tier !== null)
 
   return (
-    <>
+    <div className="orca-marketing">
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 -z-10"
@@ -40,6 +41,6 @@ export function PageShell({ children, darkNav = false }: { children: ReactNode; 
       <SiteFooter />
       <BackToTop />
       <MobileCtaBar />
-    </>
+    </div>
   )
 }
