@@ -22,7 +22,7 @@ function escapeHtml(s: string) {
 function buildHtml(name: string) {
   const n = escapeHtml(name);
   return `<!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="en" dir="ltr">
 <head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
 <body style="margin:0;padding:0;background-color:#f4f6fa;font-family:Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6fa;padding:40px 16px;">
@@ -32,35 +32,30 @@ function buildHtml(name: string) {
           <td align="center" style="background-color:#061326;padding:36px 24px;">
             <img src="${LOGO_URL}" alt="ORCA Investment" width="72" height="72" style="display:block;border-radius:18px;"/>
             <div style="color:#ffffff;font-size:20px;font-weight:bold;letter-spacing:2px;margin-top:14px;">ORCA INVESTMENT</div>
-            <div style="color:#8fa3c4;font-size:12px;letter-spacing:3px;margin-top:4px;">TRADING INTELLIGENCE OS</div>
           </td>
         </tr>
         <tr>
           <td style="padding:36px 40px;">
-            <h1 style="margin:0 0 16px;font-size:24px;color:#061326;text-align:right;">ברוך הבא ל-Orca, ${n}</h1>
-            <p style="margin:0 0 14px;font-size:15px;line-height:1.7;color:#3a4658;text-align:right;">
-              אנחנו שמחים שהצטרפת. החשבון שלך נפתח בהצלחה, והפלטפורמה מוכנה לשירותך —
-              יומן מסחר חכם, מנוע סיכונים בזמן אמת, ותובנות AI שילווה כל החלטה שלך.
+            <h1 style="margin:0 0 16px;font-size:24px;color:#061326;text-align:left;">Welcome to Orca, ${n}</h1>
+            <p style="margin:0 0 14px;font-size:15px;line-height:1.7;color:#3a4658;text-align:left;">
+              We're glad you joined. Your account has been opened successfully and the platform is
+              ready for you — a smart trading journal, a real-time risk engine, and AI insights
+              to back every decision you make.
             </p>
-            <p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:#3a4658;text-align:right;">
-              הצעד הראשון שלך: פתח את התיק הראשון, ותן ל-Orca להתחיל ללמוד את סגנון המסחר שלך.
+            <p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:#3a4658;text-align:left;">
+              Your first step: open your first portfolio and let Orca start learning your trading style.
             </p>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
               <tr><td align="center">
-                <a href="${APP_URL}" style="display:inline-block;background-color:#061326;color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;padding:14px 36px;border-radius:10px;">כניסה לפלטפורמה</a>
+                <a href="${APP_URL}" style="display:inline-block;background-color:#061326;color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;padding:14px 36px;border-radius:10px;">Enter the Platform</a>
               </td></tr>
             </table>
-            <hr style="border:none;border-top:1px solid #e6eaf2;margin:32px 0;"/>
-            <p style="margin:0;font-size:12px;line-height:1.6;color:#8a93a6;text-align:right;" dir="ltr">
-              Welcome to Orca, ${n}. Your account is ready — smart trade journal, real-time risk engine,
-              and AI insights for every decision.
-            </p>
           </td>
         </tr>
         <tr>
           <td align="center" style="background-color:#f8fafd;padding:20px 24px;">
             <p style="margin:0;font-size:11px;color:#9aa3b5;">
-              Orca Investment · מייל זה נשלח בעקבות פתיחת חשבון · אין צורך להשיב למייל זה
+              Orca Investment · This email was sent following your account registration · Please do not reply
             </p>
           </td>
         </tr>
@@ -114,7 +109,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: FROM,
         to: [email],
-        subject: 'ברוך הבא ל-Orca Investment — החשבון שלך מוכן',
+        subject: 'Welcome to Orca Investment — your account is ready',
         html: buildHtml(name),
       }),
     });
