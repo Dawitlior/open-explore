@@ -19,7 +19,7 @@ export const STRIPE_PLANS: Record<Exclude<AppTier, 'free'>, PlanDef> = {
     tier: 'pro',
     priceId: 'price_1UEalkLHBUsnz0dmmg1huRmq',
     productId: 'prod_VF4vz2I7n1QhqZ',
-    amountUsd: 39,
+    amountUsd: 10,
   },
 };
 
