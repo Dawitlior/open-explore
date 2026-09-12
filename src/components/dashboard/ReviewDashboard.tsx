@@ -472,7 +472,7 @@ export const ReviewDashboard = ({
               </>
             )}
 
-            {channel === 'breakdown' && (isPro ? (
+            {channel === 'breakdown' && (
               <>
                 <div className="dash-charts-alpha">
                 <div className="dash-chart-card">
