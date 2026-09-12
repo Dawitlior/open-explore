@@ -2104,6 +2104,7 @@ const Index = () => {
             const isPerf = item.id === 'analytics';
             const isCr = item.id === 'control-room';
             const isAi = item.id === 'ai';
+            const isWorlds = item.id === 'worlds';
             const groupChanged = item.group && item.group !== nav[idx - 1]?.group;
             return (
             <React.Fragment key={item.id}>
