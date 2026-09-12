@@ -288,13 +288,22 @@ export function NavBar({ darkNav = false }: { darkNav?: boolean }) {
             <Link to="/exchanges" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2.5 text-[15px] font-medium text-ink">Exchanges</Link>
             <Link to="/pricing" onClick={() => setMobileOpen(false)} className="rounded-lg px-3 py-2.5 text-[15px] font-medium text-ink">Pricing</Link>
           </div>
-          <Link
-            to="/signup"
-            onClick={() => setMobileOpen(false)}
-            className="mt-4 flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-[#8b5cf6] to-[#6d28d9] px-5 py-3 text-[15px] font-semibold text-white"
-          >
-            Get started →
-          </Link>
+          <div className="mt-4 flex flex-col gap-2.5">
+            <Link
+              to="/login"
+              onClick={() => setMobileOpen(false)}
+              className="flex min-h-[48px] items-center justify-center rounded-full border border-line bg-surface px-5 text-[15px] font-semibold text-ink"
+            >
+              Log in
+            </Link>
+            <Link
+              to="/signup"
+              onClick={() => setMobileOpen(false)}
+              className="flex min-h-[48px] items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-[#8b5cf6] to-[#6d28d9] px-5 text-[15px] font-semibold text-white"
+            >
+              Get started →
+            </Link>
+          </div>
         </div>
       )}
     </header>

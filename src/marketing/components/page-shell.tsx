@@ -8,7 +8,6 @@ import { engine } from '../lib/scroll-store'
 import { NavBar } from './nav-bar'
 import { SiteFooter } from './site-footer'
 import { BackToTop } from './back-to-top'
-import { MobileCtaBar } from './mobile-cta-bar'
 import '../marketing.css'
 
 /* ============================================================================
@@ -55,7 +54,6 @@ export function PageShell({ children, darkNav = false }: { children: ReactNode; 
       <main>{children}</main>
       <SiteFooter />
       <BackToTop />
-      <MobileCtaBar />
     </div>
   )
 }
