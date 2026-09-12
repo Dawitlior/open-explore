@@ -1,17 +1,15 @@
-import { SURF } from '@/lib/neon-palette';
 /**
  * UpgradeModal — listens for 'orca:open-upgrade' and presents the
  * 2-plan pricing comparison (Free / Pro).
  *
- * Bilingual (HE/EN). Pre-launch CTA is wired to a no-op stub that
- * dispatches 'orca:start-trial' — payment flow lands in a later phase.
+ * Bilingual (HE/EN). Checkout goes through Stripe via useSubscription.
  *
- * Visuals: cinematic motion entrance, animated aurora background,
- * orbital sparkles, tier cards with hover lift and tilt-glow.
+ * Visual register: formal and institutional — flat surfaces, restrained
+ * typography, one accent line. No aurora, sparkles or floating cards.
  */
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Sparkles, Crown, Zap, X } from 'lucide-react';
+import { Check, ShieldCheck, X } from 'lucide-react';
 import { useLang } from '@/hooks/use-lang';
 import { useEntitlement, type AppTier } from '@/hooks/use-entitlement';
 import { useSubscription } from '@/hooks/use-subscription';
@@ -19,24 +17,20 @@ import { cn } from '@/lib/utils';
 
 interface TierDef {
   id: AppTier;
-  icon: typeof Zap;
   name: { he: string; en: string };
   tagline: { he: string; en: string };
   price: { he: string; en: string };
+  period: { he: string; en: string } | null;
   features: { he: string; en: string }[];
-  accent: string;   // hex
-  glow: string;     // rgba glow color
 }
 
 const TIERS: TierDef[] = [
   {
     id: 'free',
-    icon: Zap,
     name: { he: 'חינם', en: 'Free' },
     tagline: { he: 'הבסיס למסחר ממושמע', en: 'The disciplined-trading baseline' },
-    price: { he: 'חינם', en: 'Free' },
-    accent: '#94a3b8',
-    glow: 'rgba(148,163,184,0.35)',
+    price: { he: '0 ₪', en: '$0' },
+    period: null,
     features: [
       { he: 'יומן מסחר מלא', en: 'Full trade journal' },
       { he: 'חישובי R-Multiple', en: 'R-Multiple calculations' },
@@ -50,12 +44,10 @@ const TIERS: TierDef[] = [
   },
   {
     id: 'pro',
-    icon: Crown,
     name: { he: 'פרו', en: 'Pro' },
     tagline: { he: 'מנוע כמותי מלא', en: 'Full quant engine' },
-    price: { he: '10$ לחודש', en: '$10/mo' },
-    accent: '#d4af37',
-    glow: 'rgba(212,175,55,0.55)',
+    price: { he: '10$', en: '$10' },
+    period: { he: 'לחודש', en: 'per month' },
     features: [
       { he: 'כל מה שיש בחינם', en: 'Everything in Free' },
       { he: 'ערוץ פילוח וחלוקה', en: 'Breakdown & Distribution channel' },
@@ -68,22 +60,6 @@ const TIERS: TierDef[] = [
     ],
   },
 ];
-
-const sparkleCSS = `
-@keyframes upgradeAurora {
-  0%   { transform: translate(-10%, -10%) rotate(0deg);   opacity: .55; }
-  50%  { transform: translate( 10%,  10%) rotate(180deg); opacity: .85; }
-  100% { transform: translate(-10%, -10%) rotate(360deg); opacity: .55; }
-}
-@keyframes upgradeStar {
-  0%, 100% { opacity: 0; transform: scale(0.6) rotate(0deg); }
-  50%      { opacity: 1; transform: scale(1)   rotate(180deg); }
-}
-@keyframes upgradeFloat {
-  0%, 100% { transform: translateY(0px); }
-  50%      { transform: translateY(-6px); }
-}
-`;
 
 export function UpgradeModal() {
   const { lang } = useLang();
@@ -114,10 +90,10 @@ export function UpgradeModal() {
   }, [open]);
 
   const isHe = lang === 'he';
-  const title = isHe ? 'בחר/י את התוכנית שלך' : 'Choose your plan';
+  const title = isHe ? 'תוכניות ומנוי' : 'Plans & subscription';
   const subtitle = isHe
-    ? 'שתי תוכניות בלבד — חינם או פרו. ניתן לבטל בכל עת'
-    : 'Two plans only — Free or Pro. Cancel anytime';
+    ? 'שתי תוכניות בלבד. ניתן לבטל בכל עת.'
+    : 'Two plans only. Cancel at any time.';
 
   const startTrial = async (tier: AppTier) => {
     if (tier === 'free') {
@@ -143,20 +119,19 @@ export function UpgradeModal() {
     <AnimatePresence>
       {open && (
         <>
-          <style>{sparkleCSS}</style>
           {/* Backdrop */}
           <motion.div
             key="upgrade-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.35 }}
+            transition={{ duration: 0.2 }}
             onClick={() => setOpen(false)}
             style={{
               position: 'fixed', inset: 0, zIndex: 9500,
-              background: SURF.scrim,
-              backdropFilter: 'blur(14px)',
-              WebkitBackdropFilter: 'blur(14px)',
+              background: 'hsl(var(--background) / 0.72)',
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
             }}
             dir={isHe ? 'rtl' : 'ltr'}
           />
@@ -164,10 +139,10 @@ export function UpgradeModal() {
           {/* Modal */}
           <motion.div
             key="upgrade-modal"
-            initial={{ opacity: 0, scale: 0.9, y: 30 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: 20 }}
-            transition={{ type: 'spring', stiffness: 220, damping: 26, mass: 0.9 }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.22, ease: [0.22, 0.61, 0.36, 1] }}
             style={{
               position: 'fixed', inset: 0, zIndex: 9501,
               display: 'grid', placeItems: 'center', padding: 20,
@@ -176,200 +151,171 @@ export function UpgradeModal() {
             dir={isHe ? 'rtl' : 'ltr'}
           >
             <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={title}
               onClick={(e) => e.stopPropagation()}
               style={{
                 pointerEvents: 'auto',
                 position: 'relative',
-                width: 'min(1080px, 100%)',
-                maxHeight: '92vh',
+                width: 'min(880px, 100%)',
+                maxHeight: '90vh',
                 overflowY: 'auto',
-                borderRadius: 24,
-                padding: 'clamp(20px, 3vw, 36px)',
-                background: SURF.panelGradient,
-                border: '1px solid rgba(34,211,238,0.18)',
-                boxShadow: '0 40px 120px -20px rgba(0,0,0,0.7), 0 0 80px -20px rgba(34,211,238,0.18)',
-                overflowX: 'hidden',
+                borderRadius: 14,
+                background: 'hsl(var(--card))',
+                border: '1px solid hsl(var(--border))',
+                boxShadow: '0 28px 80px -28px hsl(0 0% 0% / 0.7)',
+                fontFamily: "'Poppins', sans-serif",
               }}
             >
-              {/* Aurora layer */}
-              <div aria-hidden style={{
-                position: 'absolute', inset: '-30%', zIndex: 0,
-                background:
-                  'radial-gradient(ellipse 40% 30% at 30% 30%, rgba(34,211,238,0.22), transparent 60%),' +
-                  'radial-gradient(ellipse 35% 25% at 75% 20%, rgba(168,85,247,0.20), transparent 60%),' +
-                  'radial-gradient(ellipse 50% 35% at 50% 90%, rgba(212,175,55,0.16), transparent 60%)',
-                animation: 'upgradeAurora 18s ease-in-out infinite',
-                pointerEvents: 'none',
-                filter: 'blur(20px)',
-              }} />
-
-              {/* Sparkle stars */}
-              {[
-                { top: '12%', left: '8%',  d: 0,    size: 6,  c: '#22d3ee' },
-                { top: '22%', left: '92%', d: 0.6,  size: 5,  c: '#a78bfa' },
-                { top: '68%', left: '6%',  d: 1.2,  size: 4,  c: '#d4af37' },
-                { top: '78%', left: '88%', d: 1.8,  size: 6,  c: '#22d3ee' },
-                { top: '38%', left: '50%', d: 0.3,  size: 3,  c: '#fff'    },
-              ].map((s, i) => (
-                <span key={i} aria-hidden style={{
-                  position: 'absolute', top: s.top, left: s.left,
-                  width: s.size, height: s.size, borderRadius: '50%',
-                  background: s.c, boxShadow: `0 0 12px ${s.c}, 0 0 24px ${s.c}88`,
-                  animation: `upgradeStar 3.6s ease-in-out ${s.d}s infinite`,
-                  zIndex: 1, pointerEvents: 'none',
-                }} />
-              ))}
-
-              {/* Close button */}
-              <button
-                onClick={() => setOpen(false)}
-                aria-label="Close"
-                style={{
-                  position: 'absolute', top: 14, insetInlineEnd: 14, zIndex: 5,
-                  width: 36, height: 36, borderRadius: 10,
-                  background: SURF.card2,
-                  border: `1px solid ${SURF.border}`,
-                  color: SURF.text2, display: 'grid', placeItems: 'center',
-                  cursor: 'pointer', transition: 'all .2s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.18)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.55)'; e.currentTarget.style.color = '#fecaca'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; e.currentTarget.style.color = '#cbd5e1'; }}
-              >
-                <X size={16} />
-              </button>
-
               {/* Header */}
-              <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', marginBottom: 22 }}>
-                <motion.div
-                  initial={{ opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1, duration: 0.4 }}
+              <div
+                style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 16,
+                  padding: 'clamp(20px, 3vw, 28px)',
+                  borderBottom: '1px solid hsl(var(--border))',
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 10, fontWeight: 600, letterSpacing: '0.16em',
+                      textTransform: 'uppercase', color: 'hsl(var(--muted-foreground))',
+                      marginBottom: 8,
+                    }}
+                  >
+                    Orca Investment
+                  </div>
+                  <h2 style={{ margin: 0, fontSize: 'clamp(18px, 2.4vw, 22px)', fontWeight: 600, color: 'hsl(var(--foreground))' }}>
+                    {title}
+                  </h2>
+                  <p style={{ margin: '6px 0 0', fontSize: 12.5, color: 'hsl(var(--muted-foreground))' }}>
+                    {subtitle}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setOpen(false)}
+                  aria-label={isHe ? 'סגירה' : 'Close'}
                   style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 8,
-                    padding: '6px 14px', borderRadius: 999,
-                    background: 'linear-gradient(90deg, rgba(34,211,238,0.14), rgba(168,85,247,0.14))',
-                    border: '1px solid rgba(34,211,238,0.30)',
-                    fontSize: 10, fontWeight: 700, letterSpacing: '0.18em',
-                    color: '#22d3ee', textTransform: 'uppercase',
-                    marginBottom: 14,
+                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                    background: 'transparent',
+                    border: '1px solid hsl(var(--border))',
+                    color: 'hsl(var(--muted-foreground))',
+                    display: 'grid', placeItems: 'center', cursor: 'pointer',
+                    transition: 'color .15s, border-color .15s',
                   }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = 'hsl(var(--foreground))'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = 'hsl(var(--muted-foreground))'; }}
                 >
-                  <Sparkles size={12} /> {isHe ? 'שדרוג תוכנית' : 'Plan Upgrade'}
-                </motion.div>
-                <motion.h2
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.18, duration: 0.4 }}
-                  style={{
-                    fontSize: 'clamp(22px, 3.2vw, 30px)', fontWeight: 800,
-                    margin: 0, marginBottom: 6,
-                    background: `linear-gradient(90deg, ${SURF.text1} 0%, #22d3ee 50%, #a78bfa 100%)`,
-                    WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
-                  }}
-                >
-                  {title}
-                </motion.h2>
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.28, duration: 0.4 }}
-                  style={{ color: SURF.text2, fontSize: 13, margin: 0 }}
-                >
-                  {subtitle}
-                </motion.p>
+                  <X size={15} />
+                </button>
               </div>
 
               {/* Tier grid */}
               <div
-                className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto"
-                style={{ position: 'relative', zIndex: 2 }}
+                className="grid grid-cols-1 md:grid-cols-2"
+                style={{ gap: 0 }}
               >
                 {TIERS.map((tier, idx) => {
-                  const Icon = tier.icon;
                   const isCurrent = currentTier === tier.id;
                   const isRecommended = tier.id === required && !isCurrent;
                   return (
-                    <motion.div
+                    <div
                       key={tier.id}
-                      initial={{ opacity: 0, y: 24, scale: 0.96 }}
-                      animate={{ opacity: 1, y: 0, scale: isRecommended ? 1.03 : 1 }}
-                      transition={{ delay: 0.25 + idx * 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                      whileHover={{ y: -4 }}
                       style={{
                         position: 'relative',
                         display: 'flex', flexDirection: 'column',
-                        borderRadius: 18, padding: 22,
-                        background: isRecommended
-                          ? `linear-gradient(165deg, ${tier.glow.replace('0.55', '0.12')}, rgba(8,12,22,0.85))`
-                          : 'linear-gradient(165deg, rgba(255,255,255,0.04), rgba(8,12,22,0.85))',
-                        border: `1px solid ${isRecommended ? tier.accent + '88' : 'rgba(255,255,255,0.08)'}`,
-                        boxShadow: isRecommended
-                          ? `0 0 40px -8px ${tier.glow}, inset 0 1px 0 rgba(255,255,255,0.06)`
-                          : 'inset 0 1px 0 rgba(255,255,255,0.04)',
-                        overflow: 'hidden',
-                        animation: isRecommended ? 'upgradeFloat 4s ease-in-out infinite' : undefined,
+                        padding: 'clamp(20px, 3vw, 28px)',
+                        borderInlineEnd: idx === 0 ? '1px solid hsl(var(--border))' : undefined,
+                        background: isRecommended ? 'hsl(var(--muted) / 0.35)' : 'transparent',
                       }}
                     >
+                      {/* Accent rule on the recommended plan */}
                       {isRecommended && (
-                        <div style={{
-                          position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)',
-                          padding: '4px 12px', borderRadius: 999,
-                          background: `linear-gradient(90deg, ${tier.accent}, #a78bfa)`,
-                          color: '#0a0e1a', fontSize: 10, fontWeight: 800,
-                          letterSpacing: '0.14em', textTransform: 'uppercase',
-                          boxShadow: `0 6px 20px -4px ${tier.glow}`,
-                        }}>
-                          {isHe ? 'מומלץ' : 'Recommended'}
-                        </div>
-                      )}
-                      {isCurrent && (
-                        <div style={{
-                          position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)',
-                          padding: '4px 12px', borderRadius: 999,
-                          background: SURF.card2, color: SURF.text2,
-                          fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase',
-                          border: '1px solid rgba(148,163,184,0.4)',
-                        }}>
-                          {isHe ? 'התוכנית הנוכחית' : 'Current'}
-                        </div>
+                        <span
+                          aria-hidden
+                          style={{
+                            position: 'absolute', top: 0, insetInline: 0, height: 2,
+                            background: 'hsl(var(--primary))',
+                          }}
+                        />
                       )}
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                        <div style={{
-                          width: 34, height: 34, borderRadius: 10,
-                          background: `${tier.accent}1c`, border: `1px solid ${tier.accent}55`,
-                          display: 'grid', placeItems: 'center',
-                          boxShadow: `0 0 16px -2px ${tier.glow}`,
-                        }}>
-                          <Icon size={18} style={{ color: tier.accent }} />
-                        </div>
-                        <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: SURF.text1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: 'hsl(var(--foreground))' }}>
                           {tier.name[isHe ? 'he' : 'en']}
                         </h3>
-                      </div>
-                      <p style={{ margin: 0, marginBottom: 10, fontSize: 11, color: SURF.text2 }}>
-                        {tier.tagline[isHe ? 'he' : 'en']}
-                      </p>
-                      <div style={{
-                        fontSize: 26, fontWeight: 800, marginBottom: 14,
-                        color: tier.accent, fontFamily: "'JetBrains Mono', monospace",
-                        textShadow: `0 0 18px ${tier.glow}`,
-                      }}>
-                        {tier.price[isHe ? 'he' : 'en']}
+                        {isRecommended && (
+                          <span
+                            style={{
+                              fontSize: 9.5, fontWeight: 600, letterSpacing: '0.12em',
+                              textTransform: 'uppercase', padding: '3px 8px', borderRadius: 4,
+                              color: 'hsl(var(--primary))',
+                              border: '1px solid hsl(var(--primary) / 0.4)',
+                            }}
+                          >
+                            {isHe ? 'מומלץ' : 'Recommended'}
+                          </span>
+                        )}
+                        {isCurrent && (
+                          <span
+                            style={{
+                              fontSize: 9.5, fontWeight: 600, letterSpacing: '0.12em',
+                              textTransform: 'uppercase', padding: '3px 8px', borderRadius: 4,
+                              color: 'hsl(var(--muted-foreground))',
+                              border: '1px solid hsl(var(--border))',
+                            }}
+                          >
+                            {isHe ? 'פעילה' : 'Current'}
+                          </span>
+                        )}
                       </div>
 
-                      <ul style={{ flex: 1, listStyle: 'none', padding: 0, margin: 0, marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <p style={{ margin: '0 0 16px', fontSize: 11.5, color: 'hsl(var(--muted-foreground))' }}>
+                        {tier.tagline[isHe ? 'he' : 'en']}
+                      </p>
+
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 20 }}>
+                        <span
+                          style={{
+                            fontSize: 30, fontWeight: 600, lineHeight: 1,
+                            color: 'hsl(var(--foreground))',
+                            fontFamily: "'IBM Plex Mono', monospace",
+                          }}
+                        >
+                          {tier.price[isHe ? 'he' : 'en']}
+                        </span>
+                        {tier.period && (
+                          <span style={{ fontSize: 11.5, color: 'hsl(var(--muted-foreground))' }}>
+                            {tier.period[isHe ? 'he' : 'en']}
+                          </span>
+                        )}
+                      </div>
+
+                      <ul
+                        style={{
+                          flex: 1, listStyle: 'none', padding: 0, margin: '0 0 22px',
+                          display: 'flex', flexDirection: 'column', gap: 9,
+                        }}
+                      >
                         {tier.features.map((f, i) => (
-                          <motion.li
+                          <li
                             key={i}
-                            initial={{ opacity: 0, x: isHe ? 8 : -8 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.4 + idx * 0.1 + i * 0.04 }}
-                            style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, color: SURF.text2 }}
+                            style={{
+                              display: 'flex', alignItems: 'flex-start', gap: 9,
+                              fontSize: 12, lineHeight: 1.5,
+                              color: 'hsl(var(--muted-foreground))',
+                            }}
                           >
-                            <Check size={13} style={{ color: tier.accent, flexShrink: 0, marginTop: 2 }} />
+                            <Check
+                              size={13}
+                              style={{
+                                flexShrink: 0, marginTop: 2,
+                                color: isRecommended ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))',
+                              }}
+                            />
                             <span>{f[isHe ? 'he' : 'en']}</span>
-                          </motion.li>
+                          </li>
                         ))}
                       </ul>
 
@@ -378,29 +324,14 @@ export function UpgradeModal() {
                         disabled={isCurrent || checkoutTier !== null}
                         onClick={() => { void startTrial(tier.id); }}
                         className={cn(
-                          'w-full py-2.5 rounded-lg text-sm font-bold transition-all',
-                          isCurrent && 'cursor-not-allowed opacity-60',
-                          checkoutTier !== null && !isCurrent && 'opacity-80',
+                          'w-full py-2.5 rounded-md text-[12.5px] font-semibold transition-opacity',
+                          (isCurrent || checkoutTier !== null) && 'opacity-60',
                         )}
                         style={{
-                          background: isCurrent
-                            ? 'rgba(148,163,184,0.14)'
-                            : `linear-gradient(135deg, ${tier.accent}, ${tier.accent}cc)`,
-                          color: isCurrent ? '#cbd5e1' : '#0a0e1a',
-                          border: 'none',
-                          letterSpacing: '0.04em',
-                          boxShadow: isCurrent ? 'none' : `0 8px 24px -8px ${tier.glow}`,
+                          background: isCurrent || !isRecommended ? 'transparent' : 'hsl(var(--primary))',
+                          color: isCurrent || !isRecommended ? 'hsl(var(--foreground))' : 'hsl(var(--primary-foreground))',
+                          border: `1px solid ${isCurrent || !isRecommended ? 'hsl(var(--border))' : 'hsl(var(--primary))'}`,
                           cursor: isCurrent ? 'not-allowed' : 'pointer',
-                        }}
-                        onMouseEnter={e => {
-                          if (isCurrent) return;
-                          e.currentTarget.style.filter = 'brightness(1.1)';
-                          e.currentTarget.style.boxShadow = `0 12px 32px -8px ${tier.glow}, 0 0 0 1px ${tier.accent}66`;
-                        }}
-                        onMouseLeave={e => {
-                          if (isCurrent) return;
-                          e.currentTarget.style.filter = 'brightness(1)';
-                          e.currentTarget.style.boxShadow = `0 8px 24px -8px ${tier.glow}`;
                         }}
                       >
                         {isCurrent
@@ -411,22 +342,41 @@ export function UpgradeModal() {
                               ? (isHe ? 'המשך/י בחינם' : 'Stay on Free')
                               : (isHe ? 'מעבר לתשלום' : 'Continue to payment')}
                       </button>
-                    </motion.div>
+                    </div>
                   );
                 })}
               </div>
 
+              {/* Footer */}
+              <div
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                  padding: '14px 20px',
+                  borderTop: '1px solid hsl(var(--border))',
+                  background: 'hsl(var(--muted) / 0.25)',
+                }}
+              >
+                <ShieldCheck size={13} style={{ color: 'hsl(var(--muted-foreground))' }} />
+                <span style={{ fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>
+                  {isHe
+                    ? 'תשלום מאובטח בעיבוד Stripe · ביטול בכל עת'
+                    : 'Secure payment processed by Stripe · Cancel at any time'}
+                </span>
+              </div>
+
               {checkoutError && (
-                <p style={{ position: 'relative', zIndex: 2, textAlign: 'center', fontSize: 11, color: '#f87171', marginTop: 14, marginBottom: 0 }}>
+                <p
+                  role="alert"
+                  style={{
+                    textAlign: 'center', fontSize: 11.5, margin: 0,
+                    padding: '10px 20px',
+                    color: 'hsl(var(--destructive))',
+                    borderTop: '1px solid hsl(var(--border))',
+                  }}
+                >
                   {checkoutError}
                 </p>
               )}
-
-              <p style={{ position: 'relative', zIndex: 2, textAlign: 'center', fontSize: 10, color: '#64748b', marginTop: 18, marginBottom: 0 }}>
-                {isHe
-                  ? 'תשלום מאובטח דרך Stripe · ביטול בקליק'
-                  : 'Secure payment via Stripe · Cancel in one click'}
-              </p>
             </div>
           </motion.div>
         </>

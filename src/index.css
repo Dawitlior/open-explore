@@ -1670,3 +1670,18 @@ html[data-scheme="light"] { color-scheme: light; }
 }
 .orca-coach-md th { font-weight: 700; opacity: 0.8; }
 .orca-coach-md a { text-decoration: underline; text-underline-offset: 2px; }
+
+/* ── Channel transitions ───────────────────────────────────────
+   Every channel swap fades + lifts in once, so moving between
+   Dashboard / Performance / AI feels continuous instead of snapping. */
+@keyframes orca-channel-in {
+  from { opacity: 0; transform: translate3d(0, 6px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+.orca-channel-surface {
+  animation: orca-channel-in 220ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  will-change: opacity, transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .orca-channel-surface { animation: none; }
+}
