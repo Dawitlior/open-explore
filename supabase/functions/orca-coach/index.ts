@@ -61,11 +61,73 @@ Deno.serve(withCors(async (req) => {
     }
     const uid = u.user.id;
 
-    const { messages, model, portfolio_id } = await req.json() as {
+    const { messages, model, portfolio_id, memory, action } = await req.json() as {
       messages: ChatMsg[]; model?: string; portfolio_id?: string | null;
+      memory?: string | null; action?: string;
     };
     if (!Array.isArray(messages) || messages.length === 0) {
       throw new Error("messages required");
+    }
+    // Bounded input: a conversation can never push an unbounded prompt upstream.
+    const safeMessages: ChatMsg[] = messages
+      .filter((m) => m && typeof m.content === "string" && (m.role === "user" || m.role === "assistant"))
+      .slice(-60)
+      .map((m) => ({ role: m.role, content: m.content.slice(0, 8000) }));
+    const priorMemory = typeof memory === "string" ? memory.slice(0, 4000) : "";
+
+    // ── Model routing (shared by chat + compaction) ─────────────────────
+    const aiOpenAiKey = Deno.env.get("OPENAI_API_KEY");
+    const aiGatewayKey = Deno.env.get("LOVABLE_API_KEY");
+    const aiUseOpenAI = Boolean(aiOpenAiKey);
+    const aiEndpoint = aiUseOpenAI
+      ? "https://api.openai.com/v1/chat/completions"
+      : "https://ai.gateway.lovable.dev/v1/chat/completions";
+
+    /* ── Context compaction ───────────────────────────────────────────────
+       A long conversation is folded into a compact rolling memory so later
+       turns keep continuity without an ever-growing prompt. This is
+       background housekeeping, so it is NOT metered as a user message. */
+    if (action === "compact") {
+      if (!aiOpenAiKey && !aiGatewayKey) throw new Error("no AI credentials configured");
+      const transcript = safeMessages
+        .map((m) => `${m.role === "user" ? "TRADER" : "COACH"}: ${m.content}`)
+        .join("\n\n")
+        .slice(0, 24000);
+      const compactRes = await fetch(aiEndpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${aiUseOpenAI ? aiOpenAiKey : aiGatewayKey}`,
+        },
+        body: JSON.stringify({
+          model: model ?? (aiUseOpenAI ? "gpt-4o-mini" : "google/gemini-3.8-flash"),
+          messages: [
+            {
+              role: "system",
+              content:
+                "Compress this coaching conversation into durable memory notes for the coach. " +
+                "Keep: the trader's goals, the portfolio discussed, findings and numbers already " +
+                "established, commitments, and open threads. Drop pleasantries and anything " +
+                "recomputable from raw data. Max 220 words, terse bullets, same language as the trader.",
+            },
+            {
+              role: "user",
+              content: (priorMemory ? `EXISTING MEMORY:\n${priorMemory}\n\n` : "") + `CONVERSATION:\n${transcript}`,
+            },
+          ],
+          ...(aiUseOpenAI ? { temperature: 0.2, max_tokens: 500 } : {}),
+        }),
+      });
+      if (!compactRes.ok) {
+        return new Response(JSON.stringify({ error: "compact_failed" }), {
+          status: 503, headers: { ...cors, "Content-Type": "application/json" },
+        });
+      }
+      const compactJson = await compactRes.json();
+      const summary = String(compactJson?.choices?.[0]?.message?.content ?? "").slice(0, 4000);
+      return new Response(JSON.stringify({ memory: summary }), {
+        headers: { ...cors, "Content-Type": "application/json" },
+      });
     }
 
     // ── Freemium meter — 5 messages / calendar month for free users ──────
