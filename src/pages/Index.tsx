@@ -58,6 +58,7 @@ const ControlRoomPage = lazy(() => import('@/components/trading/ControlRoomPage'
 
 const AIInsightsPage = lazy(() => import('@/components/trading/AIInsightsPage').then(m => ({ default: m.AIInsightsPage })));
 const OrcaCoachPage = lazy(() => import('@/components/coach/OrcaCoachPage'));
+const CoachLauncher = lazy(() => import('@/components/coach/CoachLauncher'));
 const WeeklyReviewPage = lazy(() => import('@/components/trading/WeeklyReviewPage').then(m => ({ default: m.WeeklyReviewPage })));
 const CalendarHubPage = lazy(() => import('@/components/trading/CalendarHubPage').then(m => ({ default: m.CalendarHubPage })));
 const EconomicCalendarPage = lazy(() => import('@/components/economic/EconomicCalendarPage').then(m => ({ default: m.EconomicCalendarPage })));
@@ -2529,6 +2530,11 @@ const Index = () => {
           </div>
         </div>
       </MainPullToRefresh>
+
+      {/* Floating Pro AI assistant — hidden while the full Coach channel is open. */}
+      <Suspense fallback={null}>
+        <CoachLauncher T={T} isRTL={isRTL} enabled={isUltimateTier} hidden={page === 'ai' && aiChannel === 'coach'} />
+      </Suspense>
 
       {/* OVERLAYS */}
       {showTradingReport && <TradingReportModal T={T} isRTL={isRTL} trades={trades} onClose={() => setShowTradingReport(false)} />}

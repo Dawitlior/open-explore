@@ -22,6 +22,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { scopedStorage } from '@/lib/scoped-storage';
 import { useActivePortfolio } from '@/hooks/use-active-portfolio';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useEntitlement } from '@/hooks/use-entitlement';
 import { useTraderMind } from '@/hooks/use-trader-mind';
 import type { TradingTheme } from '@/lib/trading-theme';
@@ -30,16 +31,30 @@ import { infoColor } from '@/lib/semantic-color';
 interface Props {
   T: TradingTheme;
   isRTL: boolean;
+  /** 'page' = full channel with a persistent conversation rail.
+   *  'panel' = compact surface used by the floating Pro assistant. */
+  variant?: 'page' | 'panel';
 }
 
 interface Msg { role: 'user' | 'assistant'; content: string }
-interface Thread { id: string; title: string; messages: Msg[]; updatedAt: number }
+interface Thread {
+  id: string; title: string; messages: Msg[]; updatedAt: number;
+  /** Compacted memory of turns older than the live window. */
+  memory?: string;
+}
 
 const FREE_LIMIT = 5;
 const MAX_THREADS = 5;
 const THREADS_KEY = 'orca-coach-threads';
+/** Compact once a conversation grows past this many turns. */
+const COMPACT_AFTER = 12;
+/** Turns kept verbatim after a compaction pass. */
+const KEEP_VERBATIM = 6;
 
-export default function OrcaCoachPage({ T, isRTL }: Props) {
+export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
+  const isPanel = variant === 'panel';
+  const isMobile = useIsMobile();
+  const showRail = !isPanel && !isMobile;
   const { activePortfolioId, portfolios, setActivePortfolioId } = useActivePortfolio();
   const { tier } = useEntitlement();
   const { isCalibrated: tmDone, archetype: tmArchetype } = useTraderMind();
@@ -61,6 +76,9 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
   const taRef = useRef<HTMLTextAreaElement | null>(null);
   const msgRefs = useRef<(HTMLDivElement | null)[]>([]);
   const cancelled = useRef(false);
+  /** Rolling memory of the active thread's older turns (server-compacted). */
+  const memoryRef = useRef<string>('');
+  const compacting = useRef(false);
   const accent = infoColor(T);
 
   const started = messages.length > 0;
@@ -84,6 +102,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
           setThreads(clean);
           setActiveThreadId(last.id);
           setMessages(last.messages);
+          memoryRef.current = last.memory ?? '';
         }
       } catch { /* corrupt cache — start fresh */ }
     })();
@@ -103,7 +122,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
     const title = (messages.find(m => m.role === 'user')?.content ?? '').slice(0, 60) || 'Chat';
     setThreads(prev => {
       const rest = prev.filter(t => t.id !== id);
-      const next = [{ id, title, messages, updatedAt: Date.now() }, ...rest].slice(0, MAX_THREADS);
+      const next = [{ id, title, messages, updatedAt: Date.now(), memory: memoryRef.current || undefined }, ...rest].slice(0, MAX_THREADS);
       void scopedStorage.setItem(THREADS_KEY, JSON.stringify(next));
       return next;
     });
@@ -112,6 +131,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
   const openThread = (t: Thread) => {
     setActiveThreadId(t.id);
     setMessages(t.messages);
+    memoryRef.current = t.memory ?? '';
     setThreadsOpen(false);
     setThreadNotice(null);
     setError(null);
@@ -120,7 +140,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
   const deleteThread = (id: string) => {
     persistThreads(threads.filter(t => t.id !== id));
     setThreadNotice(null);
-    if (id === activeThreadId) { setActiveThreadId(null); setMessages([]); }
+    if (id === activeThreadId) { setActiveThreadId(null); setMessages([]); memoryRef.current = ''; }
   };
 
   const startNewChat = () => {
@@ -133,10 +153,12 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
     }
     setActiveThreadId(null);
     setMessages([]);
+    memoryRef.current = '';
     setError(null);
     setInput('');
     setNeedsPortfolio(false);
     setThreadNotice(null);
+    setThreadsOpen(false);
   };
 
   /* Load this month's usage so the meter is honest before the first send. */
@@ -222,7 +244,11 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
       const minimumThinkingTime = 5000 + Math.floor(Math.random() * 7001);
       const [{ data, error: fnErr }] = await Promise.all([
         supabase.functions.invoke('orca-coach', {
-          body: { messages: next, portfolio_id: overridePortfolioId ?? activePortfolioId },
+          body: {
+            messages: next.slice(-KEEP_VERBATIM * 2),
+            portfolio_id: overridePortfolioId ?? activePortfolioId,
+            memory: memoryRef.current || undefined,
+          },
         }),
         new Promise(resolve => window.setTimeout(resolve, minimumThinkingTime)),
       ]);
@@ -282,9 +308,28 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
       if (payload?.portfolio?.id && payload.portfolio.id !== activePortfolioId) {
         setActivePortfolioId(payload.portfolio.id);
       }
-      setMessages(m => [...m, { role: 'assistant', content: payload?.reply ?? '' }]);
+      const full: Msg[] = [...next, { role: 'assistant' as const, content: payload?.reply ?? '' }];
+      setMessages(full);
       if (typeof payload?.usage?.used === 'number') setUsed(payload.usage.used);
       else setUsed(u => u + 1);
+
+      /* Background compaction: once the thread outgrows the live window, fold
+         the older turns into a rolling memory note. Not a metered message. */
+      if (full.length > COMPACT_AFTER && !compacting.current) {
+        compacting.current = true;
+        const older = full.slice(0, full.length - KEEP_VERBATIM);
+        void supabase.functions
+          .invoke('orca-coach', { body: { action: 'compact', messages: older, memory: memoryRef.current || undefined } })
+          .then(({ data: cd }) => {
+            const mem = (cd as { memory?: string } | null)?.memory;
+            if (mem) {
+              memoryRef.current = mem;
+              setThreads(prev => prev.map(t => (t.id === activeThreadId ? { ...t, memory: mem } : t)));
+            }
+          })
+          .catch(err => console.warn('orca-coach compact', err))
+          .finally(() => { compacting.current = false; });
+      }
     } catch (e) {
       if (!cancelled.current) {
         setError(isRTL ? 'הקואצ׳ לא הצליח להשיב כרגע. נסה שוב.' : 'The coach could not answer right now. Please try again.');
@@ -453,16 +498,134 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
     }}>{error}</div>
   ) : null;
 
+  /* ── Persistent conversation rail (desktop page mode) ─────────────── */
+  const relTime = (ts: number) => {
+    const mins = Math.max(0, Math.round((Date.now() - ts) / 60000));
+    if (mins < 1) return isRTL ? 'עכשיו' : 'now';
+    if (mins < 60) return isRTL ? `לפני ${mins} ד׳` : `${mins}m ago`;
+    const hrs = Math.round(mins / 60);
+    if (hrs < 24) return isRTL ? `לפני ${hrs} ש׳` : `${hrs}h ago`;
+    return new Date(ts).toLocaleDateString(isRTL ? 'he-IL' : 'en-GB', { day: 'numeric', month: 'short' });
+  };
+
+  const railList = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto', flex: 1, minHeight: 0 }}>
+      {threads.length === 0 && (
+        <div style={{ fontSize: 11.5, color: T.text.muted, lineHeight: 1.6, padding: '10px 8px' }}>
+          {isRTL
+            ? 'אין שיחות שמורות עדיין. כל שיחה שתתחילו תישמר כאן.'
+            : 'No saved conversations yet. Anything you start is kept here.'}
+        </div>
+      )}
+      {threads.map(th => {
+        const active = th.id === activeThreadId;
+        return (
+          <div
+            key={th.id}
+            className="orca-coach-thread-row"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4, borderRadius: T.radius.sm,
+              background: active ? `${accent}16` : 'transparent',
+              border: `1px solid ${active ? `${accent}33` : 'transparent'}`,
+            }}
+          >
+            <button
+              onClick={() => openThread(th)}
+              style={{
+                flex: 1, minWidth: 0, textAlign: isRTL ? 'right' : 'left', cursor: 'pointer',
+                background: 'transparent', border: 'none', padding: '8px 9px', borderRadius: T.radius.sm,
+              }}
+            >
+              <div style={{
+                fontSize: 12.2, fontWeight: active ? 700 : 500, color: T.text.primary,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>{th.title}</div>
+              <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{relTime(th.updatedAt)}</div>
+            </button>
+            <button
+              onClick={() => deleteThread(th.id)}
+              aria-label={isRTL ? 'מחיקת שיחה' : 'Delete conversation'}
+              style={{ background: 'transparent', border: 'none', color: T.text.muted, cursor: 'pointer', padding: 7, borderRadius: T.radius.sm }}
+            ><Trash2 size={12} /></button>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const railHeader = (
+    <>
+      <button
+        onClick={startNewChat}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%',
+          background: `${accent}14`, border: `1px solid ${accent}3A`, color: T.text.primary,
+          borderRadius: 999, padding: '9px 12px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+        }}
+      ><RotateCcw size={12} style={{ color: accent }} />{isRTL ? 'שיחה חדשה' : 'New chat'}</button>
+      <div style={{ ...mono, color: T.text.muted, padding: '12px 6px 6px' }}>
+        {isRTL ? `שיחות · ${threads.length}/${MAX_THREADS}` : `Chats · ${threads.length}/${MAX_THREADS}`}
+      </div>
+    </>
+  );
+
+  const railNotice = threadNotice ? (
+    <div style={{
+      marginTop: 8, padding: 8, fontSize: 11.5, borderRadius: T.radius.sm, lineHeight: 1.5,
+      color: T.accent.orange, background: `${T.accent.orange}12`, border: `1px solid ${T.accent.orange}33`,
+    }}>{threadNotice}</div>
+  ) : null;
+
+  /** Wraps a surface with the conversation rail on desktop page mode. */
+  const withRail = (content: React.ReactNode) => {
+    if (!showRail) return content;
+    return (
+      <div style={{
+        direction: isRTL ? 'rtl' : 'ltr', display: 'grid',
+        gridTemplateColumns: '236px minmax(0, 1fr)', gap: 20, width: '100%', alignItems: 'stretch',
+      }}>
+        <aside style={{
+          ...panel, padding: 12, display: 'flex', flexDirection: 'column',
+          height: 'calc(100vh - 150px)', minHeight: 520, position: 'sticky', top: 0,
+        }}>
+          {railHeader}
+          {railList}
+          {railNotice}
+        </aside>
+        <div style={{ minWidth: 0 }}>{content}</div>
+      </div>
+    );
+  };
+
   /* ══════════════════ STATE A · IDLE ══════════════════ */
   if (!started) {
-    return (
-      <div style={{ direction: isRTL ? 'rtl' : 'ltr', maxWidth: 860, marginInline: 'auto', width: '100%', paddingBottom: 40 }}>
-        <div style={{ textAlign: 'center', paddingTop: 'clamp(24px, 6vh, 64px)', marginBottom: 26 }}>
+    return withRail(
+      <div style={{ direction: isRTL ? 'rtl' : 'ltr', maxWidth: 860, marginInline: 'auto', width: '100%', paddingBottom: isPanel ? 8 : 40 }}>
+        {/* Compact chat drawer for mobile and the floating panel. */}
+        {!showRail && threads.length > 0 && (
+          <div style={{ paddingTop: 6 }}>
+            <button
+              onClick={() => setThreadsOpen(o => !o)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                background: 'transparent', border: `1px solid ${T.border.subtle}`, color: T.text.secondary,
+                borderRadius: 999, padding: '5px 11px', fontSize: 11.5, cursor: 'pointer',
+              }}
+            ><MessageSquare size={11} />{isRTL ? 'שיחות' : 'Chats'} {threads.length}/{MAX_THREADS}</button>
+            {threadsOpen && (
+              <div style={{ ...panel, padding: 8, marginTop: 8, maxHeight: 230, overflowY: 'auto' }}>
+                {railList}
+                {railNotice}
+              </div>
+            )}
+          </div>
+        )}
+        <div style={{ textAlign: 'center', paddingTop: isPanel ? 10 : 'clamp(24px, 6vh, 64px)', marginBottom: isPanel ? 16 : 26 }}>
           <div style={{
             width: 44, height: 44, borderRadius: 12, margin: '0 auto 18px', display: 'grid', placeItems: 'center',
             background: `${accent}1C`, border: `1px solid ${accent}40`, color: accent, fontSize: 19,
           }}>◈</div>
-          <h1 style={{ fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: 700, lineHeight: 1.2, margin: '0 0 10px', color: T.text.primary }}>
+          <h1 style={{ fontSize: isPanel ? 21 : 'clamp(24px, 4vw, 36px)', fontWeight: 700, lineHeight: 1.2, margin: '0 0 10px', color: T.text.primary }}>
             {isRTL ? 'במה נתחיל?' : 'Where should we start?'}
           </h1>
           <p style={{ maxWidth: 500, margin: '0 auto', fontSize: 13.5, lineHeight: 1.7, color: T.text.secondary }}>
@@ -499,22 +662,26 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
           </div>
         )}
 
-        <div style={{ height: 1, background: T.border.subtle, margin: '34px 0 22px' }} />
+        {/* Capability cards are page furniture — the floating panel stays lean. */}
+        {!isPanel && <div style={{ height: 1, background: T.border.subtle, margin: '34px 0 22px' }} />}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
-          {CARDS.map(({ Icon, ...c }) => (
-            <div key={c.en} style={{ ...panel, padding: 14, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <div style={{
-                width: 26, height: 26, borderRadius: 8, flexShrink: 0, display: 'grid', placeItems: 'center',
-                background: `${accent}14`, border: `1px solid ${accent}2E`, color: accent,
-              }}><Icon size={13} /></div>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 600, color: T.text.primary, marginBottom: 3 }}>{isRTL ? c.he : c.en}</div>
-                <div style={{ fontSize: 11, color: T.text.secondary, lineHeight: 1.55 }}>{isRTL ? c.dhe : c.den}</div>
+        {!isPanel && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+            {CARDS.map(({ Icon, ...c }) => (
+              <div key={c.en} style={{ ...panel, padding: 14, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                <div style={{
+                  width: 26, height: 26, borderRadius: 8, flexShrink: 0, display: 'grid', placeItems: 'center',
+                  background: `${accent}14`, border: `1px solid ${accent}2E`, color: accent,
+                }}><Icon size={13} /></div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: T.text.primary, marginBottom: 3 }}>{isRTL ? c.he : c.en}</div>
+                  <div style={{ fontSize: 11, color: T.text.secondary, lineHeight: 1.55 }}>{isRTL ? c.dhe : c.den}</div>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
+
 
         {!isPro && (
           <div style={{ ...mono, color: T.text.muted, textAlign: 'center', marginTop: 22 }}>
@@ -526,10 +693,11 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
   }
 
   /* ══════════════════ STATE B · ACTIVE CHAT ══════════════════ */
-  return (
+  return withRail(
     <div style={{
       direction: isRTL ? 'rtl' : 'ltr', width: '100%',
-      display: 'flex', flexDirection: 'column', height: 'calc(100vh - 150px)', minHeight: 520,
+      display: 'flex', flexDirection: 'column',
+      height: isPanel ? '100%' : 'calc(100vh - 150px)', minHeight: isPanel ? 0 : 520,
     }}>
       {/* slim top bar */}
       <div style={{
@@ -545,14 +713,17 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
           <span style={{ ...mono, color: isPro ? accent : T.text.muted }}>
             {isPro ? 'Pro · Fair use' : `${remaining}/${FREE_LIMIT}`}
           </span>
-          <button
-            onClick={() => { setThreadsOpen(o => !o); setThreadNotice(null); }}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              background: 'transparent', border: `1px solid ${T.border.subtle}`, color: T.text.secondary,
-              borderRadius: 999, padding: '5px 11px', fontSize: 11.5, cursor: 'pointer',
-            }}
-          ><MessageSquare size={11} />{isRTL ? 'שיחות' : 'Chats'} {threads.length}/{MAX_THREADS}</button>
+          {/* Compact drawer trigger — the desktop page uses the side rail instead. */}
+          {!showRail && (
+            <button
+              onClick={() => { setThreadsOpen(o => !o); setThreadNotice(null); }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                background: 'transparent', border: `1px solid ${T.border.subtle}`, color: T.text.secondary,
+                borderRadius: 999, padding: '5px 11px', fontSize: 11.5, cursor: 'pointer',
+              }}
+            ><MessageSquare size={11} />{isRTL ? 'שיחות' : 'Chats'} {threads.length}/{MAX_THREADS}</button>
+          )}
           <button
             onClick={startNewChat}
             style={{
@@ -562,7 +733,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
             }}
           ><RotateCcw size={11} />{isRTL ? 'שיחה חדשה' : 'New chat'}</button>
 
-          {threadsOpen && (
+          {threadsOpen && !showRail && (
             <div style={{
               position: 'absolute', top: '100%', insetInlineEnd: 0, marginTop: 8, zIndex: 40,
               width: 300, background: T.bg.card, border: `1px solid ${T.border.subtle}`,
