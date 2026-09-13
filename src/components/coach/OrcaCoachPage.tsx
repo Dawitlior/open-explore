@@ -673,7 +673,8 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
   return withRail(
     <div style={{
       direction: isRTL ? 'rtl' : 'ltr', width: '100%',
-      display: 'flex', flexDirection: 'column', height: 'calc(100vh - 150px)', minHeight: 520,
+      display: 'flex', flexDirection: 'column',
+      height: isPanel ? '100%' : 'calc(100vh - 150px)', minHeight: isPanel ? 0 : 520,
     }}>
       {/* slim top bar */}
       <div style={{
