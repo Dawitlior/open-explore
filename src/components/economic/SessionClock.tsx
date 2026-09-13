@@ -370,17 +370,30 @@ export default function SessionClock({ T, compact: compactProp = true }: Props) 
                       }}
                     >
                       {m.isOpen && (
-                        <circle cx={x} cy={y} r={22} fill={c} opacity={0.16}>
-                          <animate attributeName="r" values="14;30;14" dur="3s" repeatCount="indefinite" />
-                          <animate attributeName="opacity" values="0.25;0;0.25" dur="3s" repeatCount="indefinite" />
+                        <circle cx={x} cy={y} r={16} fill="none" stroke={OPEN_C} strokeWidth={1.5} opacity={0.5}>
+                          <animate attributeName="r" values="12;24;12" dur="3s" repeatCount="indefinite" />
+                          <animate attributeName="opacity" values="0.5;0;0.5" dur="3s" repeatCount="indefinite" />
                         </circle>
                       )}
-                      <circle cx={x} cy={y} r={14} fill="transparent" />
-                      <circle cx={x} cy={y} r={9} fill={c} opacity={0.22} />
-                      <circle cx={x} cy={y} r={4.5} fill={c} stroke={PANEL} strokeWidth={1.5} />
+                      <clipPath id={`sc-flag-${m.def.id}`}>
+                        <circle cx={x} cy={y} r={11} />
+                      </clipPath>
+                      <circle cx={x} cy={y} r={18} fill="transparent" />
+                      <image
+                        href={FLAG_SRC[m.def.id]}
+                        x={x - 11} y={y - 11} width={22} height={22}
+                        preserveAspectRatio="xMidYMid slice"
+                        clipPath={`url(#sc-flag-${m.def.id})`}
+                        opacity={m.isOpen ? 1 : 0.55}
+                        pointerEvents="none"
+                      />
+                      <circle
+                        cx={x} cy={y} r={11} fill="none"
+                        stroke={m.isOpen ? OPEN_C : PANEL} strokeWidth={2} opacity={m.isOpen ? 0.95 : 0.7}
+                      />
                       <text
                         x={x}
-                        y={y - 14}
+                        y={y - 17}
                         textAnchor="middle"
                         style={{ fontSize: 17, fill: m.isOpen ? TEXT : TEXT_DIM, fontWeight: 700, fontFamily: "'IBM Plex Mono', monospace" }}
                       >
