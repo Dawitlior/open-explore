@@ -709,7 +709,7 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
             }}
           ><RotateCcw size={11} />{isRTL ? 'שיחה חדשה' : 'New chat'}</button>
 
-          {threadsOpen && (
+          {threadsOpen && !showRail && (
             <div style={{
               position: 'absolute', top: '100%', insetInlineEnd: 0, marginTop: 8, zIndex: 40,
               width: 300, background: T.bg.card, border: `1px solid ${T.border.subtle}`,
