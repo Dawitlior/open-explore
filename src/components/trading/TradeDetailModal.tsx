@@ -180,7 +180,10 @@ export function TradeDetailModal({
     ? { duration: 0 }
     : { type: 'spring' as const, stiffness: 260, damping: 26, mass: 0.9 };
 
-  return (
+  // Rendered through a portal on document.body: any transformed ancestor in the
+  // animated journal surface would otherwise become the containing block for
+  // `position: fixed` and push the dossier off-centre after scrolling.
+  return createPortal(
     <AnimatePresence mode="wait">
       <motion.div
         role="dialog"
