@@ -30,6 +30,14 @@ const MARKETS: MarketDef[] = [
   { id: 'newyork', he: 'ניו יורק', en: 'New York', tz: 'America/New_York', flag: '🇺🇸', lon: -74.01, lat: 40.71, open: 8, close: 17 },
 ];
 
+/** Round flag markers for each session, served from /public/flags. */
+const FLAG_SRC: Record<string, string> = {
+  sydney: '/flags/au.svg',
+  tokyo: '/flags/jp.svg',
+  london: '/flags/gb.svg',
+  newyork: '/flags/us.svg',
+};
+
 const MAP_W = 1000;
 const MAP_H = 500;
 
