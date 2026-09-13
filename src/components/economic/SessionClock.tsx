@@ -326,14 +326,14 @@ export default function SessionClock({ T, compact: compactProp = true }: Props) 
 
                   {/* Graticule */}
                   {[-60, -30, 0, 30, 60].map(lat => (
-                    <line key={`la${lat}`} x1={0} x2={MAP_W} y1={projY(lat)} y2={projY(lat)} stroke={BORDER_SOFT} strokeWidth={1} />
+                    <line key={`la${lat}`} x1={0} x2={MAP_W} y1={projY(lat)} y2={projY(lat)} stroke={GRID_C} strokeWidth={1} />
                   ))}
                   {[-120, -60, 0, 60, 120].map(lon => (
-                    <line key={`lo${lon}`} y1={0} y2={MAP_H} x1={projX(lon)} x2={projX(lon)} stroke={BORDER_SOFT} strokeWidth={1} />
+                    <line key={`lo${lon}`} y1={0} y2={MAP_H} x1={projX(lon)} x2={projX(lon)} stroke={GRID_C} strokeWidth={1} />
                   ))}
 
                   {/* Land */}
-                  <path d={WORLD_LAND_PATH} fill={LAND} stroke={BORDER} strokeWidth={0.8} />
+                  <path d={WORLD_LAND_PATH} fill={LAND} stroke={LAND_STROKE} strokeWidth={0.8} />
 
                   {/* Night side */}
                   {nightBands.map((b, i) => (
