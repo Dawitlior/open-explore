@@ -600,8 +600,27 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
   /* ══════════════════ STATE A · IDLE ══════════════════ */
   if (!started) {
     return withRail(
-      <div style={{ direction: isRTL ? 'rtl' : 'ltr', maxWidth: 860, marginInline: 'auto', width: '100%', paddingBottom: 40 }}>
-        <div style={{ textAlign: 'center', paddingTop: 'clamp(24px, 6vh, 64px)', marginBottom: 26 }}>
+      <div style={{ direction: isRTL ? 'rtl' : 'ltr', maxWidth: 860, marginInline: 'auto', width: '100%', paddingBottom: isPanel ? 8 : 40 }}>
+        {/* Compact chat drawer for mobile and the floating panel. */}
+        {!showRail && threads.length > 0 && (
+          <div style={{ paddingTop: 6 }}>
+            <button
+              onClick={() => setThreadsOpen(o => !o)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                background: 'transparent', border: `1px solid ${T.border.subtle}`, color: T.text.secondary,
+                borderRadius: 999, padding: '5px 11px', fontSize: 11.5, cursor: 'pointer',
+              }}
+            ><MessageSquare size={11} />{isRTL ? 'שיחות' : 'Chats'} {threads.length}/{MAX_THREADS}</button>
+            {threadsOpen && (
+              <div style={{ ...panel, padding: 8, marginTop: 8, maxHeight: 230, overflowY: 'auto' }}>
+                {railList}
+                {railNotice}
+              </div>
+            )}
+          </div>
+        )}
+        <div style={{ textAlign: 'center', paddingTop: isPanel ? 10 : 'clamp(24px, 6vh, 64px)', marginBottom: isPanel ? 16 : 26 }}>
           <div style={{
             width: 44, height: 44, borderRadius: 12, margin: '0 auto 18px', display: 'grid', placeItems: 'center',
             background: `${accent}1C`, border: `1px solid ${accent}40`, color: accent, fontSize: 19,
