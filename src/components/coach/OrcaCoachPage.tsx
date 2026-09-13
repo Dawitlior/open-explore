@@ -293,7 +293,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
     } finally {
       setBusy(false);
     }
-  }, [busy, messages, activePortfolioId, setActivePortfolioId, isPro, used, isRTL, autoGrow]);
+  }, [busy, messages, activePortfolioId, setActivePortfolioId, isPro, used, isRTL, autoGrow, activeThreadId, threads.length]);
 
   const STARTERS = useMemo(() => (isRTL
     ? ['מה הדליפה הגדולה ביותר בתיק שלי?', 'נתח את 10 העסקאות האחרונות שלי', 'באילו שעות אני מפסיד הכי הרבה?', 'מה הצעד הבא שכדאי לי לתקן?']
