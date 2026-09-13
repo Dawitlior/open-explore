@@ -199,6 +199,16 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
   const send = useCallback(async (text: string, overridePortfolioId?: string) => {
     const clean = text.trim();
     if (!clean || busy) return;
+    // Saved-conversation cap: a brand-new chat needs a free slot.
+    if (!activeThreadId && threads.length >= MAX_THREADS) {
+      setThreadsOpen(true);
+      const msg = isRTL
+        ? `אפשר לשמור עד ${MAX_THREADS} שיחות. מחקו שיחה קיימת כדי לפתוח חדשה.`
+        : `You can keep up to ${MAX_THREADS} conversations. Delete one to start a new chat.`;
+      setThreadNotice(msg);
+      setError(msg);
+      return;
+    }
     if (!isPro && used >= FREE_LIMIT) { setPaywall(true); return; }
     setError(null);
     setNeedsPortfolio(false);
