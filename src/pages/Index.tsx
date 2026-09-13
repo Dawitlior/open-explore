@@ -260,16 +260,14 @@ const Index = () => {
     window.addEventListener('orca:open-trader-mind', onOpen);
     return () => window.removeEventListener('orca:open-trader-mind', onOpen);
   }, []);
+  // Trader Mind never auto-opens after sign-in — the user always lands on the
+  // dashboard and opens the diagnostic from the sidebar when they choose to.
   useEffect(() => {
     void (async () => {
       const { scopedStorage } = await import('@/lib/scoped-storage');
-      const pending = await scopedStorage.getItem('orca-trader-mind-prompt-pending');
-      if (pending === '1' && !tmCalibrated) {
-        setTimeout(() => setShowTraderMind(true), 1200);
-        void scopedStorage.removeItem('orca-trader-mind-prompt-pending');
-      }
+      void scopedStorage.removeItem('orca-trader-mind-prompt-pending');
     })();
-  }, [tmCalibrated]);
+  }, []);
   const [aiInsights, setAiInsights] = useState<ReturnType<typeof generateInsights>>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);

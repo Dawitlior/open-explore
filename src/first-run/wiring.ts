@@ -127,5 +127,6 @@ export function persistOnboardingLocal(answers: Answers): void {
   void scopedStorage.setItem(ONBOARDING_DONE_KEY, '1')
   if (answers.fullName.trim()) void scopedStorage.setItem(NAME_KEY, answers.fullName.trim())
   if (answers.experienceLevel) void scopedStorage.setItem(PROFILE_KEY, answers.experienceLevel)
-  void scopedStorage.setItem(TRADER_MIND_PENDING_KEY, '1')
+  // Trader Mind is opt-in from the sidebar — never auto-launched after onboarding.
+  void scopedStorage.removeItem(TRADER_MIND_PENDING_KEY)
 }
