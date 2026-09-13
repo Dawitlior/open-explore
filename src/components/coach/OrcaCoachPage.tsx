@@ -102,6 +102,7 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
           setThreads(clean);
           setActiveThreadId(last.id);
           setMessages(last.messages);
+          memoryRef.current = last.memory ?? '';
         }
       } catch { /* corrupt cache — start fresh */ }
     })();
