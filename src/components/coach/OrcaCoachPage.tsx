@@ -167,7 +167,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
     if (last?.role === 'assistant') {
       const el = msgRefs.current[messages.length - 1];
       if (el) {
-        const top = el.offsetTop - box.offsetTop - 12;
+        const top = el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 12;
         box.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
         return;
       }
