@@ -2530,6 +2530,11 @@ const Index = () => {
         </div>
       </MainPullToRefresh>
 
+      {/* Floating Pro AI assistant — hidden while the full Coach channel is open. */}
+      <Suspense fallback={null}>
+        <CoachLauncher T={T} isRTL={isRTL} enabled={isUltimateTier} hidden={page === 'ai' && aiChannel === 'coach'} />
+      </Suspense>
+
       {/* OVERLAYS */}
       {showTradingReport && <TradingReportModal T={T} isRTL={isRTL} trades={trades} onClose={() => setShowTradingReport(false)} />}
       {showTradeForm && <TradeForm T={T} t={t} isRTL={isRTL} trade={editingTrade} currentBalance={currentBalance} trades={trades} onSave={handleSaveTrade} onClose={() => { setShowTradeForm(false); setEditingTrade(null); }} />}
