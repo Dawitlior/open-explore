@@ -662,9 +662,11 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
         )}
         <div style={{ textAlign: 'center', paddingTop: isPanel ? 10 : 'clamp(24px, 6vh, 64px)', marginBottom: isPanel ? 16 : 26 }}>
           <div style={{
-            width: 44, height: 44, borderRadius: 12, margin: '0 auto 18px', display: 'grid', placeItems: 'center',
-            background: `${accent}1C`, border: `1px solid ${accent}40`, color: accent, fontSize: 19,
-          }}>◈</div>
+            width: 56, height: 56, borderRadius: 999, margin: '0 auto 18px', display: 'grid', placeItems: 'center',
+            background: `radial-gradient(circle at 50% 45%, ${accent}26, transparent 72%)`,
+            border: `1px solid ${accent}40`,
+            boxShadow: `0 0 24px -4px ${accent}88`,
+          }}><img src="/orcaIcon.ico" alt="" aria-hidden width={34} height={34} style={{ width: 34, height: 34, objectFit: 'contain', filter: `drop-shadow(0 0 6px ${accent}AA)` }} /></div>
           <h1 style={{ fontSize: isPanel ? 21 : 'clamp(24px, 4vw, 36px)', fontWeight: 700, lineHeight: 1.2, margin: '0 0 10px', color: T.text.primary }}>
             {isRTL ? 'במה נתחיל?' : 'Where should we start?'}
           </h1>
@@ -722,9 +724,10 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
         padding: '0 4px 10px', borderBottom: `1px solid ${T.border.subtle}`, marginBottom: 4,
       }}>
         <div style={{
-          width: 24, height: 24, borderRadius: 7, display: 'grid', placeItems: 'center', flexShrink: 0,
-          background: `${accent}1C`, border: `1px solid ${accent}40`, color: accent, fontSize: 11,
-        }}>◈</div>
+          width: 26, height: 26, borderRadius: 999, display: 'grid', placeItems: 'center', flexShrink: 0,
+          background: `radial-gradient(circle at 50% 45%, ${accent}26, transparent 72%)`,
+          border: `1px solid ${accent}40`, boxShadow: `0 0 14px -4px ${accent}99`,
+        }}><img src="/orcaIcon.ico" alt="" aria-hidden width={17} height={17} style={{ width: 17, height: 17, objectFit: 'contain' }} /></div>
         <span style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>Orca Coach</span>
         <div style={{ marginInlineStart: 'auto', display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
           <span style={{ ...mono, color: isPro ? accent : T.text.muted }}>
@@ -811,9 +814,10 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
             ) : (
               <div key={i} ref={el => { msgRefs.current[i] = el; }} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <div style={{
-                  width: 24, height: 24, borderRadius: 7, flexShrink: 0, marginTop: 2, display: 'grid', placeItems: 'center',
-                  background: `${accent}16`, border: `1px solid ${accent}33`, color: accent, fontSize: 11,
-                }}>◈</div>
+                  width: 26, height: 26, borderRadius: 999, flexShrink: 0, marginTop: 2, display: 'grid', placeItems: 'center',
+                  background: `radial-gradient(circle at 50% 45%, ${accent}22, transparent 72%)`,
+                  border: `1px solid ${accent}33`, boxShadow: `0 0 12px -4px ${accent}88`,
+                }}><img src="/orcaIcon.ico" alt="" aria-hidden width={17} height={17} style={{ width: 17, height: 17, objectFit: 'contain' }} /></div>
                 <div className="orca-coach-md" style={{ color: T.text.primary, fontSize: 13.5, lineHeight: 1.78, minWidth: 0, flex: 1 }}>
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
                 </div>
