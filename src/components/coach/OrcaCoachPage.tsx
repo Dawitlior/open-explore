@@ -308,9 +308,28 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
       if (payload?.portfolio?.id && payload.portfolio.id !== activePortfolioId) {
         setActivePortfolioId(payload.portfolio.id);
       }
-      setMessages(m => [...m, { role: 'assistant', content: payload?.reply ?? '' }]);
+      const full: Msg[] = [...next, { role: 'assistant' as const, content: payload?.reply ?? '' }];
+      setMessages(full);
       if (typeof payload?.usage?.used === 'number') setUsed(payload.usage.used);
       else setUsed(u => u + 1);
+
+      /* Background compaction: once the thread outgrows the live window, fold
+         the older turns into a rolling memory note. Not a metered message. */
+      if (full.length > COMPACT_AFTER && !compacting.current) {
+        compacting.current = true;
+        const older = full.slice(0, full.length - KEEP_VERBATIM);
+        void supabase.functions
+          .invoke('orca-coach', { body: { action: 'compact', messages: older, memory: memoryRef.current || undefined } })
+          .then(({ data: cd }) => {
+            const mem = (cd as { memory?: string } | null)?.memory;
+            if (mem) {
+              memoryRef.current = mem;
+              setThreads(prev => prev.map(t => (t.id === activeThreadId ? { ...t, memory: mem } : t)));
+            }
+          })
+          .catch(err => console.warn('orca-coach compact', err))
+          .finally(() => { compacting.current = false; });
+      }
     } catch (e) {
       if (!cancelled.current) {
         setError(isRTL ? 'הקואצ׳ לא הצליח להשיב כרגע. נסה שוב.' : 'The coach could not answer right now. Please try again.');
