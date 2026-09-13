@@ -114,11 +114,21 @@ export function markOnboardingDoneLocal(): void {
    that syncs theme/lang), so a returning user on a new device is NOT re-onboarded.
    Degrades to false on any error (falls back to the local flag). */
 export async function isOnboardingDoneCloud(): Promise<boolean> {
-  try { return (await getSetting<string>('onboarding_completed')) === '1' } catch { return false }
+  try {
+    const v = await getSetting<unknown>('onboarding_completed')
+    return v === '1' || v === 1 || v === true
+  } catch { return false }
 }
 
+/** Write the cross-device flag and verify it — a silent failure here is what
+   makes onboarding re-appear on every sign-in, so we retry once. */
 export async function markOnboardingCompleteCloud(): Promise<void> {
-  try { await setSetting('onboarding_completed', '1') } catch { /* non-blocking */ }
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      await setSetting('onboarding_completed', '1')
+      if (await isOnboardingDoneCloud()) return
+    } catch { /* retry */ }
+  }
 }
 
 /** Persist the local onboarding facts (name, experience, done flag) exactly as
