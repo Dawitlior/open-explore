@@ -244,7 +244,11 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
       const minimumThinkingTime = 5000 + Math.floor(Math.random() * 7001);
       const [{ data, error: fnErr }] = await Promise.all([
         supabase.functions.invoke('orca-coach', {
-          body: { messages: next, portfolio_id: overridePortfolioId ?? activePortfolioId },
+          body: {
+            messages: next.slice(-KEEP_VERBATIM * 2),
+            portfolio_id: overridePortfolioId ?? activePortfolioId,
+            memory: memoryRef.current || undefined,
+          },
         }),
         new Promise(resolve => window.setTimeout(resolve, minimumThinkingTime)),
       ]);
