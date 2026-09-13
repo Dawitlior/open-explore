@@ -76,6 +76,9 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
   const taRef = useRef<HTMLTextAreaElement | null>(null);
   const msgRefs = useRef<(HTMLDivElement | null)[]>([]);
   const cancelled = useRef(false);
+  /** Rolling memory of the active thread's older turns (server-compacted). */
+  const memoryRef = useRef<string>('');
+  const compacting = useRef(false);
   const accent = infoColor(T);
 
   const started = messages.length > 0;
