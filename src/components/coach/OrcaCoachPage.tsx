@@ -30,16 +30,30 @@ import { infoColor } from '@/lib/semantic-color';
 interface Props {
   T: TradingTheme;
   isRTL: boolean;
+  /** 'page' = full channel with a persistent conversation rail.
+   *  'panel' = compact surface used by the floating Pro assistant. */
+  variant?: 'page' | 'panel';
 }
 
 interface Msg { role: 'user' | 'assistant'; content: string }
-interface Thread { id: string; title: string; messages: Msg[]; updatedAt: number }
+interface Thread {
+  id: string; title: string; messages: Msg[]; updatedAt: number;
+  /** Compacted memory of turns older than the live window. */
+  memory?: string;
+}
 
 const FREE_LIMIT = 5;
 const MAX_THREADS = 5;
 const THREADS_KEY = 'orca-coach-threads';
+/** Compact once a conversation grows past this many turns. */
+const COMPACT_AFTER = 12;
+/** Turns kept verbatim after a compaction pass. */
+const KEEP_VERBATIM = 6;
 
-export default function OrcaCoachPage({ T, isRTL }: Props) {
+export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
+  const isPanel = variant === 'panel';
+  const isMobile = useIsMobile();
+  const showRail = !isPanel && !isMobile;
   const { activePortfolioId, portfolios, setActivePortfolioId } = useActivePortfolio();
   const { tier } = useEntitlement();
   const { isCalibrated: tmDone, archetype: tmArchetype } = useTraderMind();
