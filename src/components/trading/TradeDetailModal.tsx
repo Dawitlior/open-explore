@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
