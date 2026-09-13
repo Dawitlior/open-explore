@@ -625,7 +625,7 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
             width: 44, height: 44, borderRadius: 12, margin: '0 auto 18px', display: 'grid', placeItems: 'center',
             background: `${accent}1C`, border: `1px solid ${accent}40`, color: accent, fontSize: 19,
           }}>◈</div>
-          <h1 style={{ fontSize: 'clamp(24px, 4vw, 36px)', fontWeight: 700, lineHeight: 1.2, margin: '0 0 10px', color: T.text.primary }}>
+          <h1 style={{ fontSize: isPanel ? 21 : 'clamp(24px, 4vw, 36px)', fontWeight: 700, lineHeight: 1.2, margin: '0 0 10px', color: T.text.primary }}>
             {isRTL ? 'במה נתחיל?' : 'Where should we start?'}
           </h1>
           <p style={{ maxWidth: 500, margin: '0 auto', fontSize: 13.5, lineHeight: 1.7, color: T.text.secondary }}>
