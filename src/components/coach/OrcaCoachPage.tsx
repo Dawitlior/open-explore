@@ -157,8 +157,22 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
     return () => { alive = false; };
   }, []);
 
+  /* Scrolling: a new answer parks its first line at the top of the transcript
+     (so the reply is read from its beginning), while sending a question or the
+     thinking indicator follows the bottom. */
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    const box = scrollRef.current;
+    if (!box) return;
+    const last = messages[messages.length - 1];
+    if (last?.role === 'assistant') {
+      const el = msgRefs.current[messages.length - 1];
+      if (el) {
+        const top = el.offsetTop - box.offsetTop - 12;
+        box.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+        return;
+      }
+    }
+    box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
   }, [messages, busy]);
 
   useEffect(() => { if (!busy && !paywall) taRef.current?.focus(); }, [busy, paywall, started]);
