@@ -140,10 +140,26 @@ export default function SessionClock({ T, compact: compactProp = true }: Props) 
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6;
   }, [T]);
 
-  const OCEAN = isLightTheme ? 'rgba(148,163,184,0.10)' : 'rgba(6,19,38,0.55)';
-  const LAND = isLightTheme ? 'rgba(71,85,105,0.16)' : SURFACE;
-  const NIGHT_C = isLightTheme ? '#64748b' : '#00060f';
-  const NIGHT_O = isLightTheme ? 0.2 : 0.55;
+  /** Accent-tinted alpha — keeps the map in the active palette instead of a
+      washed-out grey slab. Falls back to the raw colour for non-hex tokens. */
+  const withA = (color: string, a: number): string => {
+    const raw = String(color ?? '').trim();
+    if (!raw.startsWith('#')) return raw;
+    const hex = raw.slice(1);
+    const full = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+    if (full.length !== 6) return raw;
+    const r = parseInt(full.slice(0, 2), 16);
+    const g = parseInt(full.slice(2, 4), 16);
+    const b = parseInt(full.slice(4, 6), 16);
+    return `rgba(${r},${g},${b},${a})`;
+  };
+
+  const OCEAN = withA(ACCENT, isLightTheme ? 0.07 : 0.05);
+  const LAND = withA(ACCENT, isLightTheme ? 0.48 : 0.3);
+  const LAND_STROKE = withA(ACCENT, isLightTheme ? 0.75 : 0.5);
+  const GRID_C = withA(ACCENT, isLightTheme ? 0.18 : 0.14);
+  const NIGHT_C = isLightTheme ? '#1e293b' : '#00060f';
+  const NIGHT_O = isLightTheme ? 0.14 : 0.5;
 
   const markets = useMemo(
     () => MARKETS.map(m => computeMarket(m, now)),
