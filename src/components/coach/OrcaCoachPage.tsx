@@ -498,9 +498,108 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
     }}>{error}</div>
   ) : null;
 
+  /* ── Persistent conversation rail (desktop page mode) ─────────────── */
+  const relTime = (ts: number) => {
+    const mins = Math.max(0, Math.round((Date.now() - ts) / 60000));
+    if (mins < 1) return isRTL ? 'עכשיו' : 'now';
+    if (mins < 60) return isRTL ? `לפני ${mins} ד׳` : `${mins}m ago`;
+    const hrs = Math.round(mins / 60);
+    if (hrs < 24) return isRTL ? `לפני ${hrs} ש׳` : `${hrs}h ago`;
+    return new Date(ts).toLocaleDateString(isRTL ? 'he-IL' : 'en-GB', { day: 'numeric', month: 'short' });
+  };
+
+  const railList = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, overflowY: 'auto', flex: 1, minHeight: 0 }}>
+      {threads.length === 0 && (
+        <div style={{ fontSize: 11.5, color: T.text.muted, lineHeight: 1.6, padding: '10px 8px' }}>
+          {isRTL
+            ? 'אין שיחות שמורות עדיין. כל שיחה שתתחילו תישמר כאן.'
+            : 'No saved conversations yet. Anything you start is kept here.'}
+        </div>
+      )}
+      {threads.map(th => {
+        const active = th.id === activeThreadId;
+        return (
+          <div
+            key={th.id}
+            className="orca-coach-thread-row"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4, borderRadius: T.radius.sm,
+              background: active ? `${accent}16` : 'transparent',
+              border: `1px solid ${active ? `${accent}33` : 'transparent'}`,
+            }}
+          >
+            <button
+              onClick={() => openThread(th)}
+              style={{
+                flex: 1, minWidth: 0, textAlign: isRTL ? 'right' : 'left', cursor: 'pointer',
+                background: 'transparent', border: 'none', padding: '8px 9px', borderRadius: T.radius.sm,
+              }}
+            >
+              <div style={{
+                fontSize: 12.2, fontWeight: active ? 700 : 500, color: T.text.primary,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>{th.title}</div>
+              <div style={{ fontSize: 10, color: T.text.muted, marginTop: 2 }}>{relTime(th.updatedAt)}</div>
+            </button>
+            <button
+              onClick={() => deleteThread(th.id)}
+              aria-label={isRTL ? 'מחיקת שיחה' : 'Delete conversation'}
+              style={{ background: 'transparent', border: 'none', color: T.text.muted, cursor: 'pointer', padding: 7, borderRadius: T.radius.sm }}
+            ><Trash2 size={12} /></button>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const railHeader = (
+    <>
+      <button
+        onClick={startNewChat}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%',
+          background: `${accent}14`, border: `1px solid ${accent}3A`, color: T.text.primary,
+          borderRadius: 999, padding: '9px 12px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+        }}
+      ><RotateCcw size={12} style={{ color: accent }} />{isRTL ? 'שיחה חדשה' : 'New chat'}</button>
+      <div style={{ ...mono, color: T.text.muted, padding: '12px 6px 6px' }}>
+        {isRTL ? `שיחות · ${threads.length}/${MAX_THREADS}` : `Chats · ${threads.length}/${MAX_THREADS}`}
+      </div>
+    </>
+  );
+
+  const railNotice = threadNotice ? (
+    <div style={{
+      marginTop: 8, padding: 8, fontSize: 11.5, borderRadius: T.radius.sm, lineHeight: 1.5,
+      color: T.accent.orange, background: `${T.accent.orange}12`, border: `1px solid ${T.accent.orange}33`,
+    }}>{threadNotice}</div>
+  ) : null;
+
+  /** Wraps a surface with the conversation rail on desktop page mode. */
+  const withRail = (content: React.ReactNode) => {
+    if (!showRail) return content;
+    return (
+      <div style={{
+        direction: isRTL ? 'rtl' : 'ltr', display: 'grid',
+        gridTemplateColumns: '236px minmax(0, 1fr)', gap: 20, width: '100%', alignItems: 'stretch',
+      }}>
+        <aside style={{
+          ...panel, padding: 12, display: 'flex', flexDirection: 'column',
+          height: 'calc(100vh - 150px)', minHeight: 520, position: 'sticky', top: 0,
+        }}>
+          {railHeader}
+          {railList}
+          {railNotice}
+        </aside>
+        <div style={{ minWidth: 0 }}>{content}</div>
+      </div>
+    );
+  };
+
   /* ══════════════════ STATE A · IDLE ══════════════════ */
   if (!started) {
-    return (
+    return withRail(
       <div style={{ direction: isRTL ? 'rtl' : 'ltr', maxWidth: 860, marginInline: 'auto', width: '100%', paddingBottom: 40 }}>
         <div style={{ textAlign: 'center', paddingTop: 'clamp(24px, 6vh, 64px)', marginBottom: 26 }}>
           <div style={{
