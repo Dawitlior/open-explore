@@ -4,17 +4,18 @@ import {
   BookText,
   BarChart3,
   ShieldCheck,
-  Radar,
   ChevronDown,
   LayoutGrid,
+  LayoutDashboard,
+  NotebookPen,
+  LineChart,
+  BrainCircuit,
+  PlugZap,
+  FileInput,
   Sunrise,
   Moon,
   CalendarDays,
-  Cable,
-  FileUp,
   Sparkles,
-  Brain,
-  Gauge,
 } from 'lucide-react'
 import { scroll } from '../lib/scroll-store'
 import { IconTile, type Accent } from './ui/primitives'
@@ -46,17 +47,17 @@ type MenuItem = {
 
 // ── feature catalogue ───────────────────────────────────────────────────────
 const F = {
-  dashboard: { Icon: Gauge, accent: 'indigo', title: 'Dashboard', desc: 'Your whole account at a glance', href: '/features/dashboard', preview: '/dashboard.png' },
-  journal: { Icon: BookText, accent: 'violet', title: 'Trade Journal', desc: 'Trades synced & tagged automatically', href: '/features/journal' },
-  analytics: { Icon: BarChart3, accent: 'teal', title: 'Analytics', desc: 'Dashboards, metrics and reports', href: '/features/analytics', preview: '/carousel/analytics.png' },
-  ai: { Icon: Sparkles, accent: 'violet', title: 'AI Insights', desc: 'Patterns you would never spot alone', href: '/features/ai', preview: '/carousel/insights.png' },
-  risk: { Icon: ShieldCheck, accent: 'amber', title: 'Risk Engine', desc: '4-tier capital protection', href: '/features/risk' },
-  traderMind: { Icon: Brain, accent: 'rose', title: 'Trader Mind', desc: 'Your behavioral mirror', href: '/features/trader-mind' },
+  dashboard: { Icon: LayoutDashboard, accent: 'indigo', title: 'Dashboard', desc: 'Net R, win rate, expectancy — every number that moves your edge, in one glance', href: '/features/dashboard', preview: '/dashboard.png' },
+  journal: { Icon: NotebookPen, accent: 'violet', title: 'Trade Journal', desc: 'Trades import, tag and organize themselves — you just review', href: '/features/journal' },
+  analytics: { Icon: LineChart, accent: 'teal', title: 'Analytics', desc: 'Slice performance by setup, session and symbol — find where your edge really hides', href: '/features/analytics', preview: '/carousel/analytics.png' },
+  ai: { Icon: Sparkles, accent: 'violet', title: 'AI Insights', desc: 'Patterns buried in your history, surfaced — provable, and on your device', href: '/features/ai', preview: '/carousel/insights.png' },
+  risk: { Icon: ShieldCheck, accent: 'amber', title: 'Risk Engine', desc: 'Four layers of guardrails that stop the trade before it costs you', href: '/features/risk' },
+  traderMind: { Icon: BrainCircuit, accent: 'rose', title: 'Trader Mind', desc: 'The gap between what you say and what your trades actually do', href: '/features/trader-mind' },
   morning: { Icon: Sunrise, accent: 'amber', title: 'Market Morning Analysis', desc: 'Set bias & plan before the open', href: '/features/morning', preview: '/carousel/morning.png' },
   eod: { Icon: Moon, accent: 'violet', title: 'End of Day Review', desc: 'Reflect and lock in the lesson', href: '/features/eod', preview: '/carousel/calendar.png' },
   economic: { Icon: CalendarDays, accent: 'teal', title: 'Economic Calendar', desc: 'Every high-impact release', href: '/features/economic-calendar', preview: '/carousel/economic.png' },
-  integrations: { Icon: Cable, accent: 'indigo', title: 'Integrations', desc: 'Connect any exchange, read-only', href: '/exchanges' },
-  universalImport: { Icon: FileUp, accent: 'teal', title: 'Universal Import', desc: 'Drop any statement file', href: '/features/universal-import' },
+  integrations: { Icon: PlugZap, accent: 'indigo', title: 'Integrations', desc: 'Link any broker in read-only — your keys can never move a cent', href: '/exchanges' },
+  universalImport: { Icon: FileInput, accent: 'teal', title: 'Universal Import', desc: "Any broker's messiest export — read and rebuilt automatically", href: '/features/universal-import' },
 } satisfies Record<string, MenuItem>
 
 type Category = { key: string; label: string; Icon: typeof BookText; items: MenuItem[] }

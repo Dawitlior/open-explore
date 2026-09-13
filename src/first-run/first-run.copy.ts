@@ -36,10 +36,9 @@ export const COPY = {
   onboarding: {
     common: { back: 'Back', next: 'Continue', finish: 'Finish', saving: 'Saving…', saveErr: 'We couldn’t save that step. Please try again.' },
     stepOf: (i: number, n: number) => `Step ${i} of ${n}`,
-    labels: { identity: 'You', community: 'Community', experience: 'Experience', palette: 'Theme', riskMatrix: 'Risk', briefing: 'Briefing', commitment: 'Commitment' },
+    labels: { identity: 'You', experience: 'Experience', palette: 'Theme', riskMatrix: 'Risk', briefing: 'Briefing', commitment: 'Commitment' },
     heads: {
       identity: { t: 'First, the basics', s: 'Tell us who’s behind the trades.' },
-      community: { t: 'Are you one of us?', s: 'Members get a tailored start.' },
       experience: { t: 'Where are you today?', s: 'So Orca meets you at your level.' },
       palette: { t: 'Make it yours', s: 'Pick a color theme — you can change it anytime.' },
       riskMatrix: { t: 'Set your guardrails', s: 'Your risk limits power the Risk Engine from day one.' },

@@ -33,7 +33,7 @@ export function SectionPricing() {
             <ul className="grid grid-cols-1 gap-x-6 gap-y-3.5 sm:grid-cols-2">
               {INCLUDED.map((f) => (
                 <li key={f} className="flex items-start gap-2.5 text-[14px] text-white/85">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal" strokeWidth={2.5} />
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-white" strokeWidth={2.5} />
                   {f}
                 </li>
               ))}

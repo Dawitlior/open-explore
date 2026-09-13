@@ -373,7 +373,7 @@ function WhitepaperCTA() {
     <section className="px-6 py-20 md:px-10 md:py-28">
       <div className="mx-auto grid max-w-[1000px] items-center gap-10 overflow-hidden rounded-[28px] border border-line bg-[#0f1720] p-8 md:grid-cols-[1.3fr_1fr] md:p-12">
         <div>
-          <span className="micro font-semibold text-teal/90">Don’t take our word for it</span>
+          <span className="micro font-semibold text-white/60">Don’t take our word for it</span>
           <h2 className="mt-3 font-display text-[clamp(1.6rem,2.8vw,2.2rem)] leading-[1.15] font-bold text-white">
             Read the independent security review.
           </h2>

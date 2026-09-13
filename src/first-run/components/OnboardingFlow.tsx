@@ -5,7 +5,6 @@ import { Button, ScreenShell, StatusBanner, cx } from './ui'
 import { OnboardingProgress, ONBOARDING_ORDER } from './OnboardingProgress'
 import { COPY } from '../first-run.copy'
 import { IdentityStep } from '../steps/IdentityStep'
-import { CommunityStep } from '../steps/CommunityStep'
 import { ExperienceStep } from '../steps/ExperienceStep'
 import { PaletteStep } from '../steps/PaletteStep'
 import { RiskMatrixStep } from '../steps/RiskMatrixStep'
@@ -32,7 +31,6 @@ export function OnboardingFlow({
     const p = { lang, answers, update, onValidityChange: setValid, communityQrSrc }
     switch (step) {
       case 'identity': return <IdentityStep {...p} />
-      case 'community': return <CommunityStep {...p} />
       case 'experience': return <ExperienceStep {...p} />
       case 'palette': return <PaletteStep {...p} />
       case 'riskMatrix': return <RiskMatrixStep {...p} />
