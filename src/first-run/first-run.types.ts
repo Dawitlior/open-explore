@@ -79,7 +79,6 @@ export type LegalStepProps = {
 
 export type OnboardingStepId =
   | 'identity'
-  | 'community'
   | 'experience'
   | 'palette'
   | 'riskMatrix'
