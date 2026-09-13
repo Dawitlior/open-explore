@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Home, LayoutGrid, Tag, X, ArrowRight } from 'lucide-react'
 import {
-  LineChart, BookText, Brain, ShieldCheck, Sparkles, CalendarClock, Sunrise, Moon, PlugZap, FileUp,
+  LineChart, NotebookPen, BrainCircuit, ShieldCheck, Sparkles, CalendarClock, Sunrise, Moon, LayoutDashboard, FileInput,
 } from 'lucide-react'
 
 /* ============================================================================
@@ -15,16 +15,16 @@ import {
 const buzz = (ms = 8) => { try { navigator.vibrate?.(ms) } catch { /* unsupported */ } }
 
 const FEATURES: { to: string; label: string; sub: string; Icon: typeof Home }[] = [
-  { to: '/features/dashboard', label: 'Dashboard', sub: 'Your whole account at a glance', Icon: LayoutGrid },
-  { to: '/features/journal', label: 'Trade Journal', sub: 'Synced & tagged automatically', Icon: BookText },
-  { to: '/features/analytics', label: 'Analytics', sub: 'Dashboards, metrics and reports', Icon: LineChart },
-  { to: '/features/risk', label: 'Risk Engine', sub: '4-tier capital protection', Icon: ShieldCheck },
-  { to: '/features/trader-mind', label: 'Trader Mind', sub: 'Your behavioral mirror', Icon: Brain },
+  { to: '/features/dashboard', label: 'Dashboard', sub: 'Every number that moves your edge', Icon: LayoutDashboard },
+  { to: '/features/journal', label: 'Trade Journal', sub: 'Imports & tags itself — you just review', Icon: NotebookPen },
+  { to: '/features/analytics', label: 'Analytics', sub: 'Find where your edge really hides', Icon: LineChart },
+  { to: '/features/risk', label: 'Risk Engine', sub: 'Guardrails that stop the bad trade', Icon: ShieldCheck },
+  { to: '/features/trader-mind', label: 'Trader Mind', sub: 'Your behavioral mirror', Icon: BrainCircuit },
   { to: '/features/economic-calendar', label: 'Economic Calendar', sub: 'The day, market by market', Icon: CalendarClock },
   { to: '/features/morning', label: 'Morning Analysis', sub: 'Start the day prepared', Icon: Sunrise },
   { to: '/features/eod', label: 'End-of-Day Review', sub: 'Close the loop each night', Icon: Moon },
-  { to: '/features/universal-import', label: 'Universal Import', sub: 'Drop any statement file', Icon: FileUp },
-  { to: '/features/ai', label: 'AI Insights', sub: 'Patterns you would never spot', Icon: Sparkles },
+  { to: '/features/universal-import', label: 'Universal Import', sub: "Any broker's messy export, rebuilt", Icon: FileInput },
+  { to: '/features/ai', label: 'AI Insights', sub: 'Patterns you would never spot alone', Icon: Sparkles },
 ]
 const MORE: { to: string; label: string }[] = [
   { to: '/exchanges', label: 'Exchanges' },
@@ -66,9 +66,6 @@ function BottomSheet({ onClose }: { onClose: () => void }) {
         style={{ opacity: entered ? 1 : 0 }}
       />
       <div
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
         className="absolute inset-x-0 bottom-0 flex max-h-[86dvh] flex-col rounded-t-[28px] border-t border-line bg-surface"
         style={{
           transform: `translateY(${entered ? dragY : 900}px)`,
@@ -77,15 +74,18 @@ function BottomSheet({ onClose }: { onClose: () => void }) {
           boxShadow: '0 -20px 60px -20px rgba(15,17,22,0.35)',
         }}
       >
-        {/* drag handle */}
-        <div className="flex shrink-0 flex-col items-center pt-3 pb-1">
-          <span className="h-1.5 w-11 rounded-full bg-line" />
-        </div>
-        <div className="flex shrink-0 items-center justify-between px-5 pb-2">
-          <span className="micro text-ink-faint">Explore Orca</span>
-          <button onClick={close} aria-label="Close" className="flex h-9 w-9 items-center justify-center rounded-full text-ink-mute hover:bg-canvas-deep">
-            <X className="h-5 w-5" />
-          </button>
+        {/* Grabber (handle + header) — ONLY this area drags the sheet to dismiss,
+            so scrolling the list below never accidentally closes it. */}
+        <div onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} style={{ touchAction: 'none' }}>
+          <div className="flex shrink-0 flex-col items-center pt-3 pb-1">
+            <span className="h-1.5 w-11 rounded-full bg-line" />
+          </div>
+          <div className="flex shrink-0 items-center justify-between px-5 pb-2">
+            <span className="micro text-ink-faint">Explore Orca</span>
+            <button onClick={close} aria-label="Close" className="flex h-9 w-9 items-center justify-center rounded-full text-ink-mute hover:bg-canvas-deep">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 pb-5" style={{ WebkitOverflowScrolling: 'touch' }}>
