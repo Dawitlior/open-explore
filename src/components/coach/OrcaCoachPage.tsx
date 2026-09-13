@@ -22,6 +22,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { scopedStorage } from '@/lib/scoped-storage';
 import { useActivePortfolio } from '@/hooks/use-active-portfolio';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useEntitlement } from '@/hooks/use-entitlement';
 import { useTraderMind } from '@/hooks/use-trader-mind';
 import type { TradingTheme } from '@/lib/trading-theme';
