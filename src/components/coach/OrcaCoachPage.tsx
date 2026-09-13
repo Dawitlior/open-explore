@@ -20,6 +20,7 @@ import {
   Square, RotateCcw, Lock, ChevronDown, Briefcase, Cog,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { scopedStorage } from '@/lib/scoped-storage';
 import { useActivePortfolio } from '@/hooks/use-active-portfolio';
 import { useEntitlement } from '@/hooks/use-entitlement';
 import { useTraderMind } from '@/hooks/use-trader-mind';
@@ -32,8 +33,11 @@ interface Props {
 }
 
 interface Msg { role: 'user' | 'assistant'; content: string }
+interface Thread { id: string; title: string; messages: Msg[]; updatedAt: number }
 
 const FREE_LIMIT = 5;
+const MAX_THREADS = 5;
+const THREADS_KEY = 'orca-coach-threads';
 
 export default function OrcaCoachPage({ T, isRTL }: Props) {
   const { activePortfolioId, portfolios, setActivePortfolioId } = useActivePortfolio();
