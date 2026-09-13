@@ -68,6 +68,13 @@ export function FirstRunGate() {
 
   const completeOnboarding = async (answers: Answers) => {
     setStatus('submitting')
+    // The completion flags are written first and independently of the
+    // preference save, so a transient preference error can never cause the
+    // whole onboarding to run again on the next sign-in.
+    persistOnboardingLocal(answers)
+    markOnboardingDoneLocal()
+    try { void scopedStorage.setItem('orca-risk-onboarding-done', '1') } catch { /* noop */ }
+    await markOnboardingCompleteCloud() // cross-device: not re-onboarded elsewhere
     try {
       if (answers.colorTheme) setTheme(answers.colorTheme as ThemeId)
       await update({
@@ -77,14 +84,9 @@ export function FirstRunGate() {
         ...(answers.risk.weekly != null ? { weekly_risk_limit: answers.risk.weekly } : {}),
         ...(answers.risk.monthly != null ? { monthly_risk_limit: answers.risk.monthly } : {}),
       })
-      persistOnboardingLocal(answers)
-      await markOnboardingCompleteCloud() // cross-device: not re-onboarded on other devices
-      try { void scopedStorage.setItem('orca-risk-onboarding-done', '1') } catch { /* noop */ }
-      setStatus('idle')
-      setStage('done')
-    } catch {
-      setStatus('error')
-    }
+    } catch { /* preferences are recoverable from Settings — never re-gate */ }
+    setStatus('idle')
+    setStage('done')
   }
 
   return (
