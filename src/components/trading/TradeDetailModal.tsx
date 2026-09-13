@@ -615,7 +615,8 @@ export function TradeDetailModal({
           </motion.div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 
