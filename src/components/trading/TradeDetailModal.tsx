@@ -62,6 +62,13 @@ export function TradeDetailModal({
   // reset the notes editor whenever the dossier moves to another trade
   useEffect(() => { setNoteEditing(false); setNoteDraft(trade.comments || ''); }, [trade.id, trade.comments]);
 
+  // Lock background scrolling while the dossier is open.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
   const headline = tradeHeadline(trade);
   const r = getEffectiveR(trade);
   const isLong = trade.direction === 'Long';
