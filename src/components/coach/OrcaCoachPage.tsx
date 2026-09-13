@@ -531,18 +531,70 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
           background: `${accent}1C`, border: `1px solid ${accent}40`, color: accent, fontSize: 11,
         }}>◈</div>
         <span style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>Orca Coach</span>
-        <div style={{ marginInlineStart: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ marginInlineStart: 'auto', display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
           <span style={{ ...mono, color: isPro ? accent : T.text.muted }}>
             {isPro ? 'Pro · Fair use' : `${remaining}/${FREE_LIMIT}`}
           </span>
           <button
-            onClick={() => { setMessages([]); setError(null); setInput(''); setNeedsPortfolio(false); }}
+            onClick={() => { setThreadsOpen(o => !o); setThreadNotice(null); }}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              background: 'transparent', border: `1px solid ${T.border.subtle}`, color: T.text.secondary,
+              borderRadius: 999, padding: '5px 11px', fontSize: 11.5, cursor: 'pointer',
+            }}
+          ><MessageSquare size={11} />{isRTL ? 'שיחות' : 'Chats'} {threads.length}/{MAX_THREADS}</button>
+          <button
+            onClick={startNewChat}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               background: 'transparent', border: `1px solid ${T.border.subtle}`, color: T.text.secondary,
               borderRadius: 999, padding: '5px 11px', fontSize: 11.5, cursor: 'pointer',
             }}
           ><RotateCcw size={11} />{isRTL ? 'שיחה חדשה' : 'New chat'}</button>
+
+          {threadsOpen && (
+            <div style={{
+              position: 'absolute', top: '100%', insetInlineEnd: 0, marginTop: 8, zIndex: 40,
+              width: 300, background: T.bg.card, border: `1px solid ${T.border.subtle}`,
+              borderRadius: T.radius.md, padding: 8, boxShadow: '0 24px 60px -30px rgba(0,0,0,0.8)',
+            }}>
+              <div style={{ ...mono, color: T.text.muted, padding: '4px 6px 8px' }}>
+                {isRTL ? `שיחות שמורות · ${threads.length}/${MAX_THREADS}` : `Saved chats · ${threads.length}/${MAX_THREADS}`}
+              </div>
+              {threads.length === 0 && (
+                <div style={{ fontSize: 12, color: T.text.muted, padding: '6px' }}>
+                  {isRTL ? 'אין שיחות שמורות עדיין.' : 'No saved conversations yet.'}
+                </div>
+              )}
+              {threads.map(th => (
+                <div key={th.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <button
+                    onClick={() => openThread(th)}
+                    style={{
+                      flex: 1, minWidth: 0, textAlign: isRTL ? 'right' : 'left', cursor: 'pointer',
+                      background: th.id === activeThreadId ? `${accent}14` : 'transparent',
+                      border: 'none', color: T.text.primary, borderRadius: T.radius.sm,
+                      padding: '8px 8px', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}
+                  >{th.title}</button>
+                  <button
+                    onClick={() => deleteThread(th.id)}
+                    aria-label={isRTL ? 'מחיקה' : 'Delete'}
+                    style={{
+                      background: 'transparent', border: 'none', color: T.text.muted,
+                      cursor: 'pointer', padding: 6, borderRadius: T.radius.sm,
+                    }}
+                  ><Trash2 size={12} /></button>
+                </div>
+              ))}
+              {threadNotice && (
+                <div style={{
+                  marginTop: 6, padding: '8px', fontSize: 11.5, borderRadius: T.radius.sm,
+                  color: T.accent.orange, background: `${T.accent.orange}12`, border: `1px solid ${T.accent.orange}33`,
+                }}>{threadNotice}</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
