@@ -670,7 +670,7 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
   }
 
   /* ══════════════════ STATE B · ACTIVE CHAT ══════════════════ */
-  return (
+  return withRail(
     <div style={{
       direction: isRTL ? 'rtl' : 'ltr', width: '100%',
       display: 'flex', flexDirection: 'column', height: 'calc(100vh - 150px)', minHeight: 520,
