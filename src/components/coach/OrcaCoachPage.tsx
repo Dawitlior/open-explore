@@ -122,7 +122,7 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
     const title = (messages.find(m => m.role === 'user')?.content ?? '').slice(0, 60) || 'Chat';
     setThreads(prev => {
       const rest = prev.filter(t => t.id !== id);
-      const next = [{ id, title, messages, updatedAt: Date.now() }, ...rest].slice(0, MAX_THREADS);
+      const next = [{ id, title, messages, updatedAt: Date.now(), memory: memoryRef.current || undefined }, ...rest].slice(0, MAX_THREADS);
       void scopedStorage.setItem(THREADS_KEY, JSON.stringify(next));
       return next;
     });
@@ -131,6 +131,7 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
   const openThread = (t: Thread) => {
     setActiveThreadId(t.id);
     setMessages(t.messages);
+    memoryRef.current = t.memory ?? '';
     setThreadsOpen(false);
     setThreadNotice(null);
     setError(null);
