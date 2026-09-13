@@ -19,6 +19,10 @@ gsap.registerPlugin(ScrollTrigger)
  */
 export function useScrollEngine(tier: Tier) {
   useEffect(() => {
+    // Every page mounts its own shell → its own engine. Land at the top of the
+    // new page (footer/nav navigation), before smoothing takes over.
+    window.scrollTo(0, 0)
+
     if (tier === 'none') {
       // Reduced motion / no WebGL: native scrolling, no smoothing, no lerp.
       // Progress is still tracked so the nav rail stays accurate.
@@ -44,6 +48,7 @@ export function useScrollEngine(tier: Tier) {
     })
 
     engine.lenis = lenis
+    lenis.scrollTo(0, { immediate: true }) // start each new page at the top
     lenis.on('scroll', ScrollTrigger.update)
 
     const tick = (time: number) => lenis.raf(time * 1000)
