@@ -450,10 +450,14 @@ whenever more than two rows are involved.`;
     // ("and that trade you mentioned?") without letting the prompt balloon.
     // Six turns is the sweet spot between continuity and token spend; each
     // request also carries the full pre-aggregated portfolio context anyway.
-    const HISTORY_TURNS = 6;
-    const history = messages.filter((m) => m.role !== "system").slice(-HISTORY_TURNS);
+    const HISTORY_TURNS = 10;
+    const history = safeMessages.slice(-HISTORY_TURNS);
+    // Older turns live on as a compacted memory note (see action === "compact").
+    const memoryLine = priorMemory
+      ? `\n\n[CONVERSATION MEMORY — earlier turns, compacted]\n${priorMemory}\nTreat these as already-said context; do not repeat them back unprompted.`
+      : "";
     const finalMessages: ChatMsg[] = [
-      { role: "system", content: BASE_PROMPT + rosterLine + mindLine + portfolioLine },
+      { role: "system", content: BASE_PROMPT + rosterLine + mindLine + portfolioLine + memoryLine },
       ...history,
     ];
 
