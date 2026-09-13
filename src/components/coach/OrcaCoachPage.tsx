@@ -689,14 +689,17 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
           <span style={{ ...mono, color: isPro ? accent : T.text.muted }}>
             {isPro ? 'Pro · Fair use' : `${remaining}/${FREE_LIMIT}`}
           </span>
-          <button
-            onClick={() => { setThreadsOpen(o => !o); setThreadNotice(null); }}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              background: 'transparent', border: `1px solid ${T.border.subtle}`, color: T.text.secondary,
-              borderRadius: 999, padding: '5px 11px', fontSize: 11.5, cursor: 'pointer',
-            }}
-          ><MessageSquare size={11} />{isRTL ? 'שיחות' : 'Chats'} {threads.length}/{MAX_THREADS}</button>
+          {/* Compact drawer trigger — the desktop page uses the side rail instead. */}
+          {!showRail && (
+            <button
+              onClick={() => { setThreadsOpen(o => !o); setThreadNotice(null); }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                background: 'transparent', border: `1px solid ${T.border.subtle}`, color: T.text.secondary,
+                borderRadius: 999, padding: '5px 11px', fontSize: 11.5, cursor: 'pointer',
+              }}
+            ><MessageSquare size={11} />{isRTL ? 'שיחות' : 'Chats'} {threads.length}/{MAX_THREADS}</button>
+          )}
           <button
             onClick={startNewChat}
             style={{
