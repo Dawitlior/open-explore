@@ -215,6 +215,9 @@
 .orca-marketing .article-prose .katex { color: var(--color-ink); font-size: 1.05em; }
 
 .orca-marketing :focus-visible { outline: 2px solid var(--color-indigo); outline-offset: 3px; border-radius: 6px; }
+/* Headings/panels get programmatic focus (tabindex=-1) for screen-reader flow —
+   that is NOT a user focus target, so never paint a ring on it. */
+.orca-marketing [tabindex="-1"]:focus, .orca-marketing [tabindex="-1"]:focus-visible { outline: none; }
 
 /* Marketing-scoped scrollbar (WebKit) — only when the marketing layer owns the page. */
 .orca-marketing::-webkit-scrollbar { width: 11px; }
