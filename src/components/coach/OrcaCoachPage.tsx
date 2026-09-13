@@ -153,10 +153,12 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
     }
     setActiveThreadId(null);
     setMessages([]);
+    memoryRef.current = '';
     setError(null);
     setInput('');
     setNeedsPortfolio(false);
     setThreadNotice(null);
+    setThreadsOpen(false);
   };
 
   /* Load this month's usage so the meter is honest before the first send. */
