@@ -643,22 +643,26 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
           </div>
         )}
 
-        <div style={{ height: 1, background: T.border.subtle, margin: '34px 0 22px' }} />
+        {/* Capability cards are page furniture — the floating panel stays lean. */}
+        {!isPanel && <div style={{ height: 1, background: T.border.subtle, margin: '34px 0 22px' }} />}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
-          {CARDS.map(({ Icon, ...c }) => (
-            <div key={c.en} style={{ ...panel, padding: 14, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <div style={{
-                width: 26, height: 26, borderRadius: 8, flexShrink: 0, display: 'grid', placeItems: 'center',
-                background: `${accent}14`, border: `1px solid ${accent}2E`, color: accent,
-              }}><Icon size={13} /></div>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 600, color: T.text.primary, marginBottom: 3 }}>{isRTL ? c.he : c.en}</div>
-                <div style={{ fontSize: 11, color: T.text.secondary, lineHeight: 1.55 }}>{isRTL ? c.dhe : c.den}</div>
+        {!isPanel && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+            {CARDS.map(({ Icon, ...c }) => (
+              <div key={c.en} style={{ ...panel, padding: 14, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                <div style={{
+                  width: 26, height: 26, borderRadius: 8, flexShrink: 0, display: 'grid', placeItems: 'center',
+                  background: `${accent}14`, border: `1px solid ${accent}2E`, color: accent,
+                }}><Icon size={13} /></div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: T.text.primary, marginBottom: 3 }}>{isRTL ? c.he : c.en}</div>
+                  <div style={{ fontSize: 11, color: T.text.secondary, lineHeight: 1.55 }}>{isRTL ? c.dhe : c.den}</div>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
+
 
         {!isPro && (
           <div style={{ ...mono, color: T.text.muted, textAlign: 'center', marginTop: 22 }}>
