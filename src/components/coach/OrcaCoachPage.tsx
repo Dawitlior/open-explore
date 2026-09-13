@@ -17,7 +17,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
   ArrowUp, Activity, Search, Target, Clock3, Layers, Infinity as InfinityIcon,
-  Square, RotateCcw, Lock, ChevronDown, Briefcase, Cog,
+  Square, RotateCcw, Lock, ChevronDown, Briefcase, Cog, MessageSquare, Trash2,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { scopedStorage } from '@/lib/scoped-storage';
