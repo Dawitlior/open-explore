@@ -283,14 +283,14 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode, only }: Pr
 
       {/* Row: Cumulative R + Rolling Calmar */}
       {(show('core') || show('risk')) && (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginBottom: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 460px), 1fr))', gap: 12, marginBottom: 12 }}>
         {show('core') && (
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{isMoney ? t('עקומת הון מצטבר ($)', 'Cumulative Equity Curve ($)') : t('עקומת R מצטברת', 'Cumulative R Curve')}</div>
           {moneyBlocked ? (
-            <div style={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.text.muted, fontSize: 11 }}>{emptyMoneyMsg}</div>
+            <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.text.muted, fontSize: 11 }}>{emptyMoneyMsg}</div>
           ) : (
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={cumR}>
               <defs>
                 <linearGradient id="cumR" x1="0" y1="0" x2="0" y2="1">
@@ -313,7 +313,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode, only }: Pr
         {show('risk') && (
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('Calmar מתגלגל (חלון 20)', 'Rolling Calmar (window 20)')}</div>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={300}>
             <LineChart data={rollingCalmar}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis dataKey="i" tick={{ fill: T.text.muted, fontSize: 10 }} />
@@ -330,12 +330,12 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode, only }: Pr
 
       {/* Row: Avg W vs L + Streak distribution */}
       {show('dynamics') && (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginBottom: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 460px), 1fr))', gap: 12, marginBottom: 12 }}>
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>
             {t('ניצחון ממוצע מול הפסד ממוצע', 'Avg Win vs Avg Loss')}
           </div>
-          <ResponsiveContainer width="100%" height={240}>
+          <ResponsiveContainer width="100%" height={330}>
             <BarChart data={avgWL}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis dataKey="name" tick={{ fill: T.text.muted, fontSize: 11 }} />
@@ -351,7 +351,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode, only }: Pr
 
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('התפלגות אורך רצפים', 'Streak Length Distribution')}</div>
-          <ResponsiveContainer width="100%" height={240}>
+          <ResponsiveContainer width="100%" height={330}>
             <BarChart data={streakDist}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis dataKey="len" tick={{ fill: T.text.muted, fontSize: 10 }} />
@@ -367,14 +367,14 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode, only }: Pr
 
       {/* Row: Position size vs P&L + Sessions */}
       {(show('risk') || show('temporal')) && (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 12, marginBottom: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 460px), 1fr))', gap: 12, marginBottom: 12 }}>
         {show('risk') && (
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('גודל פוזיציה מול P&L', 'Position Size vs P&L')}</div>
           {moneyBlocked ? (
-            <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.text.muted, fontSize: 11 }}>{emptyMoneyMsg}</div>
+            <div style={{ height: 330, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.text.muted, fontSize: 11 }}>{emptyMoneyMsg}</div>
           ) : (
-          <ResponsiveContainer width="100%" height={240}>
+          <ResponsiveContainer width="100%" height={330}>
             <ScatterChart>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis type="number" dataKey="size" tick={{ fill: T.text.muted, fontSize: 10 }} />
@@ -397,9 +397,9 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode, only }: Pr
         <GlassCard T={T}>
           <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('פיצול לפי סשן (אסיה / לונדון / ניו-יורק)', 'Session Split (Asia / London / NY)')}</div>
           {moneyBlocked ? (
-            <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.text.muted, fontSize: 11 }}>{emptyMoneyMsg}</div>
+            <div style={{ height: 330, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.text.muted, fontSize: 11 }}>{emptyMoneyMsg}</div>
           ) : (
-          <ResponsiveContainer width="100%" height={240}>
+          <ResponsiveContainer width="100%" height={330}>
             <BarChart data={sessions}>
               <CartesianGrid stroke={T.border.subtle} strokeDasharray="3 3" />
               <XAxis dataKey="session" tick={{ fill: T.text.muted, fontSize: 11 }} />
@@ -421,7 +421,7 @@ const AnalyticsQuantLab_Impl = ({ T, trades: _allTrades, privacyMode, only }: Pr
       {show('core') && (
       <GlassCard T={T} style={{ marginBottom: 12 }}>
         <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, marginBottom: 10 }}>{t('הון יומי מצטבר (מדרגות)', 'Daily Cumulative Equity (Steps)')}</div>
-        <ResponsiveContainer width="100%" height={240}>
+        <ResponsiveContainer width="100%" height={330}>
           <AreaChart data={dailyEq}>
             <defs>
               <linearGradient id="dEq" x1="0" y1="0" x2="0" y2="1">

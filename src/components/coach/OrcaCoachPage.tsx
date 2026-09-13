@@ -17,9 +17,10 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
   ArrowUp, Activity, Search, Target, Clock3, Layers, Infinity as InfinityIcon,
-  Square, RotateCcw, Lock, ChevronDown, Briefcase, Cog,
+  Square, RotateCcw, Lock, ChevronDown, Briefcase, Cog, MessageSquare, Trash2,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { scopedStorage } from '@/lib/scoped-storage';
 import { useActivePortfolio } from '@/hooks/use-active-portfolio';
 import { useEntitlement } from '@/hooks/use-entitlement';
 import { useTraderMind } from '@/hooks/use-trader-mind';
@@ -32,8 +33,11 @@ interface Props {
 }
 
 interface Msg { role: 'user' | 'assistant'; content: string }
+interface Thread { id: string; title: string; messages: Msg[]; updatedAt: number }
 
 const FREE_LIMIT = 5;
+const MAX_THREADS = 5;
+const THREADS_KEY = 'orca-coach-threads';
 
 export default function OrcaCoachPage({ T, isRTL }: Props) {
   const { activePortfolioId, portfolios, setActivePortfolioId } = useActivePortfolio();
@@ -49,12 +53,91 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
   const [paywall, setPaywall] = useState(false);
   const [needsPortfolio, setNeedsPortfolio] = useState(false);
   const [thinkingIndex, setThinkingIndex] = useState(0);
+  const [threads, setThreads] = useState<Thread[]>([]);
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [threadsOpen, setThreadsOpen] = useState(false);
+  const [threadNotice, setThreadNotice] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
+  const msgRefs = useRef<(HTMLDivElement | null)[]>([]);
   const cancelled = useRef(false);
   const accent = infoColor(T);
 
   const started = messages.length > 0;
+  const atThreadLimit = threads.length >= MAX_THREADS;
+
+  /* ── Saved conversations (max 5, per user, survive channel switches) ── */
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const raw = await scopedStorage.getItem(THREADS_KEY);
+        if (!raw || !alive) return;
+        const parsed = JSON.parse(raw) as Thread[];
+        if (!Array.isArray(parsed)) return;
+        const clean = parsed
+          .filter(t => t && typeof t.id === 'string' && Array.isArray(t.messages))
+          .slice(0, MAX_THREADS);
+        setThreads(clean);
+        const last = clean[0];
+        if (last && last.messages.length) {
+          setThreads(clean);
+          setActiveThreadId(last.id);
+          setMessages(last.messages);
+        }
+      } catch { /* corrupt cache — start fresh */ }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const persistThreads = useCallback((next: Thread[]) => {
+    setThreads(next);
+    void scopedStorage.setItem(THREADS_KEY, JSON.stringify(next.slice(0, MAX_THREADS)));
+  }, []);
+
+  /* Keep the active thread in sync with the live transcript. */
+  useEffect(() => {
+    if (!messages.length) return;
+    const id = activeThreadId ?? `t${Date.now()}`;
+    if (!activeThreadId) setActiveThreadId(id);
+    const title = (messages.find(m => m.role === 'user')?.content ?? '').slice(0, 60) || 'Chat';
+    setThreads(prev => {
+      const rest = prev.filter(t => t.id !== id);
+      const next = [{ id, title, messages, updatedAt: Date.now() }, ...rest].slice(0, MAX_THREADS);
+      void scopedStorage.setItem(THREADS_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, [messages, activeThreadId]);
+
+  const openThread = (t: Thread) => {
+    setActiveThreadId(t.id);
+    setMessages(t.messages);
+    setThreadsOpen(false);
+    setThreadNotice(null);
+    setError(null);
+  };
+
+  const deleteThread = (id: string) => {
+    persistThreads(threads.filter(t => t.id !== id));
+    setThreadNotice(null);
+    if (id === activeThreadId) { setActiveThreadId(null); setMessages([]); }
+  };
+
+  const startNewChat = () => {
+    if (atThreadLimit && !threads.some(t => t.id === activeThreadId && t.messages.length === 0)) {
+      setThreadsOpen(true);
+      setThreadNotice(isRTL
+        ? `אפשר לשמור עד ${MAX_THREADS} שיחות. מחקו שיחה כדי לפתוח חדשה.`
+        : `You can keep up to ${MAX_THREADS} conversations. Delete one to start a new chat.`);
+      return;
+    }
+    setActiveThreadId(null);
+    setMessages([]);
+    setError(null);
+    setInput('');
+    setNeedsPortfolio(false);
+    setThreadNotice(null);
+  };
 
   /* Load this month's usage so the meter is honest before the first send. */
   useEffect(() => {
@@ -74,8 +157,22 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
     return () => { alive = false; };
   }, []);
 
+  /* Scrolling: a new answer parks its first line at the top of the transcript
+     (so the reply is read from its beginning), while sending a question or the
+     thinking indicator follows the bottom. */
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    const box = scrollRef.current;
+    if (!box) return;
+    const last = messages[messages.length - 1];
+    if (last?.role === 'assistant') {
+      const el = msgRefs.current[messages.length - 1];
+      if (el) {
+        const top = el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 12;
+        box.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+        return;
+      }
+    }
+    box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
   }, [messages, busy]);
 
   useEffect(() => { if (!busy && !paywall) taRef.current?.focus(); }, [busy, paywall, started]);
@@ -102,6 +199,16 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
   const send = useCallback(async (text: string, overridePortfolioId?: string) => {
     const clean = text.trim();
     if (!clean || busy) return;
+    // Saved-conversation cap: a brand-new chat needs a free slot.
+    if (!activeThreadId && threads.length >= MAX_THREADS) {
+      setThreadsOpen(true);
+      const msg = isRTL
+        ? `אפשר לשמור עד ${MAX_THREADS} שיחות. מחקו שיחה קיימת כדי לפתוח חדשה.`
+        : `You can keep up to ${MAX_THREADS} conversations. Delete one to start a new chat.`;
+      setThreadNotice(msg);
+      setError(msg);
+      return;
+    }
     if (!isPro && used >= FREE_LIMIT) { setPaywall(true); return; }
     setError(null);
     setNeedsPortfolio(false);
@@ -186,7 +293,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
     } finally {
       setBusy(false);
     }
-  }, [busy, messages, activePortfolioId, setActivePortfolioId, isPro, used, isRTL, autoGrow]);
+  }, [busy, messages, activePortfolioId, setActivePortfolioId, isPro, used, isRTL, autoGrow, activeThreadId, threads.length]);
 
   const STARTERS = useMemo(() => (isRTL
     ? ['מה הדליפה הגדולה ביותר בתיק שלי?', 'נתח את 10 העסקאות האחרונות שלי', 'באילו שעות אני מפסיד הכי הרבה?', 'מה הצעד הבא שכדאי לי לתקן?']
@@ -434,18 +541,70 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
           background: `${accent}1C`, border: `1px solid ${accent}40`, color: accent, fontSize: 11,
         }}>◈</div>
         <span style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>Orca Coach</span>
-        <div style={{ marginInlineStart: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ marginInlineStart: 'auto', display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
           <span style={{ ...mono, color: isPro ? accent : T.text.muted }}>
             {isPro ? 'Pro · Fair use' : `${remaining}/${FREE_LIMIT}`}
           </span>
           <button
-            onClick={() => { setMessages([]); setError(null); setInput(''); setNeedsPortfolio(false); }}
+            onClick={() => { setThreadsOpen(o => !o); setThreadNotice(null); }}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              background: 'transparent', border: `1px solid ${T.border.subtle}`, color: T.text.secondary,
+              borderRadius: 999, padding: '5px 11px', fontSize: 11.5, cursor: 'pointer',
+            }}
+          ><MessageSquare size={11} />{isRTL ? 'שיחות' : 'Chats'} {threads.length}/{MAX_THREADS}</button>
+          <button
+            onClick={startNewChat}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               background: 'transparent', border: `1px solid ${T.border.subtle}`, color: T.text.secondary,
               borderRadius: 999, padding: '5px 11px', fontSize: 11.5, cursor: 'pointer',
             }}
           ><RotateCcw size={11} />{isRTL ? 'שיחה חדשה' : 'New chat'}</button>
+
+          {threadsOpen && (
+            <div style={{
+              position: 'absolute', top: '100%', insetInlineEnd: 0, marginTop: 8, zIndex: 40,
+              width: 300, background: T.bg.card, border: `1px solid ${T.border.subtle}`,
+              borderRadius: T.radius.md, padding: 8, boxShadow: '0 24px 60px -30px rgba(0,0,0,0.8)',
+            }}>
+              <div style={{ ...mono, color: T.text.muted, padding: '4px 6px 8px' }}>
+                {isRTL ? `שיחות שמורות · ${threads.length}/${MAX_THREADS}` : `Saved chats · ${threads.length}/${MAX_THREADS}`}
+              </div>
+              {threads.length === 0 && (
+                <div style={{ fontSize: 12, color: T.text.muted, padding: '6px' }}>
+                  {isRTL ? 'אין שיחות שמורות עדיין.' : 'No saved conversations yet.'}
+                </div>
+              )}
+              {threads.map(th => (
+                <div key={th.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <button
+                    onClick={() => openThread(th)}
+                    style={{
+                      flex: 1, minWidth: 0, textAlign: isRTL ? 'right' : 'left', cursor: 'pointer',
+                      background: th.id === activeThreadId ? `${accent}14` : 'transparent',
+                      border: 'none', color: T.text.primary, borderRadius: T.radius.sm,
+                      padding: '8px 8px', fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}
+                  >{th.title}</button>
+                  <button
+                    onClick={() => deleteThread(th.id)}
+                    aria-label={isRTL ? 'מחיקה' : 'Delete'}
+                    style={{
+                      background: 'transparent', border: 'none', color: T.text.muted,
+                      cursor: 'pointer', padding: 6, borderRadius: T.radius.sm,
+                    }}
+                  ><Trash2 size={12} /></button>
+                </div>
+              ))}
+              {threadNotice && (
+                <div style={{
+                  marginTop: 6, padding: '8px', fontSize: 11.5, borderRadius: T.radius.sm,
+                  color: T.accent.orange, background: `${T.accent.orange}12`, border: `1px solid ${T.accent.orange}33`,
+                }}>{threadNotice}</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -454,7 +613,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
         <div style={{ maxWidth: 780, marginInline: 'auto', display: 'flex', flexDirection: 'column', gap: 22 }}>
           {messages.map((m, i) => (
             m.role === 'user' ? (
-              <div key={i} style={{ alignSelf: isRTL ? 'flex-start' : 'flex-end', maxWidth: '80%' }}>
+              <div key={i} ref={el => { msgRefs.current[i] = el; }} style={{ alignSelf: isRTL ? 'flex-start' : 'flex-end', maxWidth: '80%' }}>
                 <div style={{
                   padding: '10px 15px', borderRadius: 18,
                   background: `${accent}1C`, border: `1px solid ${accent}3A`,
@@ -462,7 +621,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
                 }}>{m.content}</div>
               </div>
             ) : (
-              <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <div key={i} ref={el => { msgRefs.current[i] = el; }} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <div style={{
                   width: 24, height: 24, borderRadius: 7, flexShrink: 0, marginTop: 2, display: 'grid', placeItems: 'center',
                   background: `${accent}16`, border: `1px solid ${accent}33`, color: accent, fontSize: 11,

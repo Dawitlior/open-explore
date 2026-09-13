@@ -976,8 +976,10 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
 
             </GlassCard>
 
+            {/* ── YEARLY · two charts side by side on desktop ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 460px), 1fr))', gap: 12, marginBottom: 16 }}>
             {/* ── YEARLY · CHART 1 — P&L / R per year (area + bars) ── */}
-            <GlassCard T={T} style={{ marginBottom: 12 }}>
+            <GlassCard T={T}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
                 <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, letterSpacing: '0.05em' }}>
                   {t('ביצועים שנתיים — רווח/הפסד', 'Yearly Performance — P&L')}
@@ -1025,7 +1027,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
             </GlassCard>
 
             {/* ── YEARLY · CHART 2 — Win Rate + Expectancy line ── */}
-            <GlassCard T={T} style={{ marginBottom: 16 }}>
+            <GlassCard T={T}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
                 <div style={{ fontSize: 12, color: T.text.primary, fontWeight: 700, letterSpacing: '0.05em' }}>
                   {t('ביצועים שנתיים — איכות (Win % · תוחלת R)', 'Yearly Performance — Quality (Win % · Expectancy R)')}
@@ -1057,6 +1059,7 @@ const AdvancedAnalyticsPage_Impl = ({ T, trades: _allTrades, stats, privacyMode,
                 </ResponsiveContainer>
               </div>
             </GlassCard>
+            </div>
           </>
         );
       })()}

@@ -140,10 +140,26 @@ export default function SessionClock({ T, compact: compactProp = true }: Props) 
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6;
   }, [T]);
 
-  const OCEAN = isLightTheme ? 'rgba(148,163,184,0.10)' : 'rgba(6,19,38,0.55)';
-  const LAND = isLightTheme ? 'rgba(71,85,105,0.16)' : SURFACE;
-  const NIGHT_C = isLightTheme ? '#64748b' : '#00060f';
-  const NIGHT_O = isLightTheme ? 0.2 : 0.55;
+  /** Accent-tinted alpha — keeps the map in the active palette instead of a
+      washed-out grey slab. Falls back to the raw colour for non-hex tokens. */
+  const withA = (color: string, a: number): string => {
+    const raw = String(color ?? '').trim();
+    if (!raw.startsWith('#')) return raw;
+    const hex = raw.slice(1);
+    const full = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+    if (full.length !== 6) return raw;
+    const r = parseInt(full.slice(0, 2), 16);
+    const g = parseInt(full.slice(2, 4), 16);
+    const b = parseInt(full.slice(4, 6), 16);
+    return `rgba(${r},${g},${b},${a})`;
+  };
+
+  const OCEAN = withA(ACCENT, isLightTheme ? 0.07 : 0.05);
+  const LAND = withA(ACCENT, isLightTheme ? 0.48 : 0.3);
+  const LAND_STROKE = withA(ACCENT, isLightTheme ? 0.75 : 0.5);
+  const GRID_C = withA(ACCENT, isLightTheme ? 0.18 : 0.14);
+  const NIGHT_C = isLightTheme ? '#1e293b' : '#00060f';
+  const NIGHT_O = isLightTheme ? 0.14 : 0.5;
 
   const markets = useMemo(
     () => MARKETS.map(m => computeMarket(m, now)),
@@ -310,14 +326,14 @@ export default function SessionClock({ T, compact: compactProp = true }: Props) 
 
                   {/* Graticule */}
                   {[-60, -30, 0, 30, 60].map(lat => (
-                    <line key={`la${lat}`} x1={0} x2={MAP_W} y1={projY(lat)} y2={projY(lat)} stroke={BORDER_SOFT} strokeWidth={1} />
+                    <line key={`la${lat}`} x1={0} x2={MAP_W} y1={projY(lat)} y2={projY(lat)} stroke={GRID_C} strokeWidth={1} />
                   ))}
                   {[-120, -60, 0, 60, 120].map(lon => (
-                    <line key={`lo${lon}`} y1={0} y2={MAP_H} x1={projX(lon)} x2={projX(lon)} stroke={BORDER_SOFT} strokeWidth={1} />
+                    <line key={`lo${lon}`} y1={0} y2={MAP_H} x1={projX(lon)} x2={projX(lon)} stroke={GRID_C} strokeWidth={1} />
                   ))}
 
                   {/* Land */}
-                  <path d={WORLD_LAND_PATH} fill={LAND} stroke={BORDER} strokeWidth={0.8} />
+                  <path d={WORLD_LAND_PATH} fill={LAND} stroke={LAND_STROKE} strokeWidth={0.8} />
 
                   {/* Night side */}
                   {nightBands.map((b, i) => (
