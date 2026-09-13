@@ -603,7 +603,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
         <div style={{ maxWidth: 780, marginInline: 'auto', display: 'flex', flexDirection: 'column', gap: 22 }}>
           {messages.map((m, i) => (
             m.role === 'user' ? (
-              <div key={i} style={{ alignSelf: isRTL ? 'flex-start' : 'flex-end', maxWidth: '80%' }}>
+              <div key={i} ref={el => { msgRefs.current[i] = el; }} style={{ alignSelf: isRTL ? 'flex-start' : 'flex-end', maxWidth: '80%' }}>
                 <div style={{
                   padding: '10px 15px', borderRadius: 18,
                   background: `${accent}1C`, border: `1px solid ${accent}3A`,
@@ -611,7 +611,7 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
                 }}>{m.content}</div>
               </div>
             ) : (
-              <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <div key={i} ref={el => { msgRefs.current[i] = el; }} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <div style={{
                   width: 24, height: 24, borderRadius: 7, flexShrink: 0, marginTop: 2, display: 'grid', placeItems: 'center',
                   background: `${accent}16`, border: `1px solid ${accent}33`, color: accent, fontSize: 11,
