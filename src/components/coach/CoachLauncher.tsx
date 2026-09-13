@@ -67,9 +67,10 @@ export default function CoachLauncher({ T, isRTL, enabled, hidden }: Props) {
             padding: '11px 13px', borderBottom: `1px solid ${T.border.subtle}`,
           }}>
             <span style={{
-              width: 22, height: 22, borderRadius: 7, display: 'grid', placeItems: 'center',
-              background: `${accent}1C`, border: `1px solid ${accent}40`, color: accent, fontSize: 10,
-            }}>◈</span>
+              width: 24, height: 24, borderRadius: 999, display: 'grid', placeItems: 'center',
+              background: `radial-gradient(circle at 50% 45%, ${accent}26, transparent 72%)`,
+              border: `1px solid ${accent}40`, boxShadow: `0 0 12px -4px ${accent}88`,
+            }}><img src="/orcaIcon.ico" alt="" aria-hidden width={16} height={16} style={{ width: 16, height: 16, objectFit: 'contain' }} /></span>
             <span style={{ fontSize: 12.5, fontWeight: 700, color: T.text.primary }}>Orca Coach</span>
             <button
               onClick={() => setOpen(false)}
