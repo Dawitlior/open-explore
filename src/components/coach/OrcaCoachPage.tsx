@@ -49,12 +49,91 @@ export default function OrcaCoachPage({ T, isRTL }: Props) {
   const [paywall, setPaywall] = useState(false);
   const [needsPortfolio, setNeedsPortfolio] = useState(false);
   const [thinkingIndex, setThinkingIndex] = useState(0);
+  const [threads, setThreads] = useState<Thread[]>([]);
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [threadsOpen, setThreadsOpen] = useState(false);
+  const [threadNotice, setThreadNotice] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
+  const msgRefs = useRef<(HTMLDivElement | null)[]>([]);
   const cancelled = useRef(false);
   const accent = infoColor(T);
 
   const started = messages.length > 0;
+  const atThreadLimit = threads.length >= MAX_THREADS;
+
+  /* ── Saved conversations (max 5, per user, survive channel switches) ── */
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const raw = await scopedStorage.getItem(THREADS_KEY);
+        if (!raw || !alive) return;
+        const parsed = JSON.parse(raw) as Thread[];
+        if (!Array.isArray(parsed)) return;
+        const clean = parsed
+          .filter(t => t && typeof t.id === 'string' && Array.isArray(t.messages))
+          .slice(0, MAX_THREADS);
+        setThreads(clean);
+        const last = clean[0];
+        if (last && last.messages.length) {
+          setThreads(clean);
+          setActiveThreadId(last.id);
+          setMessages(last.messages);
+        }
+      } catch { /* corrupt cache — start fresh */ }
+    })();
+    return () => { alive = false; };
+  }, []);
+
+  const persistThreads = useCallback((next: Thread[]) => {
+    setThreads(next);
+    void scopedStorage.setItem(THREADS_KEY, JSON.stringify(next.slice(0, MAX_THREADS)));
+  }, []);
+
+  /* Keep the active thread in sync with the live transcript. */
+  useEffect(() => {
+    if (!messages.length) return;
+    const id = activeThreadId ?? `t${Date.now()}`;
+    if (!activeThreadId) setActiveThreadId(id);
+    const title = (messages.find(m => m.role === 'user')?.content ?? '').slice(0, 60) || 'Chat';
+    setThreads(prev => {
+      const rest = prev.filter(t => t.id !== id);
+      const next = [{ id, title, messages, updatedAt: Date.now() }, ...rest].slice(0, MAX_THREADS);
+      void scopedStorage.setItem(THREADS_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, [messages, activeThreadId]);
+
+  const openThread = (t: Thread) => {
+    setActiveThreadId(t.id);
+    setMessages(t.messages);
+    setThreadsOpen(false);
+    setThreadNotice(null);
+    setError(null);
+  };
+
+  const deleteThread = (id: string) => {
+    persistThreads(threads.filter(t => t.id !== id));
+    setThreadNotice(null);
+    if (id === activeThreadId) { setActiveThreadId(null); setMessages([]); }
+  };
+
+  const startNewChat = () => {
+    if (atThreadLimit && !threads.some(t => t.id === activeThreadId && t.messages.length === 0)) {
+      setThreadsOpen(true);
+      setThreadNotice(isRTL
+        ? `אפשר לשמור עד ${MAX_THREADS} שיחות. מחקו שיחה כדי לפתוח חדשה.`
+        : `You can keep up to ${MAX_THREADS} conversations. Delete one to start a new chat.`);
+      return;
+    }
+    setActiveThreadId(null);
+    setMessages([]);
+    setError(null);
+    setInput('');
+    setNeedsPortfolio(false);
+    setThreadNotice(null);
+  };
 
   /* Load this month's usage so the meter is honest before the first send. */
   useEffect(() => {
