@@ -67,9 +67,10 @@ export default function CoachLauncher({ T, isRTL, enabled, hidden }: Props) {
             padding: '11px 13px', borderBottom: `1px solid ${T.border.subtle}`,
           }}>
             <span style={{
-              width: 22, height: 22, borderRadius: 7, display: 'grid', placeItems: 'center',
-              background: `${accent}1C`, border: `1px solid ${accent}40`, color: accent, fontSize: 10,
-            }}>◈</span>
+              width: 24, height: 24, borderRadius: 999, display: 'grid', placeItems: 'center',
+              background: `radial-gradient(circle at 50% 45%, ${accent}26, transparent 72%)`,
+              border: `1px solid ${accent}40`, boxShadow: `0 0 12px -4px ${accent}88`,
+            }}><img src="/orcaIcon.ico" alt="" aria-hidden width={16} height={16} style={{ width: 16, height: 16, objectFit: 'contain' }} /></span>
             <span style={{ fontSize: 12.5, fontWeight: 700, color: T.text.primary }}>Orca Coach</span>
             <button
               onClick={() => setOpen(false)}
@@ -98,14 +99,25 @@ export default function CoachLauncher({ T, isRTL, enabled, hidden }: Props) {
         aria-expanded={open}
         style={{
           position: 'fixed', insetInlineEnd: isMobile ? 14 : 24, bottom: isMobile ? 18 : 24,
-          width: 52, height: 52, borderRadius: 999, zIndex: 1301, cursor: 'pointer',
-          display: 'grid', placeItems: 'center', fontSize: 20, color: T.bg.primary,
-          background: `linear-gradient(145deg, ${accent}, ${accent}C8)`,
-          border: `1px solid ${accent}`,
-          boxShadow: `0 16px 40px -16px ${accent}`,
+          width: 56, height: 56, borderRadius: 999, zIndex: 1301, cursor: 'pointer',
+          display: 'grid', placeItems: 'center', color: T.text.primary,
+          background: `radial-gradient(circle at 50% 45%, ${accent}2E, ${T.bg.card} 72%)`,
+          border: `1px solid ${accent}66`,
+          // Soft breathing halo around the brand mark.
+          boxShadow: `0 0 0 1px ${accent}22, 0 0 22px -2px ${accent}AA, 0 18px 44px -18px ${accent}`,
+          animation: 'orca-coach-halo 3.2s ease-in-out infinite',
           transition: 'transform 160ms ease',
         }}
-      >{open ? <X size={19} /> : <span aria-hidden>◈</span>}</button>
+      >{open
+        ? <X size={19} />
+        : <img
+            src="/orcaIcon.ico"
+            alt=""
+            aria-hidden
+            width={34}
+            height={34}
+            style={{ width: 34, height: 34, objectFit: 'contain', filter: `drop-shadow(0 0 6px ${accent}AA)` }}
+          />}</button>
     </>,
     document.body,
   );

@@ -16,8 +16,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
-  ArrowUp, Activity, Search, Target, Clock3, Layers, Infinity as InfinityIcon,
-  Square, RotateCcw, Lock, ChevronDown, Briefcase, Cog, MessageSquare, Trash2,
+  ArrowUp, Square, RotateCcw, Lock, Briefcase, Cog, MessageSquare, Trash2,
+  PanelRightClose, PanelRightOpen,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { scopedStorage } from '@/lib/scoped-storage';
@@ -72,6 +72,9 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [threadsOpen, setThreadsOpen] = useState(false);
   const [threadNotice, setThreadNotice] = useState<string | null>(null);
+  const [railOpen, setRailOpen] = useState(true);
+  /** Portfolio the trader picked inside this conversation (asked in chat). */
+  const [chosenPortfolioId, setChosenPortfolioId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
   const msgRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -135,6 +138,8 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
     setThreadsOpen(false);
     setThreadNotice(null);
     setError(null);
+    setChosenPortfolioId(null);
+    setNeedsPortfolio(false);
   };
 
   const deleteThread = (id: string) => {
@@ -159,6 +164,7 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
     setNeedsPortfolio(false);
     setThreadNotice(null);
     setThreadsOpen(false);
+    setChosenPortfolioId(null);
   };
 
   /* Load this month's usage so the meter is honest before the first send. */
@@ -232,6 +238,25 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
       return;
     }
     if (!isPro && used >= FREE_LIMIT) { setPaywall(true); return; }
+    /* Ask which book to analyse INSIDE the conversation — once per chat, and
+       only when the trader actually keeps more than one portfolio. */
+    if (!overridePortfolioId && !chosenPortfolioId && portfolios.length > 1) {
+      setMessages(prev => [
+        ...prev,
+        { role: 'user', content: clean },
+        {
+          role: 'assistant',
+          content: isRTL
+            ? 'לפני שנצלול — על איזה תיק נדבר?'
+            : 'Before we dive in — which portfolio should we look at?',
+        },
+      ]);
+      setInput('');
+      requestAnimationFrame(autoGrow);
+      setNeedsPortfolio(true);
+      setError(null);
+      return;
+    }
     setError(null);
     setNeedsPortfolio(false);
     cancelled.current = false;
@@ -338,20 +363,11 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
     } finally {
       setBusy(false);
     }
-  }, [busy, messages, activePortfolioId, setActivePortfolioId, isPro, used, isRTL, autoGrow, activeThreadId, threads.length]);
+  }, [busy, messages, activePortfolioId, setActivePortfolioId, isPro, used, isRTL, autoGrow, activeThreadId, threads.length, chosenPortfolioId, portfolios.length]);
 
   const STARTERS = useMemo(() => (isRTL
     ? ['מה הדליפה הגדולה ביותר בתיק שלי?', 'נתח את 10 העסקאות האחרונות שלי', 'באילו שעות אני מפסיד הכי הרבה?', 'מה הצעד הבא שכדאי לי לתקן?']
     : ['What is my single biggest leak?', 'Review my last 10 trades', 'Which sessions cost me the most?', 'What should I fix next?']), [isRTL]);
-
-  const CARDS = [
-    { Icon: Activity, he: 'איתור דליפות', en: 'Leak detection', dhe: 'מה פוגע בתוצאות — עם העסקאות, הסשנים והנכסים שמאחורי זה.', den: 'What is hurting results — with the trades, sessions and symbols behind it.' },
-    { Icon: Search, he: 'ביקורת מבוססת ראיות', en: 'Evidence-based review', dhe: 'הפסדים גדולים, עסקאות אחרונות והערות יומן — בלי מעבר בין לשוניות.', den: 'Worst trades, recent tables and journal notes without hunting tabs.' },
-    { Icon: Target, he: 'צעדים ברי ביצוע', en: 'Coachable next steps', dhe: 'שאלות רחבות הופכות לביקורת ממוקדת: מה לתקן, לבדוק ולנטר.', den: 'Broad questions become focused reviews: fix, test, watch.' },
-    { Icon: Layers, he: 'סיכומים וטבלאות', en: 'Structured artifacts', dhe: 'סיכומים, השוואות ופילוחים שקל לפעול לפיהם.', den: 'Summaries, comparisons and breakdowns that are easy to act on.' },
-    { Icon: Clock3, he: 'תזמון וסשנים', en: 'Timing & sessions', dhe: 'איך שעת היום והסשן מעצבים את התוצאות שלך.', den: 'How time of day and session choice shape your outcomes.' },
-    { Icon: InfinityIcon, he: 'החלפת תיקים בצ׳אט', en: 'Switch books in chat', dhe: 'בקשו "תעבור לתיק הסווינג" והקואצ׳ יטען את הנתונים של אותו תיק.', den: 'Say “switch to my swing book” and the coach loads that portfolio’s data.' },
-  ];
 
   /* Starred question — only for traders who finished the Trader Mind test. */
   const tmPrompt = isRTL
@@ -394,29 +410,6 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
   };
 
   const openUpgrade = () => window.dispatchEvent(new CustomEvent('orca:open-upgrade', { detail: { required: 'pro' } }));
-
-  /* ── Portfolio picker (shared by both states) ─────────────────────── */
-  const portfolioPicker = (
-    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-      <Briefcase size={12} style={{ position: 'absolute', insetInlineStart: 10, pointerEvents: 'none', color: T.text.muted }} />
-      <select
-        value={activePortfolioId ?? ''}
-        onChange={e => setActivePortfolioId(e.target.value)}
-        aria-label={isRTL ? 'תיק פעיל' : 'Active portfolio'}
-        style={{
-          appearance: 'none', background: 'transparent', color: T.text.primary,
-          border: `1px solid ${T.border.subtle}`, borderRadius: 999,
-          fontSize: 11.5, fontWeight: 600, padding: '5px 26px 5px 28px',
-          cursor: portfolios.length > 1 ? 'pointer' : 'default',
-        }}
-      >
-        {portfolios.length === 0 && <option value="">{isRTL ? 'אין תיק' : 'No portfolio'}</option>}
-        {portfolios.length > 1 && <option value="">{isRTL ? 'שאל אותי איזה תיק' : 'Let the coach ask'}</option>}
-        {portfolios.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-      </select>
-      <ChevronDown size={12} style={{ position: 'absolute', insetInlineEnd: 9, pointerEvents: 'none', color: T.text.muted }} />
-    </div>
-  );
 
   /* ── Composer (shared, sized per state) ───────────────────────────── */
   const composer = (big: boolean) => (
@@ -553,22 +546,6 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
     </div>
   );
 
-  const railHeader = (
-    <>
-      <button
-        onClick={startNewChat}
-        style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%',
-          background: `${accent}14`, border: `1px solid ${accent}3A`, color: T.text.primary,
-          borderRadius: 999, padding: '9px 12px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
-        }}
-      ><RotateCcw size={12} style={{ color: accent }} />{isRTL ? 'שיחה חדשה' : 'New chat'}</button>
-      <div style={{ ...mono, color: T.text.muted, padding: '12px 6px 6px' }}>
-        {isRTL ? `שיחות · ${threads.length}/${MAX_THREADS}` : `Chats · ${threads.length}/${MAX_THREADS}`}
-      </div>
-    </>
-  );
-
   const railNotice = threadNotice ? (
     <div style={{
       marginTop: 8, padding: 8, fontSize: 11.5, borderRadius: T.radius.sm, lineHeight: 1.5,
@@ -576,23 +553,86 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
     }}>{threadNotice}</div>
   ) : null;
 
-  /** Wraps a surface with the conversation rail on desktop page mode. */
+  /** Wraps a surface with the conversation rail on desktop page mode.
+   *  The rail sits on the trailing edge (away from the app sidebar) and
+   *  collapses to a slim strip with an animated width transition. */
   const withRail = (content: React.ReactNode) => {
     if (!showRail) return content;
     return (
       <div style={{
-        direction: isRTL ? 'rtl' : 'ltr', display: 'grid',
-        gridTemplateColumns: '236px minmax(0, 1fr)', gap: 20, width: '100%', alignItems: 'stretch',
+        direction: isRTL ? 'rtl' : 'ltr', display: 'flex',
+        gap: 18, width: '100%', alignItems: 'stretch',
       }}>
-        <aside style={{
-          ...panel, padding: 12, display: 'flex', flexDirection: 'column',
-          height: 'calc(100vh - 150px)', minHeight: 520, position: 'sticky', top: 0,
-        }}>
-          {railHeader}
-          {railList}
-          {railNotice}
+        <div style={{ flex: 1, minWidth: 0 }}>{content}</div>
+        <aside
+          className="orca-coach-rail"
+          style={{
+            ...panel,
+            width: railOpen ? 244 : 56,
+            flexShrink: 0, overflow: 'hidden',
+            padding: railOpen ? 12 : '12px 8px',
+            display: 'flex', flexDirection: 'column',
+            height: 'calc(100vh - 150px)', minHeight: 520, position: 'sticky', top: 0,
+            background: `linear-gradient(180deg, ${T.bg.card} 0%, ${T.bg.secondary} 100%)`,
+            boxShadow: `inset 0 1px 0 ${T.border.subtle}`,
+          }}
+        >
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            justifyContent: railOpen ? 'space-between' : 'center', marginBottom: 10,
+          }}>
+            {railOpen && (
+              <span style={{ ...mono, color: T.text.muted }}>
+                {isRTL ? `שיחות · ${threads.length}/${MAX_THREADS}` : `Chats · ${threads.length}/${MAX_THREADS}`}
+              </span>
+            )}
+            <button
+              onClick={() => setRailOpen(o => !o)}
+              aria-label={railOpen ? (isRTL ? 'קיפול רשימת השיחות' : 'Collapse conversations') : (isRTL ? 'פתיחת רשימת השיחות' : 'Expand conversations')}
+              aria-expanded={railOpen}
+              style={{
+                background: 'transparent', border: `1px solid ${T.border.subtle}`, color: T.text.secondary,
+                borderRadius: 9, padding: 6, cursor: 'pointer', display: 'grid', placeItems: 'center',
+              }}
+            >{railOpen ? <PanelRightClose size={13} /> : <PanelRightOpen size={13} />}</button>
+          </div>
+
+          {railOpen ? (
+            <>
+              <button
+                onClick={startNewChat}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%',
+                  background: `${accent}14`, border: `1px solid ${accent}3A`, color: T.text.primary,
+                  borderRadius: 999, padding: '9px 12px', fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+                  marginBottom: 10,
+                }}
+              ><RotateCcw size={12} style={{ color: accent }} />{isRTL ? 'שיחה חדשה' : 'New chat'}</button>
+              {railList}
+              {railNotice}
+            </>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+              <button
+                onClick={startNewChat}
+                aria-label={isRTL ? 'שיחה חדשה' : 'New chat'}
+                style={{
+                  width: 34, height: 34, display: 'grid', placeItems: 'center', cursor: 'pointer',
+                  background: `${accent}14`, border: `1px solid ${accent}3A`, color: accent, borderRadius: 999,
+                }}
+              ><RotateCcw size={13} /></button>
+              <button
+                onClick={() => setRailOpen(true)}
+                aria-label={isRTL ? 'שיחות שמורות' : 'Saved chats'}
+                style={{
+                  width: 34, height: 34, display: 'grid', placeItems: 'center', cursor: 'pointer',
+                  background: 'transparent', border: `1px solid ${T.border.subtle}`, color: T.text.secondary, borderRadius: 999,
+                }}
+              ><MessageSquare size={13} /></button>
+              <span style={{ ...mono, color: T.text.muted }}>{threads.length}</span>
+            </div>
+          )}
         </aside>
-        <div style={{ minWidth: 0 }}>{content}</div>
       </div>
     );
   };
@@ -622,9 +662,11 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
         )}
         <div style={{ textAlign: 'center', paddingTop: isPanel ? 10 : 'clamp(24px, 6vh, 64px)', marginBottom: isPanel ? 16 : 26 }}>
           <div style={{
-            width: 44, height: 44, borderRadius: 12, margin: '0 auto 18px', display: 'grid', placeItems: 'center',
-            background: `${accent}1C`, border: `1px solid ${accent}40`, color: accent, fontSize: 19,
-          }}>◈</div>
+            width: 56, height: 56, borderRadius: 999, margin: '0 auto 18px', display: 'grid', placeItems: 'center',
+            background: `radial-gradient(circle at 50% 45%, ${accent}26, transparent 72%)`,
+            border: `1px solid ${accent}40`,
+            boxShadow: `0 0 24px -4px ${accent}88`,
+          }}><img src="/orcaIcon.ico" alt="" aria-hidden width={34} height={34} style={{ width: 34, height: 34, objectFit: 'contain', filter: `drop-shadow(0 0 6px ${accent}AA)` }} /></div>
           <h1 style={{ fontSize: isPanel ? 21 : 'clamp(24px, 4vw, 36px)', fontWeight: 700, lineHeight: 1.2, margin: '0 0 10px', color: T.text.primary }}>
             {isRTL ? 'במה נתחיל?' : 'Where should we start?'}
           </h1>
@@ -634,8 +676,6 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
               : 'Orca Coach reads your trades, statistics and Trader Mind diagnostic. Pick a portfolio — or just ask, and it will ask you which book to work on.'}
           </p>
         </div>
-
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>{portfolioPicker}</div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
           {errorBlock}
@@ -662,27 +702,6 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
           </div>
         )}
 
-        {/* Capability cards are page furniture — the floating panel stays lean. */}
-        {!isPanel && <div style={{ height: 1, background: T.border.subtle, margin: '34px 0 22px' }} />}
-
-        {!isPanel && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
-            {CARDS.map(({ Icon, ...c }) => (
-              <div key={c.en} style={{ ...panel, padding: 14, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                <div style={{
-                  width: 26, height: 26, borderRadius: 8, flexShrink: 0, display: 'grid', placeItems: 'center',
-                  background: `${accent}14`, border: `1px solid ${accent}2E`, color: accent,
-                }}><Icon size={13} /></div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 12.5, fontWeight: 600, color: T.text.primary, marginBottom: 3 }}>{isRTL ? c.he : c.en}</div>
-                  <div style={{ fontSize: 11, color: T.text.secondary, lineHeight: 1.55 }}>{isRTL ? c.dhe : c.den}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-
         {!isPro && (
           <div style={{ ...mono, color: T.text.muted, textAlign: 'center', marginTop: 22 }}>
             {isRTL ? `נותרו ${remaining} מתוך ${FREE_LIMIT} הודעות החודש` : `${remaining} of ${FREE_LIMIT} free messages left this month`}
@@ -705,9 +724,10 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
         padding: '0 4px 10px', borderBottom: `1px solid ${T.border.subtle}`, marginBottom: 4,
       }}>
         <div style={{
-          width: 24, height: 24, borderRadius: 7, display: 'grid', placeItems: 'center', flexShrink: 0,
-          background: `${accent}1C`, border: `1px solid ${accent}40`, color: accent, fontSize: 11,
-        }}>◈</div>
+          width: 26, height: 26, borderRadius: 999, display: 'grid', placeItems: 'center', flexShrink: 0,
+          background: `radial-gradient(circle at 50% 45%, ${accent}26, transparent 72%)`,
+          border: `1px solid ${accent}40`, boxShadow: `0 0 14px -4px ${accent}99`,
+        }}><img src="/orcaIcon.ico" alt="" aria-hidden width={17} height={17} style={{ width: 17, height: 17, objectFit: 'contain' }} /></div>
         <span style={{ fontSize: 13, fontWeight: 700, color: T.text.primary }}>Orca Coach</span>
         <div style={{ marginInlineStart: 'auto', display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
           <span style={{ ...mono, color: isPro ? accent : T.text.muted }}>
@@ -794,9 +814,10 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
             ) : (
               <div key={i} ref={el => { msgRefs.current[i] = el; }} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <div style={{
-                  width: 24, height: 24, borderRadius: 7, flexShrink: 0, marginTop: 2, display: 'grid', placeItems: 'center',
-                  background: `${accent}16`, border: `1px solid ${accent}33`, color: accent, fontSize: 11,
-                }}>◈</div>
+                  width: 26, height: 26, borderRadius: 999, flexShrink: 0, marginTop: 2, display: 'grid', placeItems: 'center',
+                  background: `radial-gradient(circle at 50% 45%, ${accent}22, transparent 72%)`,
+                  border: `1px solid ${accent}33`, boxShadow: `0 0 12px -4px ${accent}88`,
+                }}><img src="/orcaIcon.ico" alt="" aria-hidden width={17} height={17} style={{ width: 17, height: 17, objectFit: 'contain' }} /></div>
                 <div className="orca-coach-md" style={{ color: T.text.primary, fontSize: 13.5, lineHeight: 1.78, minWidth: 0, flex: 1 }}>
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
                 </div>
@@ -811,8 +832,10 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
                 <button
                   key={p.id}
                   onClick={() => {
+                    setChosenPortfolioId(p.id);
                     setActivePortfolioId(p.id);
-                    send(isRTL ? `בוא ננתח את התיק "${p.name}"` : `Let's analyse the "${p.name}" portfolio`, p.id);
+                    setNeedsPortfolio(false);
+                    send(p.name ?? (isRTL ? 'התיק הזה' : 'this portfolio'), p.id);
                   }}
                   className="orca-coach-chip"
                   style={{
