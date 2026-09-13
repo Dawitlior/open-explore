@@ -140,7 +140,7 @@ export default function OrcaCoachPage({ T, isRTL, variant = 'page' }: Props) {
   const deleteThread = (id: string) => {
     persistThreads(threads.filter(t => t.id !== id));
     setThreadNotice(null);
-    if (id === activeThreadId) { setActiveThreadId(null); setMessages([]); }
+    if (id === activeThreadId) { setActiveThreadId(null); setMessages([]); memoryRef.current = ''; }
   };
 
   const startNewChat = () => {
