@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Trade } from '@/data/trades';
 import type { TradingTheme } from '@/lib/trading-theme';
@@ -60,6 +61,13 @@ export function TradeDetailModal({
 
   // reset the notes editor whenever the dossier moves to another trade
   useEffect(() => { setNoteEditing(false); setNoteDraft(trade.comments || ''); }, [trade.id, trade.comments]);
+
+  // Lock background scrolling while the dossier is open.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
 
   const headline = tradeHeadline(trade);
   const r = getEffectiveR(trade);
@@ -180,7 +188,10 @@ export function TradeDetailModal({
     ? { duration: 0 }
     : { type: 'spring' as const, stiffness: 260, damping: 26, mass: 0.9 };
 
-  return (
+  // Rendered through a portal on document.body: any transformed ancestor in the
+  // animated journal surface would otherwise become the containing block for
+  // `position: fixed` and push the dossier off-centre after scrolling.
+  return createPortal(
     <AnimatePresence mode="wait">
       <motion.div
         role="dialog"
@@ -611,7 +622,8 @@ export function TradeDetailModal({
           </motion.div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 
